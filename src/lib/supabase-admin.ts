@@ -29,8 +29,8 @@ export async function syncUserToSupabase(userData: {
       .upsert({
         id: userData.id,
         email: email,
-        first_name: userData.first_name || null,
-        last_name: userData.last_name || null,
+        first_name: userData.first_name ?? null,
+        last_name: userData.last_name ?? null,
         subscription_tier: 'free', // Default tier
         stripe_customer_id: null,
         created_at: new Date(userData.created_at).toISOString(),
