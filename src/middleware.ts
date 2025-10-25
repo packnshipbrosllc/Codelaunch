@@ -8,8 +8,14 @@ const isPublicRoute = createRouteMatcher([
 ]);
 
 export default clerkMiddleware(async (auth, request) => {
-  // Explicitly exclude webhook routes from authentication
-  if (request.nextUrl.pathname.startsWith('/api/webhooks')) {
+  const pathname = request.nextUrl.pathname;
+  
+  // Log to verify middleware is running
+  console.log('🔍 Middleware checking path:', pathname);
+  
+  // Explicitly skip ALL webhook routes - no auth at all
+  if (pathname.includes('/api/webhooks')) {
+    console.log('✅ Skipping auth for webhook');
     return NextResponse.next();
   }
 
