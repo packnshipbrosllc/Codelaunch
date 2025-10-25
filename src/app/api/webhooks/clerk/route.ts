@@ -131,3 +131,7 @@ export async function POST(req: Request) {
 
   return new Response('Webhook processed successfully', { status: 200 });
 }
+
+export async function GET() {
+  return new Response('Error: Missing svix headers', { status: 405 });
+}
