@@ -30,7 +30,7 @@ export async function POST(request: Request) {
 
     // Parse body
     const body = await request.json();
-    const { priceId, plan } = body;
+    const { priceId, plan } = body as { priceId: string; plan: 'monthly' | 'yearly' };
     
     console.log('📝 Plan:', plan, 'Price ID:', priceId);
 
@@ -44,7 +44,7 @@ export async function POST(request: Request) {
     }
 
     // Validate price ID
-    const expectedPriceId = PRICING[plan].priceId;
+    const expectedPriceId = PRICING[plan as 'monthly' | 'yearly'].priceId;
     if (priceId !== expectedPriceId) {
       console.log('❌ Price ID mismatch');
       return NextResponse.json(
