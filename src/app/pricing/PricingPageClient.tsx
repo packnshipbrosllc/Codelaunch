@@ -26,7 +26,7 @@ export default function PricingPageClient() {
         ? process.env.NEXT_PUBLIC_STRIPE_MONTHLY_PRICE_ID 
         : process.env.NEXT_PUBLIC_STRIPE_YEARLY_PRICE_ID;
 
-      const response = await fetch('/api/stripe/create-checkout/', {  // Add trailing slash
+      const response = await fetch('/api/stripe/create-checkout', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
