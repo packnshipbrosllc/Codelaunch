@@ -55,11 +55,14 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    return NextResponse.json({ url: session.url });
-  } catch (error) {
+    return NextResponse.json({ 
+      url: session.url,
+      sessionId: session.id 
+    });
+  } catch (error: any) {
     console.error('Error creating checkout session:', error);
     return NextResponse.json(
-      { error: 'Failed to create checkout session' },
+      { error: error.message || 'Failed to create checkout session' },
       { status: 500 }
     );
   }
