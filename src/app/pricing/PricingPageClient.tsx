@@ -26,7 +26,13 @@ export default function PricingPageClient() {
         ? process.env.NEXT_PUBLIC_STRIPE_MONTHLY_PRICE_ID 
         : process.env.NEXT_PUBLIC_STRIPE_YEARLY_PRICE_ID;
 
-      const response = await fetch('/api/stripe/create-checkout', {
+      // ADD DETAILED LOGGING:
+      console.log('🔍 Attempting checkout...');
+      console.log('Plan:', plan);
+      console.log('Price ID:', priceId);
+      console.log('URL:', `${window.location.origin}/api/stripe/create-checkout`);
+
+      const response = await fetch(`${window.location.origin}/api/stripe/create-checkout`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -35,7 +41,11 @@ export default function PricingPageClient() {
           priceId,
           plan,
         }),
+        redirect: 'follow',
       });
+
+      console.log('Response status:', response.status);
+      console.log('Response OK:', response.ok);
 
       if (!response.ok) {
         const error = await response.json();
