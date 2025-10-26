@@ -1,8 +1,18 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
+// Add GET for testing
+export async function GET() {
+  return NextResponse.json({ 
+    message: 'POST endpoint is working. Use POST method to create checkout.' 
+  });
+}
+
 export async function POST(request: Request) {
-  console.log('🚀 Checkout endpoint called');
+  console.log('🚀 Checkout POST endpoint called');
   
   try {
     // Get auth
