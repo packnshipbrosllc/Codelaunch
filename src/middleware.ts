@@ -20,9 +20,41 @@ export default clerkMiddleware(async (auth, request) => {
     return NextResponse.next();
   }
 
-  if (!isPublicRoute(request)) {
-    await auth.protect();
+  // Skip auth for public routes
+  if (isPublicRoute(request)) {
+    return NextResponse.next();
   }
+
+  // Protect route - check authentication
+  if (!auth.userId) {
+    const signInUrl = new URL('/sign-in', request.url);
+    return NextResponse.redirect(signInUrl);
+  }
+
+  // Check subscription for protected routes
+  try {
+    const response = await fetch(`${request.nextUrl.origin}/api/check-subscription`, {
+      headers: {
+        'x-user-id': auth.userId,
+      },
+    });
+
+    if (response.ok) {
+      const { hasSubscription } = await response.json();
+      
+      if (!hasSubscription) {
+        console.log('❌ No subscription - redirecting to pricing');
+        const pricingUrl = new URL('/pricing', request.url);
+        pricingUrl.searchParams.set('redirect', 'true');
+        return NextResponse.redirect(pricingUrl);
+      }
+    }
+  } catch (error) {
+    console.error('Subscription check error:', error);
+    // If check fails, allow through (fail open)
+  }
+
+  return NextResponse.next();
 });
 
 export const config = {
