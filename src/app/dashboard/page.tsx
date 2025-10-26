@@ -11,6 +11,7 @@ import ConfigStage from '@/components/stages/ConfigStage';
 import GeneratingStage from '@/components/stages/GeneratingStage';
 import DeployingStage from '@/components/stages/DeployingStage';
 import SuccessStage from '@/components/stages/SuccessStage';
+import SubscriptionStatus from '@/components/SubscriptionStatus';
 import { AppData, Config, Stage } from '@/types';
 import { generateAppData } from '@/lib/utils';
 
@@ -70,6 +71,11 @@ export default function CodeLaunchApp() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-slate-950 text-white">
+      {/* Subscription Status Badge */}
+      <div className="p-4">
+        <SubscriptionStatus />
+      </div>
+      
       {stage === 'welcome' && <WelcomeStage onStart={() => setStage('input')} />}
       {stage === 'input' && (
         <InputStage 
