@@ -1,42 +1,47 @@
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-export const fetchCache = 'force-no-store';
 
-import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@clerk/nextjs/server';
-import { stripe } from '@/lib/stripe';
-
-export async function POST(req: NextRequest) {
+export async function POST(request: NextRequest) {
+  console.log('✅ POST endpoint hit');
+  
   try {
-    // Debug logging
-    console.log('🔍 DEBUG - Starting checkout...');
-    console.log('STRIPE_SECRET_KEY exists?', !!process.env.STRIPE_SECRET_KEY);
-    console.log('STRIPE_SECRET_KEY starts with:', process.env.STRIPE_SECRET_KEY?.substring(0, 10));
+    // Import auth inside the function
+    const { auth, currentUser } = await import('@clerk/nextjs/server');
+    const { stripe } = await import('@/lib/stripe');
     
+    // Get user
     const { userId } = await auth();
-
+    console.log('User ID:', userId);
+    
     if (!userId) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { priceId, plan } = await req.json();
-    
-    console.log('📦 Price ID:', priceId);
-    console.log('📦 Plan:', plan);
+    // Get body
+    const body = await request.json();
+    const { priceId, plan } = body;
+    console.log('Plan:', plan, 'Price ID:', priceId);
+
+    // Validate
+    if (!plan || (plan !== 'monthly' && plan !== 'yearly')) {
+      return NextResponse.json({ error: 'Invalid plan' }, { status: 400 });
+    }
 
     if (!priceId) {
-      return NextResponse.json(
-        { error: 'Price ID is required' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Price ID is required' }, { status: 400 });
     }
 
-    // Create checkout session
+    // Get user email
+    const user = await currentUser();
+    const userEmail = user?.emailAddresses[0]?.emailAddress;
+
+    console.log('Creating session for:', userEmail);
+
+    // Create session
     const session = await stripe.checkout.sessions.create({
-      customer_email: undefined, // Clerk will handle email
       payment_method_types: ['card'],
       line_items: [
         {
@@ -45,7 +50,7 @@ export async function POST(req: NextRequest) {
         },
       ],
       mode: 'subscription',
-      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard?payment=success`,
+      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard?success=true`,
       cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/pricing?canceled=true`,
       metadata: {
         userId,
@@ -59,16 +64,17 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    return NextResponse.json({ 
+    console.log('Session created:', session.id);
+
+    return NextResponse.json({
+      sessionId: session.id,
       url: session.url,
-      sessionId: session.id 
     });
   } catch (error: any) {
-    console.error('Error creating checkout session:', error);
+    console.error('Error:', error);
     return NextResponse.json(
-      { error: error.message || 'Failed to create checkout session' },
+      { error: error.message || 'Server error' },
       { status: 500 }
     );
   }
 }
-
