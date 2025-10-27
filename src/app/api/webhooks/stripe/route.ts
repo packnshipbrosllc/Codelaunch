@@ -8,10 +8,16 @@ const supabase = createClient(
 );
 
 export async function POST(req: NextRequest) {
+  console.log('🔔 WEBHOOK RECEIVED - Starting processing');
+  
   const body = await req.text();
   const signature = req.headers.get('stripe-signature');
 
+  console.log('📧 Signature exists:', !!signature);
+  console.log('📦 Body length:', body.length);
+
   if (!signature) {
+    console.error('❌ No signature found');
     return NextResponse.json(
       { error: 'Missing signature' },
       { status: 400 }
@@ -25,21 +31,29 @@ export async function POST(req: NextRequest) {
       signature,
       process.env.STRIPE_WEBHOOK_SECRET!
     );
+    console.log('✅ Event verified:', event.type);
   } catch (err) {
-    console.error('Webhook signature verification failed:', err);
+    console.error('❌ Webhook signature verification failed:', err);
     return NextResponse.json(
       { error: 'Invalid signature' },
       { status: 400 }
     );
   }
+  
+  console.log('🎯 Processing event type:', event.type);
 
   try {
     switch (event.type) {
       case 'checkout.session.completed': {
+        console.log('💳 Processing checkout.session.completed');
         const session = event.data.object;
         const userId = session.metadata?.userId;
+        
+        console.log('👤 User ID from session:', userId);
+        console.log('📧 Customer email:', session.customer_email);
 
         if (userId) {
+          console.log('🔍 About to update Supabase for user ID:', userId);
           await supabase
             .from('users')
             .update({
@@ -49,6 +63,9 @@ export async function POST(req: NextRequest) {
               subscription_started_at: new Date().toISOString(),
             })
             .eq('id', userId);
+          console.log('✅ Supabase update completed for user:', userId);
+        } else {
+          console.warn('⚠️ No user ID found in session metadata');
         }
         break;
       }
@@ -141,9 +158,10 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    console.log('✅ Webhook processing completed successfully');
     return NextResponse.json({ received: true });
   } catch (error) {
-    console.error('Error processing webhook:', error);
+    console.error('❌ Webhook processing failed:', error);
     return NextResponse.json(
       { error: 'Webhook processing failed' },
       { status: 500 }
