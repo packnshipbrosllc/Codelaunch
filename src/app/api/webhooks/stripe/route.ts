@@ -54,7 +54,8 @@ export async function POST(req: NextRequest) {
 
         if (userId) {
           console.log('🔍 About to update Supabase for user ID:', userId);
-          await supabase
+          
+          const { data, error } = await supabase
             .from('users')
             .update({
               subscription_status: 'active',
@@ -62,7 +63,17 @@ export async function POST(req: NextRequest) {
               subscription_plan: session.metadata?.plan || 'monthly',
               subscription_started_at: new Date().toISOString(),
             })
-            .eq('id', userId);
+            .eq('id', userId)
+            .select(); // Returns the updated row
+          
+          console.log('📊 Supabase response data:', JSON.stringify(data, null, 2));
+          console.log('❌ Supabase error:', error);
+          console.log('🔢 Rows updated:', data?.length || 0);
+          
+          if (error) {
+            console.error('❌ Supabase update error details:', JSON.stringify(error, null, 2));
+          }
+          
           console.log('✅ Supabase update completed for user:', userId);
         } else {
           console.warn('⚠️ No user ID found in session metadata');
