@@ -7,6 +7,12 @@ import { useUser } from '@clerk/nextjs';
 import MindmapFlow from '@/components/MindmapFlow';
 import { MindmapData } from '@/types/mindmap';
 
+// Debug logging
+if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+  console.log('🔍 DEBUG: MindmapFlow imported:', typeof MindmapFlow);
+  console.log('🔍 DEBUG: MindmapFlow component:', MindmapFlow);
+}
+
 export default function CreateProjectPage() {
   const router = useRouter();
   const { user, isLoaded } = useUser();
@@ -225,6 +231,7 @@ export default function CreateProjectPage() {
             </div>
 
             <MindmapFlow data={mindmapData} onSave={handleSave} />
+            {process.env.NODE_ENV === 'development' && console.log('🔍 DEBUG: Rendering MindmapFlow with data:', mindmapData)}
 
             {/* Next Steps */}
             <div className="mt-8 p-6 bg-gray-800/50 rounded-lg border border-purple-500/20">
