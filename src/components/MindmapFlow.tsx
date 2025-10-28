@@ -329,7 +329,12 @@ export default function MindmapFlow({ data, onSave }: MindmapFlowProps) {
   const [edges, , onEdgesChange] = useEdgesState(initialEdges);
 
   return (
-    <div className="w-full h-[800px] bg-gray-50 rounded-xl border-2 border-gray-200 overflow-hidden">
+    <div className="w-full h-[800px] bg-gray-50 rounded-xl border-2 border-gray-200 overflow-hidden relative">
+      {/* Debug Badge - Remove this after confirming it works */}
+      <div className="absolute top-4 left-4 z-10 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg font-semibold">
+        ✅ React Flow Active
+      </div>
+      
       <ReactFlow
         nodes={nodes}
         edges={edges}
