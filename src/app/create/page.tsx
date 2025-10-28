@@ -1,7 +1,7 @@
 // src/app/create/page.tsx
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
 import MindmapFlow from '@/components/MindmapFlow';
@@ -21,6 +21,13 @@ export default function CreateProjectPage() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [mindmapData, setMindmapData] = useState<MindmapData | null>(null);
   const [error, setError] = useState('');
+
+  // Debug logging
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'development' && mindmapData) {
+      console.log('🔍 DEBUG: Rendering MindmapFlow with data:', mindmapData);
+    }
+  }, [mindmapData]);
 
   // Redirect if not authenticated
   if (isLoaded && !user) {
@@ -231,7 +238,6 @@ export default function CreateProjectPage() {
             </div>
 
             <MindmapFlow data={mindmapData} onSave={handleSave} />
-            {process.env.NODE_ENV === 'development' && console.log('🔍 DEBUG: Rendering MindmapFlow with data:', mindmapData)}
 
             {/* Next Steps */}
             <div className="mt-8 p-6 bg-gray-800/50 rounded-lg border border-purple-500/20">
