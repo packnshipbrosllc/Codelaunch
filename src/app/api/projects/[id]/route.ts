@@ -11,7 +11,7 @@ const supabase = createClient(
 // GET single project
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { userId } = await auth();
@@ -23,10 +23,13 @@ export async function GET(
       );
     }
 
+    // Await params in Next.js 15
+    const { id } = await params;
+
     const { data, error } = await supabase
       .from('projects')
       .select('*')
-      .eq('id', params.id)
+      .eq('id', id)
       .eq('user_id', userId)
       .single();
 
@@ -52,7 +55,7 @@ export async function GET(
 // PATCH update project
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { userId } = await auth();
@@ -64,12 +67,14 @@ export async function PATCH(
       );
     }
 
+    // Await params in Next.js 15
+    const { id } = await params;
     const body = await request.json();
 
     const { data, error } = await supabase
       .from('projects')
       .update(body)
-      .eq('id', params.id)
+      .eq('id', id)
       .eq('user_id', userId)
       .select()
       .single();
@@ -96,7 +101,7 @@ export async function PATCH(
 // DELETE project
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { userId } = await auth();
@@ -108,10 +113,13 @@ export async function DELETE(
       );
     }
 
+    // Await params in Next.js 15
+    const { id } = await params;
+
     const { error } = await supabase
       .from('projects')
       .delete()
-      .eq('id', params.id)
+      .eq('id', id)
       .eq('user_id', userId);
 
     if (error) throw error;

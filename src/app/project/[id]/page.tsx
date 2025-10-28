@@ -21,27 +21,30 @@ export default function ProjectDetailPage() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [showPRDViewer, setShowPRDViewer] = useState(false);
 
+  // Get project ID from params
+  const projectId = typeof params.id === 'string' ? params.id : params.id?.[0];
+
   useEffect(() => {
     if (isLoaded && !user) {
       router.push('/sign-in');
       return;
     }
 
-    if (user && params.id) {
+    if (user && projectId) {
       fetchProject();
     }
-  }, [user, isLoaded, params.id, router]);
+  }, [user, isLoaded, projectId, router]);
 
   const fetchProject = async () => {
     try {
-      const response = await fetch(`/api/projects/${params.id}`);
+      const response = await fetch(`/api/projects/${projectId}`);
       const result = await response.json();
       
       if (result.success) {
         setProject(result.data);
         
         // Update last accessed
-        fetch(`/api/projects/${params.id}`, {
+        fetch(`/api/projects/${projectId}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ last_accessed_at: new Date().toISOString() }),
@@ -343,23 +346,25 @@ export default function ProjectDetailPage() {
                 </div>
 
                 {/* Estimates */}
-                <div className="mt-6 p-6 bg-gray-50 rounded-xl">
-                  <h3 className="text-lg font-bold text-gray-900 mb-4">📊 Estimates</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                      <div className="text-sm text-gray-600">Complexity</div>
-                      <div className="font-semibold">{techStack.estimatedComplexity}</div>
-                    </div>
-                    <div>
-                      <div className="text-sm text-gray-600">Timeline</div>
-                      <div className="font-semibold">{techStack.estimatedTimeline}</div>
-                    </div>
-                    <div>
-                      <div className="text-sm text-gray-600">Team Size</div>
-                      <div className="font-semibold">{techStack.teamSize}</div>
+                {techStack.estimatedComplexity && (
+                  <div className="mt-6 p-6 bg-gray-50 rounded-xl">
+                    <h3 className="text-lg font-bold text-gray-900 mb-4">📊 Estimates</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div>
+                        <div className="text-sm text-gray-600">Complexity</div>
+                        <div className="font-semibold">{techStack.estimatedComplexity}</div>
+                      </div>
+                      <div>
+                        <div className="text-sm text-gray-600">Timeline</div>
+                        <div className="font-semibold">{techStack.estimatedTimeline}</div>
+                      </div>
+                      <div>
+                        <div className="text-sm text-gray-600">Team Size</div>
+                        <div className="font-semibold">{techStack.teamSize}</div>
+                      </div>
                     </div>
                   </div>
-                </div>
+                )}
               </div>
             )}
           </div>
