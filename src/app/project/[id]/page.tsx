@@ -6,6 +6,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
 import MindmapFlow from '@/components/MindmapFlow';
 import PRDViewer from '@/components/PRDViewer';
+import Header from '@/components/Header';
 
 export default function ProjectDetailPage() {
   const params = useParams();
@@ -23,6 +24,11 @@ export default function ProjectDetailPage() {
 
   // Get project ID from params
   const projectId = typeof params.id === 'string' ? params.id : params.id?.[0];
+
+  // Safely resolve fields regardless of schema version
+  const projectName = project?.project_name ?? project?.name ?? project?.data?.projectName;
+  const idea = project?.idea ?? project?.description ?? project?.data?.projectDescription;
+  const mindmapData = project?.mindmap_data ?? project?.data ?? null;
 
   useEffect(() => {
     if (isLoaded && !user) {
@@ -64,9 +70,9 @@ export default function ProjectDetailPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          projectName: project.project_name,
-          idea: project.idea,
-          mindmapData: project.mindmap_data,
+          projectName: projectName,
+          idea: idea,
+          mindmapData: mindmapData,
         }),
       });
 
@@ -102,8 +108,8 @@ export default function ProjectDetailPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          projectName: project.project_name,
-          idea: project.idea,
+          projectName: projectName,
+          idea: idea,
         }),
       });
 
@@ -127,8 +133,8 @@ export default function ProjectDetailPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          projectName: project.project_name,
-          idea: project.idea,
+          projectName: projectName,
+          idea: idea,
           techStack: techStack,
           codeType,
         }),
@@ -177,11 +183,12 @@ export default function ProjectDetailPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-pink-50">
+      <Header title="Project Details" showBackButton backUrl="/dashboard" />
       {/* PRD Viewer Modal */}
       {showPRDViewer && prdData && (
         <PRDViewer
           prdData={prdData}
-          projectName={project.project_name}
+          projectName={projectName}
           onClose={() => setShowPRDViewer(false)}
         />
       )}
@@ -197,8 +204,8 @@ export default function ProjectDetailPage() {
               >
                 ← Back to Dashboard
               </button>
-              <h1 className="text-3xl font-bold text-gray-900">{project.project_name}</h1>
-              <p className="text-gray-600 mt-1">{project.idea}</p>
+              <h1 className="text-3xl font-bold text-gray-900">{projectName}</h1>
+              <p className="text-gray-600 mt-1">{idea}</p>
             </div>
             <div className="flex gap-2">
               <span className="px-4 py-2 bg-purple-100 text-purple-700 rounded-lg font-semibold">
@@ -241,7 +248,7 @@ export default function ProjectDetailPage() {
         {/* Mindmap Tab */}
         {activeTab === 'mindmap' && (
           <div className="bg-white rounded-2xl shadow-xl overflow-hidden" style={{ height: '700px' }}>
-            <MindmapFlow data={project.mindmap_data} />
+            <MindmapFlow data={mindmapData} />
           </div>
         )}
 

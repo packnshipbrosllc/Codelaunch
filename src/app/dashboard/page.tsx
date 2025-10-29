@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
 import Link from 'next/link';
+import Header from '@/components/Header';
 
 interface Project {
   id: string;
@@ -134,6 +135,7 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-pink-50">
+      <Header title="My Projects" />
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8">
