@@ -28,16 +28,29 @@ export async function GET(
 
     const { data, error } = await supabase
       .from('projects')
-      .select('*')
+      .select(`
+        *,
+        mindmaps (
+          id,
+          data
+        )
+      `)
       .eq('id', id)
       .eq('user_id', userId)
       .single();
 
     if (error) throw error;
 
+    // Backward compatibility: if mindmap_data isn't on the project row,
+    // flatten the first related mindmap's data into mindmap_data
+    const flattened = {
+      ...data,
+      mindmap_data: (data as any)?.mindmap_data ?? (Array.isArray((data as any)?.mindmaps) ? (data as any).mindmaps[0]?.data ?? null : null),
+    };
+
     return NextResponse.json({
       success: true,
-      data,
+      data: flattened,
     });
 
   } catch (error: any) {
