@@ -10,6 +10,8 @@ const anthropic = new Anthropic({
 });
 
 export async function POST(request: NextRequest) {
+  const startTime = Date.now();
+  console.log('🚀 [Backend] PRD generation request received');
   try {
     const { userId } = await auth();
     
@@ -23,10 +25,19 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { projectName, mindmapData, idea, features, competitors, techStack } = body;
 
-    // Validate inputs (projectName + mindmapData are required for professional flow)
-    if (!projectName || !mindmapData) {
+    // Validate required inputs
+    if (!projectName) {
+      console.warn('⚠️ [Backend] Missing projectName');
       return NextResponse.json(
-        { success: false, error: 'Missing required fields' },
+        { success: false, error: 'Project name is required' },
+        { status: 400 }
+      );
+    }
+
+    if (!mindmapData || (typeof mindmapData === 'object' && Object.keys(mindmapData).length === 0)) {
+      console.warn('⚠️ [Backend] Missing or empty mindmapData');
+      return NextResponse.json(
+        { success: false, error: 'Mindmap data is required' },
         { status: 400 }
       );
     }
@@ -113,6 +124,12 @@ Create a detailed PRD that includes:
 
 Return the PRD in a structured JSON format with clear sections and subsections. Make it professional, comprehensive, and actionable.`;
 
+    console.log('📦 [Backend] Request validated:', {
+      projectName,
+      mindmapSize: JSON.stringify(mindmapData).length,
+    });
+
+    console.log('🤖 [Backend] Calling Anthropic API...');
     const message = await anthropic.messages.create({
       model: 'claude-sonnet-4-5-20250929',
       max_tokens: 4096,
@@ -124,6 +141,14 @@ Return the PRD in a structured JSON format with clear sections and subsections. 
         },
       ],
     });
+
+    const duration = Date.now() - startTime;
+    console.log(`✅ [Backend] Anthropic responded in ${duration}ms`);
+    // @ts-ignore usage may be present depending on SDK version
+    if ((message as any)?.usage) {
+      // @ts-ignore
+      console.log('📊 [Backend] Token usage:', (message as any).usage);
+    }
 
     const responseText = message.content[0].type === 'text' 
       ? message.content[0].text 
@@ -151,17 +176,42 @@ Return the PRD in a structured JSON format with clear sections and subsections. 
           projectName,
           generatedAt: new Date().toISOString(),
           model: 'claude-sonnet-4-5',
+          // @ts-ignore usage may be present
+          tokensUsed: (message as any)?.usage,
+          processingTime: duration,
         },
       },
     });
 
   } catch (error: any) {
-    console.error('PRD Generation Error:', error);
+    const duration = Date.now() - startTime;
+    console.error('❌ [Backend] PRD generation failed:', {
+      error: error?.message,
+      duration,
+      stack: error?.stack,
+      status: error?.status,
+      code: error?.code,
+    });
+
+    if (error?.status === 401) {
+      return NextResponse.json(
+        { success: false, error: 'API authentication failed' },
+        { status: 500 }
+      );
+    }
+
+    if (error?.status === 429) {
+      return NextResponse.json(
+        { success: false, error: 'Rate limit exceeded. Please try again later.' },
+        { status: 429 }
+      );
+    }
+
     return NextResponse.json(
       { 
         success: false, 
-        error: error.message || 'Failed to generate PRD',
-        code: error.code || 'UNKNOWN_ERROR'
+        error: error?.message || 'Failed to generate PRD',
+        code: error?.code || 'INTERNAL_ERROR',
       },
       { status: 500 }
     );

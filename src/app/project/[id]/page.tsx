@@ -66,7 +66,10 @@ export default function ProjectDetailPage() {
   const generatePRD = async () => {
     setIsGenerating(true);
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 55000);
+    let timeoutId: NodeJS.Timeout | null = null;
+    timeoutId = setTimeout(() => {
+      controller.abort();
+    }, 55000);
 
     try {
       const response = await fetch('/api/generate-prd', {
@@ -77,9 +80,11 @@ export default function ProjectDetailPage() {
           mindmapData: mindmapData,
         }),
         signal: controller.signal,
+        // Improve reliability in Safari
+        keepalive: true,
       });
 
-      clearTimeout(timeoutId);
+      if (timeoutId) clearTimeout(timeoutId);
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
@@ -104,14 +109,18 @@ export default function ProjectDetailPage() {
         throw new Error(result.error || 'Failed to generate PRD');
       }
     } catch (error: any) {
+      if (timeoutId) clearTimeout(timeoutId);
       if (error?.name === 'AbortError') {
-        alert('PRD request timed out. Please try again.');
+        alert('Request timed out. The AI is taking longer than expected. Please try again.');
+      } else if (!navigator.onLine) {
+        alert('No internet connection. Please check your network and try again.');
       } else {
         console.error('PRD Generation failed:', error);
-        alert(error?.message || 'Failed to generate PRD');
+        alert(error?.message || 'An unexpected error occurred');
       }
     } finally {
       setIsGenerating(false);
+      if (timeoutId) clearTimeout(timeoutId);
     }
   };
 
