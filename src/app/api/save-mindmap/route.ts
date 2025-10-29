@@ -36,9 +36,10 @@ export async function POST(req: NextRequest) {
       .from('projects')
       .insert({
         user_id: userId,
-        name: mindmapData.projectName,
-        description: mindmapData.projectDescription,
+        project_name: mindmapData.projectName,
+        idea: mindmapData.projectDescription,
         status: 'draft',
+        mindmap_data: mindmapData, // Store entire mindmap data in projects table
       })
       .select()
       .single();
