@@ -1,4 +1,6 @@
 // src/app/api/generate-prd/route.ts
+export const maxDuration = 60;
+export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 import { auth } from '@clerk/nextjs/server';
@@ -19,11 +21,12 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { projectName, idea, mindmapData, features, competitors, techStack } = body;
+    const { projectName, mindmapData, idea, features, competitors, techStack } = body;
 
-    if (!projectName || !idea) {
+    // Validate inputs (projectName + mindmapData are required for professional flow)
+    if (!projectName || !mindmapData) {
       return NextResponse.json(
-        { success: false, error: 'Project name and idea are required' },
+        { success: false, error: 'Missing required fields' },
         { status: 400 }
       );
     }
@@ -112,7 +115,7 @@ Return the PRD in a structured JSON format with clear sections and subsections. 
 
     const message = await anthropic.messages.create({
       model: 'claude-sonnet-4-5-20250929',
-      max_tokens: 8000,
+      max_tokens: 4096,
       temperature: 0.7,
       messages: [
         {
@@ -153,11 +156,12 @@ Return the PRD in a structured JSON format with clear sections and subsections. 
     });
 
   } catch (error: any) {
-    console.error('Error generating PRD:', error);
+    console.error('PRD Generation Error:', error);
     return NextResponse.json(
       { 
         success: false, 
-        error: error.message || 'Failed to generate PRD' 
+        error: error.message || 'Failed to generate PRD',
+        code: error.code || 'UNKNOWN_ERROR'
       },
       { status: 500 }
     );

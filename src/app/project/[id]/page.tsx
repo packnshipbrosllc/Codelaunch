@@ -65,23 +65,31 @@ export default function ProjectDetailPage() {
 
   const generatePRD = async () => {
     setIsGenerating(true);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 55000);
+
     try {
       const response = await fetch('/api/generate-prd', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           projectName: projectName,
-          idea: idea,
           mindmapData: mindmapData,
         }),
+        signal: controller.signal,
       });
 
-      const result = await response.json();
+      clearTimeout(timeoutId);
 
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to generate PRD');
+      }
+
+      const result = await response.json();
       if (result.success) {
         setPrdData(result.data);
-        
-        // Save PRD to database
+
         await fetch('/api/save-prd', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -92,10 +100,16 @@ export default function ProjectDetailPage() {
         });
 
         setShowPRDViewer(true);
+      } else {
+        throw new Error(result.error || 'Failed to generate PRD');
       }
-    } catch (error) {
-      console.error('Error generating PRD:', error);
-      alert('Failed to generate PRD');
+    } catch (error: any) {
+      if (error?.name === 'AbortError') {
+        alert('PRD request timed out. Please try again.');
+      } else {
+        console.error('PRD Generation failed:', error);
+        alert(error?.message || 'Failed to generate PRD');
+      }
     } finally {
       setIsGenerating(false);
     }
