@@ -1,29 +1,33 @@
 // src/app/api/save-mindmap/route.ts
 
+import { auth } from '@clerk/nextjs/server';
+import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
 
 export async function POST(request: Request) {
   try {
-    const supabase = createRouteHandlerClient({ cookies });
-
-    // Get authenticated user
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-
-    if (authError || !user) {
+    // Get Clerk user
+    const { userId } = await auth();
+    
+    if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    // Create Supabase client with service role key (bypasses RLS)
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
 
     const body = await request.json();
     console.log('Received mindmap data:', body);
 
-    // Insert into mindmaps table (store full JSON in data column)
+    // Insert into mindmaps table using Clerk userId
     const { data: mindmapData, error } = await supabase
       .from('mindmaps')
       .insert({
-        user_id: user.id,
-        project_id: null, // or link to a project if available
+        user_id: userId, // Clerk user ID
+        project_id: null,
         data: body,
       })
       .select()
@@ -33,13 +37,13 @@ export async function POST(request: Request) {
       console.error('Database error:', error);
       return NextResponse.json({ 
         error: 'Failed to save mindmap', 
-        details: error.message 
+        details: (error as any).message 
       }, { status: 500 });
     }
 
     return NextResponse.json({ success: true, mindmap: mindmapData });
 
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error saving mindmap:', error);
     return NextResponse.json({ 
       error: 'Internal server error',
