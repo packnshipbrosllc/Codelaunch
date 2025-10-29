@@ -1,104 +1,50 @@
 // src/app/api/save-mindmap/route.ts
 
-import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-import { auth } from '@clerk/nextjs/server';
+import { NextResponse } from 'next/server';
+import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
+import { cookies } from 'next/headers';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
-
-export async function POST(req: NextRequest) {
+export async function POST(request: Request) {
   try {
-    const { userId } = await auth();
-    
-    if (!userId) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+    const supabase = createRouteHandlerClient({ cookies });
+
+    // Get authenticated user
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { mindmapData } = await req.json();
+    const body = await request.json();
+    console.log('Received mindmap data:', body);
 
-    if (!mindmapData || !mindmapData.projectName) {
-      return NextResponse.json(
-        { error: 'Invalid mindmap data' },
-        { status: 400 }
-      );
-    }
-
-    console.log('💾 Saving mindmap for user:', userId);
-
-    // 1. Create project
-    const { data: project, error: projectError } = await supabase
-      .from('projects')
-      .insert({
-        user_id: userId,
-        project_name: mindmapData.projectName,
-        idea: mindmapData.projectDescription,
-        status: 'draft',
-        mindmap_data: mindmapData, // Store entire mindmap data in projects table
-      })
-      .select()
-      .single();
-
-    if (projectError) {
-      console.error('❌ Error creating project:', projectError);
-      throw new Error('Failed to create project');
-    }
-
-    console.log('✅ Project created:', project.id);
-
-    // 2. Save mindmap
-    const { data: mindmap, error: mindmapError } = await supabase
+    // Insert into mindmaps table (store full JSON in data column)
+    const { data: mindmapData, error } = await supabase
       .from('mindmaps')
       .insert({
-        project_id: project.id,
-        user_id: userId,
-        project_name: mindmapData.projectName,
-        project_description: mindmapData.projectDescription,
-        target_audience: mindmapData.targetAudience,
-        competitors: mindmapData.competitors,
-        tech_stack: mindmapData.techStack,
-        features: mindmapData.features,
-        monetization: mindmapData.monetization,
-        user_persona: mindmapData.userPersona,
-        // Store empty nodes/edges for now - can be populated from React Flow later
-        nodes: [],
-        edges: [],
+        user_id: user.id,
+        project_id: null, // or link to a project if available
+        data: body,
       })
       .select()
       .single();
 
-    if (mindmapError) {
-      console.error('❌ Error saving mindmap:', mindmapError);
-      // Rollback: delete the project
-      await supabase.from('projects').delete().eq('id', project.id);
-      throw new Error('Failed to save mindmap');
+    if (error) {
+      console.error('Database error:', error);
+      return NextResponse.json({ 
+        error: 'Failed to save mindmap', 
+        details: error.message 
+      }, { status: 500 });
     }
 
-    console.log('✅ Mindmap saved:', mindmap.id);
-
-    return NextResponse.json({
-      success: true,
-      data: {
-        projectId: project.id,
-        mindmapId: mindmap.id,
-      },
-    });
+    return NextResponse.json({ success: true, mindmap: mindmapData });
 
   } catch (error: any) {
-    console.error('❌ Error in save-mindmap:', error);
-    
-    return NextResponse.json(
-      {
-        success: false,
-        error: error.message || 'Failed to save mindmap',
-      },
-      { status: 500 }
-    );
+    console.error('Error saving mindmap:', error);
+    return NextResponse.json({ 
+      error: 'Internal server error',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, { status: 500 });
   }
 }
 
