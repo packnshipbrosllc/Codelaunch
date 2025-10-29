@@ -22,13 +22,16 @@ export async function POST(request: Request) {
     const body = await request.json();
     console.log('Received mindmap data:', body);
 
+    // Extract the actual mindmap data (supports both { mindmapData } and raw object)
+    const mindmapData = body?.mindmapData ?? body;
+
     // Insert into mindmaps table using Clerk userId
-    const { data: mindmapData, error } = await supabase
+    const { data: savedMindmap, error } = await supabase
       .from('mindmaps')
       .insert({
-        user_id: userId, // Clerk user ID
+        user_id: userId, // Clerk user ID (TEXT)
         project_id: null,
-        data: body,
+        data: mindmapData,
       })
       .select()
       .single();
@@ -41,7 +44,7 @@ export async function POST(request: Request) {
       }, { status: 500 });
     }
 
-    return NextResponse.json({ success: true, mindmap: mindmapData });
+    return NextResponse.json({ success: true, mindmap: savedMindmap });
 
   } catch (error) {
     console.error('Error saving mindmap:', error);
