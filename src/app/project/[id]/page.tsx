@@ -68,10 +68,16 @@ export default function ProjectDetailPage() {
     const controller = new AbortController();
     let timeoutId: NodeJS.Timeout | null = null;
     timeoutId = setTimeout(() => {
+      console.log('⏱️ [Frontend] Aborting due to timeout');
       controller.abort();
     }, 55000);
 
     try {
+      console.log('🚀 [Frontend] Starting PRD generation', {
+        projectName,
+        hasMindmapData: !!mindmapData,
+      });
+
       const response = await fetch('/api/generate-prd', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -86,16 +92,33 @@ export default function ProjectDetailPage() {
 
       if (timeoutId) clearTimeout(timeoutId);
 
+      console.log('📡 [Frontend] Response received:', {
+        status: response.status,
+        ok: response.ok,
+        statusText: response.statusText,
+        headers: Object.fromEntries(response.headers.entries()),
+      });
+
       if (!response.ok) {
+        console.error('❌ [Frontend] Response not OK');
         const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.error || 'Failed to generate PRD');
       }
 
+      // Try to read response
+      console.log('📄 [Frontend] Reading response body...');
       const result = await response.json();
+      console.log('✅ [Frontend] Response parsed:', {
+        success: result.success,
+        hasData: !!result.data,
+        dataKeys: result.data ? Object.keys(result.data) : [],
+      });
       if (result.success) {
+        console.log('💾 [Frontend] Saving PRD data...');
         setPrdData(result.data);
 
-        await fetch('/api/save-prd', {
+        console.log('📤 [Frontend] Sending to save-prd API...');
+        const saveResponse = await fetch('/api/save-prd', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -103,22 +126,32 @@ export default function ProjectDetailPage() {
             content: result.data,
           }),
         });
+        console.log('💾 [Frontend] Save response:', saveResponse.status);
 
+        console.log('🎉 [Frontend] Showing PRD viewer');
         setShowPRDViewer(true);
       } else {
         throw new Error(result.error || 'Failed to generate PRD');
       }
     } catch (error: any) {
       if (timeoutId) clearTimeout(timeoutId);
+      console.error('❌ [Frontend] Error caught:', {
+        name: error?.name,
+        message: error?.message,
+        isAbort: error?.name === 'AbortError',
+        isOnline: navigator.onLine,
+      });
+
       if (error?.name === 'AbortError') {
         alert('Request timed out. The AI is taking longer than expected. Please try again.');
       } else if (!navigator.onLine) {
         alert('No internet connection. Please check your network and try again.');
       } else {
+        alert(`Error: ${error?.message || 'Failed to generate PRD'}`);
         console.error('PRD Generation failed:', error);
-        alert(error?.message || 'An unexpected error occurred');
       }
     } finally {
+      console.log('🏁 [Frontend] Cleaning up...');
       setIsGenerating(false);
       if (timeoutId) clearTimeout(timeoutId);
     }
