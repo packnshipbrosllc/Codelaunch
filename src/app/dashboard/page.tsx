@@ -124,79 +124,79 @@ export default function DashboardPage() {
 
   if (!isLoaded || isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-pink-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-purple-500 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading your projects...</p>
+          <p className="text-gray-300">Loading your projects...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-pink-50">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900">
       <Header title="My Projects" />
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mb-2">
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-400 to-pink-500 bg-clip-text text-transparent mb-2">
             📊 My Projects
           </h1>
-          <p className="text-gray-600">Manage and track all your CodeLaunch projects</p>
+          <p className="text-gray-300">Manage and track all your CodeLaunch projects</p>
         </div>
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-          <div className="bg-white rounded-xl shadow-lg p-6">
+          <div className="bg-gray-800/50 backdrop-blur-sm border border-purple-500/20 rounded-xl shadow-lg p-6 hover:shadow-2xl transition-all duration-300 transform hover:scale-105">
             <div className="text-3xl mb-2">📁</div>
-            <div className="text-2xl font-bold text-gray-900">{projects.length}</div>
-            <div className="text-sm text-gray-600">Total Projects</div>
+            <div className="text-2xl font-bold text-white">{projects.length}</div>
+            <div className="text-sm text-gray-300">Total Projects</div>
           </div>
-          <div className="bg-white rounded-xl shadow-lg p-6">
+          <div className="bg-gray-800/50 backdrop-blur-sm border border-purple-500/20 rounded-xl shadow-lg p-6 hover:shadow-2xl transition-all duration-300 transform hover:scale-105">
             <div className="text-3xl mb-2">📝</div>
-            <div className="text-2xl font-bold text-gray-900">
+            <div className="text-2xl font-bold text-white">
               {projects.filter(p => p.status === 'draft').length}
             </div>
-            <div className="text-sm text-gray-600">Draft</div>
+            <div className="text-sm text-gray-300">Draft</div>
           </div>
-          <div className="bg-white rounded-xl shadow-lg p-6">
+          <div className="bg-gray-800/50 backdrop-blur-sm border border-purple-500/20 rounded-xl shadow-lg p-6 hover:shadow-2xl transition-all duration-300 transform hover:scale-105">
             <div className="text-3xl mb-2">🚀</div>
-            <div className="text-2xl font-bold text-gray-900">
+            <div className="text-2xl font-bold text-white">
               {projects.filter(p => p.status === 'active').length}
             </div>
-            <div className="text-sm text-gray-600">Active</div>
+            <div className="text-sm text-gray-300">Active</div>
           </div>
-          <div className="bg-white rounded-xl shadow-lg p-6">
+          <div className="bg-gray-800/50 backdrop-blur-sm border border-purple-500/20 rounded-xl shadow-lg p-6 hover:shadow-2xl transition-all duration-300 transform hover:scale-105">
             <div className="text-3xl mb-2">✅</div>
-            <div className="text-2xl font-bold text-gray-900">
+            <div className="text-2xl font-bold text-white">
               {projects.filter(p => p.status === 'completed').length}
             </div>
-            <div className="text-sm text-gray-600">Completed</div>
+            <div className="text-sm text-gray-300">Completed</div>
           </div>
         </div>
 
         {/* Filters and Search */}
-        <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
+        <div className="bg-gray-800/50 backdrop-blur-sm border border-purple-500/20 rounded-xl shadow-lg p-6 mb-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Search */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Search</label>
+              <label className="block text-sm font-medium text-gray-300 mb-2">Search</label>
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search projects..."
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                className="w-full px-4 py-2 border border-purple-500/20 bg-gray-900 text-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
               />
             </div>
 
             {/* Filter */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Filter by Status</label>
+              <label className="block text-sm font-medium text-gray-300 mb-2">Filter by Status</label>
               <select
                 value={filter}
                 onChange={(e) => setFilter(e.target.value as any)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                className="w-full px-4 py-2 border border-purple-500/20 bg-gray-900 text-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
               >
                 <option value="all">All Projects</option>
                 <option value="draft">Draft</option>
@@ -207,11 +207,11 @@ export default function DashboardPage() {
 
             {/* Sort */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Sort By</label>
+              <label className="block text-sm font-medium text-gray-300 mb-2">Sort By</label>
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as any)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                className="w-full px-4 py-2 border border-purple-500/20 bg-gray-900 text-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
               >
                 <option value="recent">Recently Accessed</option>
                 <option value="created">Date Created</option>
@@ -225,7 +225,7 @@ export default function DashboardPage() {
         <div className="mb-8">
           <Link
             href="/create"
-            className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold rounded-xl shadow-lg hover:from-purple-600 hover:to-pink-600 transition-all"
+            className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold rounded-xl shadow-lg hover:from-purple-700 hover:to-pink-700 transition-all hover:shadow-lg duration-200 transform hover:scale-105"
           >
             ➕ Create New Project
           </Link>
@@ -233,10 +233,10 @@ export default function DashboardPage() {
 
         {/* Projects Grid */}
         {filteredProjects.length === 0 ? (
-          <div className="bg-white rounded-xl shadow-lg p-12 text-center">
+          <div className="bg-gray-800/30 backdrop-blur-sm rounded-2xl p-12 border-2 border-dashed border-purple-500/30 text-center">
             <div className="text-6xl mb-4">📭</div>
-            <h3 className="text-2xl font-bold text-gray-900 mb-2">No projects found</h3>
-            <p className="text-gray-600 mb-6">
+            <h3 className="text-2xl font-bold text-white mb-2">No projects found</h3>
+            <p className="text-gray-300 mb-6">
               {searchQuery || filter !== 'all'
                 ? 'Try adjusting your filters or search query'
                 : 'Start by creating your first project!'}
@@ -244,7 +244,7 @@ export default function DashboardPage() {
             {!searchQuery && filter === 'all' && (
               <Link
                 href="/create"
-                className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold rounded-xl shadow-lg hover:from-purple-600 hover:to-pink-600 transition-all"
+                className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold rounded-xl shadow-lg hover:from-purple-700 hover:to-pink-700 transition-all hover:shadow-lg duration-200 transform hover:scale-105"
               >
                 🚀 Create Your First Project
               </Link>
@@ -255,7 +255,7 @@ export default function DashboardPage() {
             {filteredProjects.map((project) => (
               <div
                 key={project.id}
-                className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-shadow overflow-hidden group"
+                className="bg-gray-800/50 backdrop-blur-sm border border-purple-500/20 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-105 overflow-hidden group"
               >
                 {/* Project Header */}
                 <div className="p-6 bg-gradient-to-r from-purple-500 to-pink-500">
@@ -269,11 +269,11 @@ export default function DashboardPage() {
 
                 {/* Project Body */}
                 <div className="p-6">
-                  <p className="text-gray-600 text-sm line-clamp-3 mb-4">
+                  <p className="text-gray-300 text-sm line-clamp-3 mb-4">
                     {project.idea}
                   </p>
 
-                  <div className="text-xs text-gray-500 mb-4">
+                  <div className="text-xs text-gray-400 mb-4">
                     <div>Created: {new Date(project.created_at).toLocaleDateString()}</div>
                     <div>Last accessed: {new Date(project.last_accessed_at).toLocaleDateString()}</div>
                   </div>
@@ -282,20 +282,20 @@ export default function DashboardPage() {
                   <div className="flex gap-2">
                     <Link
                       href={`/project/${project.id}`}
-                      className="flex-1 px-4 py-2 bg-purple-500 text-white text-center rounded-lg hover:bg-purple-600 transition-colors text-sm font-semibold"
+                      className="flex-1 px-4 py-2 bg-purple-600 text-white text-center rounded-lg hover:bg-purple-700 transition-colors text-sm font-semibold"
                     >
                       Open
                     </Link>
                     <button
                       onClick={() => duplicateProject(project)}
-                      className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors text-sm"
+                      className="px-4 py-2 bg-gray-700 text-gray-200 rounded-lg hover:bg-gray-600 transition-colors text-sm"
                       title="Duplicate"
                     >
                       📋
                     </button>
                     <button
                       onClick={() => deleteProject(project.id)}
-                      className="px-4 py-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors text-sm"
+                      className="px-4 py-2 bg-red-600/20 text-red-400 rounded-lg hover:bg-red-600/30 transition-colors text-sm"
                       title="Delete"
                     >
                       🗑️
