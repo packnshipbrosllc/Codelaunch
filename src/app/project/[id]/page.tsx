@@ -357,6 +357,170 @@ export default function ProjectDetailPage() {
         {/* PRD Tab */}
         {activeTab === 'prd' && (
           <div className="bg-white rounded-2xl shadow-xl p-8">
+            {/* Enhanced Action Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+              {/* Generate PRD Card */}
+              <div className="group bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-105">
+                <div className="text-white">
+                  <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center mb-4 group-hover:bg-white/30 transition-colors">
+                    <span className="text-xl">📄</span>
+                  </div>
+                  <h3 className="text-xl font-bold mb-2">Generate PRD</h3>
+                  <p className="text-purple-100 text-sm mb-4">Create a comprehensive product requirements document</p>
+                  <button
+                    onClick={generatePRD}
+                    disabled={isGenerating || !mindmapData}
+                    className="w-full bg-white text-purple-600 font-semibold py-2.5 px-4 rounded-lg hover:bg-purple-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isGenerating ? (
+                      <span className="flex items-center justify-center gap-2">
+                        <span className="w-4 h-4 border-2 border-purple-600 border-t-transparent rounded-full animate-spin" />
+                        Generating...
+                      </span>
+                    ) : (
+                      'Generate PRD'
+                    )}
+                  </button>
+                  {prdData && (
+                    <button
+                      onClick={() => setShowPRDViewer(true)}
+                      className="w-full mt-2 bg-white/20 text-white font-semibold py-2 px-4 rounded-lg hover:bg-white/30 transition-colors"
+                    >
+                      View PRD
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Tech Stack Card */}
+              <div className="group bg-gradient-to-br from-blue-500 to-cyan-500 rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-105">
+                <div className="text-white">
+                  <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center mb-4 group-hover:bg-white/30 transition-colors">
+                    <span className="text-xl">⚙️</span>
+                  </div>
+                  <h3 className="text-xl font-bold mb-2">Tech Stack</h3>
+                  <p className="text-blue-100 text-sm mb-4">Get AI-powered technology recommendations</p>
+                  <button
+                    onClick={generateTechStack}
+                    disabled={isGenerating || !prdData}
+                    className="w-full bg-white text-blue-600 font-semibold py-2.5 px-4 rounded-lg hover:bg-blue-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isGenerating ? (
+                      <span className="flex items-center justify-center gap-2">
+                        <span className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+                        Analyzing...
+                      </span>
+                    ) : (
+                      'Get Recommendations'
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {/* Generate Code Card */}
+              <div className="group bg-gradient-to-br from-emerald-500 to-teal-500 rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-105">
+                <div className="text-white">
+                  <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center mb-4 group-hover:bg-white/30 transition-colors">
+                    <span className="text-xl">💻</span>
+                  </div>
+                  <h3 className="text-xl font-bold mb-2">Generate Code</h3>
+                  <p className="text-emerald-100 text-sm mb-4">Transform your PRD into working code</p>
+                  <button
+                    onClick={() => generateCode('fullstack')}
+                    disabled={isGenerating || !techStack}
+                    className="w-full bg-white text-emerald-600 font-semibold py-2.5 px-4 rounded-lg hover:bg-emerald-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isGenerating ? (
+                      <span className="flex items-center justify-center gap-2">
+                        <span className="w-4 h-4 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin" />
+                        Coding...
+                      </span>
+                    ) : (
+                      'Generate Code'
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {/* Export Card */}
+              <div className="group bg-gradient-to-br from-orange-500 to-red-500 rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-105">
+                <div className="text-white">
+                  <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center mb-4 group-hover:bg-white/30 transition-colors">
+                    <span className="text-xl">📦</span>
+                  </div>
+                  <h3 className="text-xl font-bold mb-2">Export Project</h3>
+                  <p className="text-orange-100 text-sm mb-4">Export to Lovable, Cursor, Bolt, or Replit</p>
+                  <button
+                    disabled={!generatedCode}
+                    className="w-full bg-white text-orange-600 font-semibold py-2.5 px-4 rounded-lg hover:bg-orange-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Export Options
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Progress Tracker */}
+            <div className="bg-white rounded-2xl shadow-lg p-8 mb-8 border">
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">Project Progress</h2>
+              <div className="space-y-4">
+                <div className="flex items-center gap-4">
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center ${mindmapData ? 'bg-green-500' : 'bg-gray-300'}`}>
+                    {mindmapData ? (
+                      <span className="text-white text-xl">✓</span>
+                    ) : (
+                      <span className="text-white font-bold">1</span>
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-gray-900">Mindmap Created</h3>
+                    <p className="text-sm text-gray-600">Project structure defined</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-4">
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center ${prdData ? 'bg-green-500' : 'bg-gray-300'}`}>
+                    {prdData ? (
+                      <span className="text-white text-xl">✓</span>
+                    ) : (
+                      <span className="text-white font-bold">2</span>
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-gray-900">PRD Generated</h3>
+                    <p className="text-sm text-gray-600">Requirements documented</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-4">
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center ${techStack ? 'bg-green-500' : 'bg-gray-300'}`}>
+                    {techStack ? (
+                      <span className="text-white text-xl">✓</span>
+                    ) : (
+                      <span className="text-white font-bold">3</span>
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-gray-900">Tech Stack Ready</h3>
+                    <p className="text-sm text-gray-600">Technologies selected</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-4">
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center ${generatedCode ? 'bg-green-500' : 'bg-gray-300'}`}>
+                    {generatedCode ? (
+                      <span className="text-white text-xl">✓</span>
+                    ) : (
+                      <span className="text-white font-bold">4</span>
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-gray-900">Code Generated</h3>
+                    <p className="text-sm text-gray-600">Ready to export</p>
+                  </div>
+                </div>
+              </div>
+            </div>
             <div className="text-center max-w-2xl mx-auto">
               <div className="text-6xl mb-4">📝</div>
               <h2 className="text-3xl font-bold text-gray-900 mb-4">
