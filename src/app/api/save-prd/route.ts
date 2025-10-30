@@ -45,9 +45,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Structure the PRD content properly
+    // Structure the PRD content simply: store plain text + metadata
     const prdContent = {
-      content: content || rawText,
       rawText: rawText || content,
       metadata: metadata || {
         generatedAt: new Date().toISOString(),

@@ -154,23 +154,9 @@ Return the PRD in a structured JSON format with clear sections and subsections. 
       ? message.content[0].text 
       : '';
 
-    // Parse the PRD content
-    let prdContent;
-    try {
-      // Try to parse as JSON first
-      prdContent = JSON.parse(responseText);
-    } catch {
-      // If not JSON, structure it as sections
-      prdContent = {
-        executiveSummary: responseText,
-        sections: parseIntoSections(responseText),
-      };
-    }
-
     return NextResponse.json({
       success: true,
       data: {
-        content: prdContent,
         rawText: responseText,
         metadata: {
           projectName,
@@ -218,24 +204,5 @@ Return the PRD in a structured JSON format with clear sections and subsections. 
   }
 }
 
-// Helper function to parse text into sections
-function parseIntoSections(text: string) {
-  const sections: { [key: string]: string } = {};
-  
-  // Split by main headers (##)
-  const parts = text.split(/\n(?=##\s)/);
-  
-  parts.forEach(part => {
-    const lines = part.trim().split('\n');
-    const header = lines[0].replace(/^##\s*/, '').replace(/\*\*/g, '');
-    const content = lines.slice(1).join('\n').trim();
-    
-    if (header && content) {
-      const key = header.toLowerCase().replace(/\s+/g, '_').replace(/[^\w_]/g, '');
-      sections[key] = content;
-    }
-  });
-  
-  return sections;
-}
+// Removed JSON parsing helper; we return raw text to avoid double-encoding
 

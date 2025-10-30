@@ -388,10 +388,16 @@ export default function ProjectDetailPage() {
                 <div className="bg-gray-50 border rounded-lg p-6">
                   <h3 className="text-xl font-bold mb-4">Product Requirements Document</h3>
                   <div className="prose max-w-none">
-                    <pre className="whitespace-pre-wrap font-sans text-sm">
-{prdData.content?.rawText || JSON.stringify(prdData.content, null, 2)}
+                    <pre className="whitespace-pre-wrap font-sans text-sm text-gray-800 bg-gray-50 p-4 rounded">
+{prdData.content?.rawText || 'No content available'}
                     </pre>
                   </div>
+                  {prdData.content?.metadata && (
+                    <div className="mt-4 text-sm text-gray-600">
+                      <p>Generated: {new Date(prdData.content.metadata.generatedAt).toLocaleString()}</p>
+                      <p>Model: {prdData.content.metadata.model}</p>
+                    </div>
+                  )}
                   <button
                     onClick={() => downloadPRD(prdData)}
                     className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
