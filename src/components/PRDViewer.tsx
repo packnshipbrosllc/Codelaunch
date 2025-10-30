@@ -1,169 +1,141 @@
-// src/components/PRDViewer.tsx
+// Enhanced PRD viewer (beautiful, sectioned UI)
 'use client';
 
-import { useState } from 'react';
-import { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType } from 'docx';
-import { saveAs } from 'file-saver';
+import { X, CheckCircle2, Target, Users, Calendar, Lightbulb, Zap, Shield, TrendingUp } from 'lucide-react';
 
 interface PRDViewerProps {
-  prdData: any;
-  projectName: string;
-  onClose?: () => void;
+  prdData: any; // expects { projectName, content } where content can be string or { rawText }
+  onClose: () => void;
 }
 
-export default function PRDViewer({ prdData, projectName, onClose }: PRDViewerProps) {
-  const [activeSection, setActiveSection] = useState<string>('all');
-  
-  const sections = prdData?.sections || {};
-  const sectionKeys = Object.keys(sections);
+export default function PRDViewer({ prdData, onClose }: PRDViewerProps) {
+  const contentString = typeof prdData?.content === 'string'
+    ? prdData.content
+    : prdData?.content?.rawText || '';
 
-  const exportToDOCX = async () => {
-    try {
-      const doc = new Document({
-        sections: [{
-          properties: {},
-          children: [
-            // Title
-            new Paragraph({
-              text: `Product Requirements Document`,
-              heading: HeadingLevel.TITLE,
-              alignment: AlignmentType.CENTER,
-              spacing: { after: 200 },
-            }),
-            new Paragraph({
-              text: projectName,
-              heading: HeadingLevel.HEADING_1,
-              alignment: AlignmentType.CENTER,
-              spacing: { after: 400 },
-            }),
-            new Paragraph({
-              text: `Generated: ${new Date().toLocaleDateString()}`,
-              alignment: AlignmentType.CENTER,
-              spacing: { after: 400 },
-            }),
+  const parseSections = (content: string) => {
+    const sections: { [key: string]: string } = {};
+    const lines = content.split('\n');
+    let currentSection = '';
+    let currentContent: string[] = [];
 
-            // Sections
-            ...sectionKeys.flatMap(key => {
-              const title = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-              const content = sections[key];
-              
-              return [
-                new Paragraph({
-                  text: title,
-                  heading: HeadingLevel.HEADING_1,
-                  spacing: { before: 400, after: 200 },
-                }),
-                new Paragraph({
-                  text: content,
-                  spacing: { after: 200 },
-                }),
-              ];
-            }),
-          ],
-        }],
-      });
+    lines.forEach((line) => {
+      if (line.trim().startsWith('#')) {
+        if (currentSection) {
+          sections[currentSection] = currentContent.join('\n').trim();
+        }
+        currentSection = line.replace(/^#+\s*/, '').trim();
+        currentContent = [];
+      } else if (currentSection) {
+        currentContent.push(line);
+      }
+    });
 
-      const blob = await Packer.toBlob(doc);
-      saveAs(blob, `${projectName}-PRD.docx`);
-    } catch (error) {
-      console.error('Error exporting to DOCX:', error);
-      alert('Failed to export PRD. Please try again.');
+    if (currentSection) {
+      sections[currentSection] = currentContent.join('\n').trim();
     }
+
+    return sections;
+  };
+
+  const sections = parseSections(contentString);
+
+  const getSectionIcon = (title: string) => {
+    const titleLower = title.toLowerCase();
+    if (titleLower.includes('overview') || titleLower.includes('summary')) return <Lightbulb className="w-6 h-6" />;
+    if (titleLower.includes('objective') || titleLower.includes('goal')) return <Target className="w-6 h-6" />;
+    if (titleLower.includes('user') || titleLower.includes('audience')) return <Users className="w-6 h-6" />;
+    if (titleLower.includes('timeline') || titleLower.includes('schedule')) return <Calendar className="w-6 h-6" />;
+    if (titleLower.includes('feature') || titleLower.includes('requirement')) return <CheckCircle2 className="w-6 h-6" />;
+    if (titleLower.includes('technical') || titleLower.includes('architecture')) return <Zap className="w-6 h-6" />;
+    if (titleLower.includes('security') || titleLower.includes('compliance')) return <Shield className="w-6 h-6" />;
+    if (titleLower.includes('success') || titleLower.includes('metric')) return <TrendingUp className="w-6 h-6" />;
+    return <CheckCircle2 className="w-6 h-6" />;
+  };
+
+  const formatContent = (content: string) => {
+    const lines = content.split('\n');
+    return lines.map((line, idx) => {
+      const trimmed = line.trim();
+      if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
+        return (
+          <li key={idx} className="ml-6 mb-2 text-gray-700 leading-relaxed">
+            {trimmed.substring(2)}
+          </li>
+        );
+      }
+      if (/^\d+\./.test(trimmed)) {
+        return (
+          <li key={idx} className="ml-6 mb-2 text-gray-700 leading-relaxed list-decimal">
+            {trimmed.replace(/^\d+\.\s*/, '')}
+          </li>
+        );
+      }
+      if (trimmed.startsWith('**') && trimmed.endsWith('**')) {
+        return (
+          <p key={idx} className="font-semibold text-gray-900 mb-3 mt-4">
+            {trimmed.replace(/\*\*/g, '')}
+          </p>
+        );
+      }
+      if (trimmed) {
+        return (
+          <p key={idx} className="text-gray-700 mb-3 leading-relaxed">
+            {trimmed}
+          </p>
+        );
+      }
+      return <br key={idx} />;
+    });
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-6xl w-full max-h-[90vh] flex flex-col">
-        {/* Header */}
-        <div className="p-6 border-b bg-gradient-to-r from-purple-500 to-pink-500">
-          <div className="flex justify-between items-center">
-            <div className="text-white">
-              <h2 className="text-2xl font-bold">{projectName}</h2>
-              <p className="text-purple-100 text-sm">Product Requirements Document</p>
-            </div>
-            <div className="flex gap-2">
-              <button
-                onClick={exportToDOCX}
-                className="px-4 py-2 bg-white text-purple-600 font-semibold rounded-lg hover:bg-purple-50 transition-colors"
-              >
-                📄 Export as DOCX
-              </button>
-              {onClose && (
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-5xl w-full my-8 overflow-hidden">
+        <div className="bg-gradient-to-r from-purple-600 via-pink-600 to-purple-600 text-white p-8 relative">
                 <button
                   onClick={onClose}
-                  className="px-4 py-2 bg-white/20 text-white font-semibold rounded-lg hover:bg-white/30 transition-colors"
+            className="absolute top-6 right-6 text-white/80 hover:text-white transition-colors"
                 >
-                  ✕ Close
+            <X className="w-6 h-6" />
                 </button>
-              )}
-            </div>
+          <div className="max-w-3xl">
+            <h1 className="text-4xl font-bold mb-3">{prdData?.projectName || 'Project'}</h1>
+            <p className="text-purple-100 text-lg">Product Requirements Document</p>
           </div>
         </div>
 
-        {/* Content */}
-        <div className="flex flex-1 overflow-hidden">
-          {/* Sidebar Navigation */}
-          <div className="w-64 border-r bg-gray-50 overflow-y-auto p-4">
-            <button
-              onClick={() => setActiveSection('all')}
-              className={`w-full text-left px-4 py-2 rounded-lg mb-2 transition-colors ${
-                activeSection === 'all'
-                  ? 'bg-purple-100 text-purple-700 font-semibold'
-                  : 'hover:bg-gray-100 text-gray-700'
-              }`}
-            >
-              📋 All Sections
-            </button>
-            
-            {sectionKeys.map((key) => {
-              const title = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+        <div className="p-8 space-y-8 max-h-[70vh] overflow-y-auto">
+          {Object.entries(sections).map(([title, content], idx) => {
+            if (title.toLowerCase().includes('model') || (content as string).toLowerCase().includes('claude-sonnet')) {
+              return null;
+            }
               return (
-                <button
-                  key={key}
-                  onClick={() => setActiveSection(key)}
-                  className={`w-full text-left px-4 py-2 rounded-lg mb-2 transition-colors ${
-                    activeSection === key
-                      ? 'bg-purple-100 text-purple-700 font-semibold'
-                      : 'hover:bg-gray-100 text-gray-700'
-                  }`}
-                >
-                  {title}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Main Content Area */}
-          <div className="flex-1 overflow-y-auto p-8">
-            {activeSection === 'all' ? (
-              // Show all sections
-              sectionKeys.map((key) => {
-                const title = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-                const content = sections[key];
-                
-                return (
-                  <div key={key} className="mb-8">
-                    <h3 className="text-2xl font-bold text-gray-900 mb-4 pb-2 border-b-2 border-purple-500">
-                      {title}
-                    </h3>
-                    <div className="prose max-w-none text-gray-700 whitespace-pre-wrap">
-                      {content}
-                    </div>
+              <div key={idx} className="bg-gradient-to-br from-gray-50 to-white rounded-xl p-6 border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+                <div className="flex items-start gap-4 mb-4">
+                  <div className="bg-gradient-to-br from-purple-500 to-pink-500 text-white p-3 rounded-lg shadow-lg">
+                    {getSectionIcon(title)}
                   </div>
-                );
-              })
-            ) : (
-              // Show selected section
-              <div>
-                <h3 className="text-2xl font-bold text-gray-900 mb-4 pb-2 border-b-2 border-purple-500">
-                  {activeSection.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                </h3>
-                <div className="prose max-w-none text-gray-700 whitespace-pre-wrap">
-                  {sections[activeSection]}
+                  <h2 className="text-2xl font-bold text-gray-900 flex-1 pt-2">
+                    {title}
+                  </h2>
+                </div>
+                <div className="space-y-2 text-gray-700">
+                  {formatContent(content as string)}
                 </div>
               </div>
-            )}
+            );
+          })}
           </div>
+
+        <div className="bg-gray-50 px-8 py-6 border-t border-gray-200 flex justify-between items-center">
+          <p className="text-sm text-gray-600">Generated with CodeLaunch</p>
+          <button
+            onClick={onClose}
+            className="px-6 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg font-semibold hover:shadow-lg transition-all duration-200 transform hover:scale-105"
+          >
+            Close
+          </button>
         </div>
       </div>
     </div>
