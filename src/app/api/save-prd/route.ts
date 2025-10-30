@@ -3,6 +3,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { createClient } from '@supabase/supabase-js';
 
+export const maxDuration = 90;
+
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -10,9 +12,12 @@ const supabase = createClient(
 
 export async function POST(request: NextRequest) {
   try {
+    console.log('🔍 [Save PRD] Starting save process');
+
     const { userId } = await auth();
     
     if (!userId) {
+      console.log('❌ [Save PRD] No user ID found');
       return NextResponse.json(
         { success: false, error: 'Unauthorized' },
         { status: 401 }
@@ -20,14 +25,37 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { projectId, content, status = 'draft' } = body;
+    console.log('📦 [Save PRD] Request body keys:', Object.keys(body));
+    
+    const { projectId, content, rawText, metadata } = body;
 
-    if (!projectId || !content) {
+    if (!projectId) {
+      console.log('❌ [Save PRD] Missing project ID');
       return NextResponse.json(
-        { success: false, error: 'Project ID and content are required' },
+        { success: false, error: 'Project ID is required' },
         { status: 400 }
       );
     }
+
+    if (!content && !rawText) {
+      console.log('❌ [Save PRD] Missing content');
+      return NextResponse.json(
+        { success: false, error: 'PRD content is required' },
+        { status: 400 }
+      );
+    }
+
+    // Structure the PRD content properly
+    const prdContent = {
+      content: content || rawText,
+      rawText: rawText || content,
+      metadata: metadata || {
+        generatedAt: new Date().toISOString(),
+        model: 'claude-sonnet-4-5'
+      }
+    } as const;
+
+    console.log('💾 [Save PRD] Saving for project:', projectId);
 
     // Check if PRD already exists for this project
     const { data: existing } = await supabase
@@ -37,43 +65,32 @@ export async function POST(request: NextRequest) {
       .eq('user_id', userId)
       .order('version', { ascending: false })
       .limit(1)
-      .single();
+      .maybeSingle();
 
     let result;
+    const newVersion = existing ? (existing as any).version + 1 : 1;
 
-    if (existing) {
-      // Create new version
-      const { data, error } = await supabase
-        .from('prds')
-        .insert({
-          project_id: projectId,
-          user_id: userId,
-          content,
-          version: existing.version + 1,
-          status,
-        })
-        .select()
-        .single();
+    console.log(`📝 [Save PRD] Creating version ${newVersion}`);
 
-      if (error) throw error;
-      result = data;
-    } else {
-      // Create first version
-      const { data, error } = await supabase
-        .from('prds')
-        .insert({
-          project_id: projectId,
-          user_id: userId,
-          content,
-          version: 1,
-          status,
-        })
-        .select()
-        .single();
+    const { data, error } = await supabase
+      .from('prds')
+      .insert({
+        project_id: projectId,
+        user_id: userId,
+        content: prdContent,
+        version: newVersion,
+        status: 'draft',
+      })
+      .select()
+      .single();
 
-      if (error) throw error;
-      result = data;
+    if (error) {
+      console.error('❌ [Save PRD] Supabase error:', error);
+      throw error;
     }
+
+    result = data;
+    console.log('✅ [Save PRD] Successfully saved PRD:', (result as any).id);
 
     return NextResponse.json({
       success: true,
@@ -81,7 +98,7 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error: any) {
-    console.error('Error saving PRD:', error);
+    console.error('❌ [Save PRD] Error:', error);
     return NextResponse.json(
       { 
         success: false, 

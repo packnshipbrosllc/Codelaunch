@@ -124,7 +124,9 @@ export default function ProjectDetailPage() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             projectId: project.id,
-            content: result.data,
+            content: result.data?.content,
+            rawText: result.data?.rawText,
+            metadata: result.data?.metadata,
           }),
         });
         console.log('💾 [Frontend] Save response:', saveResponse.status);
