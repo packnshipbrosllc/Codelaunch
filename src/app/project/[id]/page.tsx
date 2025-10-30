@@ -86,17 +86,21 @@ export default function ProjectDetailPage() {
     try {
       if (!projectId) return;
       setLoadingPrd(true);
-      console.log('📖 Fetching PRD for project:', projectId);
+      console.log('📖 [Frontend] Fetching PRD for project:', projectId);
       const response = await fetch(`/api/save-prd?projectId=${projectId}`);
       const result = await response.json();
+      console.log('📖 [Frontend] Fetch result:', result);
+      console.log('📖 [Frontend] Has data:', !!result?.data);
+      console.log('📖 [Frontend] Has content:', !!result?.data?.content);
+      console.log('📖 [Frontend] Has rawText:', !!result?.data?.content?.rawText);
       if (result.success && result.data) {
-        console.log('✅ PRD loaded successfully');
+        console.log('✅ [Frontend] PRD loaded successfully');
         setPrdData(result.data);
       } else {
-        console.log('ℹ️ No PRD found yet');
+        console.log('ℹ️ [Frontend] No PRD found');
       }
     } catch (error) {
-      console.error('❌ Error fetching PRD:', error);
+      console.error('❌ [Frontend] Error fetching PRD:', error);
     } finally {
       setLoadingPrd(false);
     }
@@ -384,7 +388,7 @@ export default function ProjectDetailPage() {
               {loadingPrd && (
                 <p className="text-gray-600 text-center">Loading PRD...</p>
               )}
-              {!loadingPrd && prdData && (
+              {!loadingPrd && prdData && prdData.content && (
                 <div className="bg-gray-50 border rounded-lg p-6">
                   <h3 className="text-xl font-bold mb-4">Product Requirements Document</h3>
                   <div className="prose max-w-none">
