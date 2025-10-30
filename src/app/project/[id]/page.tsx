@@ -6,7 +6,6 @@ import { useParams, useRouter } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
 import MindmapFlow from '@/components/MindmapFlow';
 import PRDViewer from '@/components/PRDViewer';
-import Header from '@/components/Header';
 
 export default function ProjectDetailPage() {
   const params = useParams();
