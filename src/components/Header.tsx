@@ -9,18 +9,18 @@ interface HeaderProps {
 
 export default function Header({ title, showBackButton = false, backUrl = '/dashboard' }: HeaderProps) {
   return (
-    <header className="border-b bg-white sticky top-0 z-50 shadow-sm">
+    <header className="bg-gray-900/80 backdrop-blur-lg border-b border-purple-500/20 sticky top-0 z-50 shadow-lg">
       <div className="container mx-auto px-4 py-4 flex justify-between items-center">
         <div className="flex items-center gap-4">
           {showBackButton && (
             <Link 
               href={backUrl}
-              className="text-gray-600 hover:text-gray-900 transition"
+              className="text-purple-400 hover:text-purple-300 transition"
             >
               ← Back
             </Link>
           )}
-          <h1 className="text-2xl font-bold text-gray-900">{title}</h1>
+          <h1 className="text-2xl font-bold text-white">{title}</h1>
         </div>
         <UserButton afterSignOutUrl="/" />
       </div>
