@@ -67,10 +67,11 @@ export default function ProjectDetailPage() {
     setIsGenerating(true);
     const controller = new AbortController();
     let timeoutId: NodeJS.Timeout | null = null;
+    // Extend frontend timeout slightly beyond backend (60s) to allow response
     timeoutId = setTimeout(() => {
       console.log('⏱️ [Frontend] Aborting due to timeout');
       controller.abort();
-    }, 55000);
+    }, 65000);
 
     try {
       console.log('🚀 [Frontend] Starting PRD generation', {
