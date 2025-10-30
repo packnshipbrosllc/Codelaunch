@@ -7,7 +7,7 @@ import { useUser } from '@clerk/nextjs';
 import MindmapFlow from '@/components/MindmapFlow';
 import PRDViewer from '@/components/PRDViewer';
 import Header from '@/components/Header';
-import CodePreviewModal from '@/components/CodePreviewModal';
+import AppPreviewModal from '@/components/AppPreviewModal';
 import { Eye } from 'lucide-react';
 
 export default function ProjectDetailPage() {
@@ -848,7 +848,7 @@ export default function ProjectDetailPage() {
       </div>
 
       {showCodePreview && generatedCode && (
-        <CodePreviewModal
+        <AppPreviewModal
           code={JSON.stringify(generatedCode, null, 2)}
           projectName={projectName}
           onClose={() => setShowCodePreview(false)}
