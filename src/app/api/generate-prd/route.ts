@@ -1,5 +1,5 @@
 // src/app/api/generate-prd/route.ts
-export const maxDuration = 60;
+export const maxDuration = 90;
 export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
