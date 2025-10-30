@@ -290,7 +290,6 @@ export default function ProjectDetailPage() {
       {showPRDViewer && prdData && (
         <PRDViewer
           prdData={prdData}
-          projectName={projectName}
           onClose={() => setShowPRDViewer(false)}
         />
       )}
