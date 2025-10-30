@@ -386,32 +386,80 @@ export default function ProjectDetailPage() {
             </div>
             <div className="mt-8">
               {loadingPrd && (
-                <p className="text-gray-600 text-center">Loading PRD...</p>
+                <div className="text-center py-8">
+                  <p className="text-gray-600">Loading PRD...</p>
+                </div>
               )}
-              {!loadingPrd && prdData && prdData.content && (
-                <div className="bg-gray-50 border rounded-lg p-6">
-                  <h3 className="text-xl font-bold mb-4">Product Requirements Document</h3>
-                  <div className="prose max-w-none">
-                    <pre className="whitespace-pre-wrap font-sans text-sm text-gray-800 bg-gray-50 p-4 rounded">
-{prdData.content?.rawText || 'No content available'}
-                    </pre>
-                  </div>
-                  {prdData.content?.metadata && (
-                    <div className="mt-4 text-sm text-gray-600">
-                      <p>Generated: {new Date(prdData.content.metadata.generatedAt).toLocaleString()}</p>
-                      <p>Model: {prdData.content.metadata.model}</p>
-                    </div>
-                  )}
-                  <button
-                    onClick={() => downloadPRD(prdData)}
-                    className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-                  >
-                    Download PRD
-                  </button>
+              {!loadingPrd && prdData && (
+                <div className="bg-white rounded-lg shadow p-6 mt-6">
+                  <h2 className="text-2xl font-bold mb-4">Product Requirements Document</h2>
+                  {(() => {
+                    let contentObj: any = null;
+                    try {
+                      contentObj = typeof prdData.content === 'string'
+                        ? JSON.parse(prdData.content)
+                        : prdData.content;
+                    } catch (e) {
+                      console.error('Error parsing content:', e);
+                      return <p className="text-red-600">Error loading PRD content</p>;
+                    }
+
+                    const rawText = contentObj?.rawText || '';
+                    if (!rawText) {
+                      return <p className="text-gray-600">No content available</p>;
+                    }
+
+                    return (
+                      <>
+                        <div className="prose prose-sm max-w-none">
+                          <pre className="whitespace-pre-wrap font-sans text-sm text-gray-800 bg-gray-50 p-4 rounded leading-relaxed">
+                            {rawText}
+                          </pre>
+                        </div>
+                        {contentObj?.metadata && (
+                          <div className="mt-4 pt-4 border-t text-sm text-gray-600">
+                            <p><strong>Project:</strong> {contentObj.metadata.projectName}</p>
+                            <p><strong>Generated:</strong> {new Date(contentObj.metadata.generatedAt).toLocaleString()}</p>
+                            <p><strong>Model:</strong> {contentObj.metadata.model}</p>
+                            {contentObj.metadata.tokensUsed && (
+                              <p><strong>Tokens:</strong> {contentObj.metadata.tokensUsed.input_tokens + contentObj.metadata.tokensUsed.output_tokens}</p>
+                            )}
+                          </div>
+                        )}
+                        <button
+                          onClick={() => {
+                            const projectNameDl = contentObj.metadata?.projectName || 'document';
+                            const date = new Date().toISOString().split('T')[0];
+                            const blob = new Blob([rawText], { type: 'text/plain' });
+                            const url = URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = `PRD-${projectNameDl}-${date}.txt`;
+                            document.body.appendChild(a);
+                            a.click();
+                            document.body.removeChild(a);
+                            URL.revokeObjectURL(url);
+                          }}
+                          className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+                        >
+                          📥 Download PRD
+                        </button>
+                      </>
+                    );
+                  })()}
                 </div>
               )}
               {!loadingPrd && !prdData && (
-                <p className="text-gray-600 text-center">No PRD generated yet. Click "Generate PRD" to create one.</p>
+                <div className="bg-gray-50 rounded-lg p-8 text-center mt-6">
+                  <div className="text-6xl mb-4">📝</div>
+                  <p className="text-gray-600 mb-4">No PRD has been generated for this project yet.</p>
+                  <button 
+                    onClick={generatePRD}
+                    className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  >
+                    Generate PRD Now
+                  </button>
+                </div>
               )}
             </div>
           </div>
