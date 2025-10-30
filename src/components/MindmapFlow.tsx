@@ -329,13 +329,14 @@ export default function MindmapFlow({ data, onSave }: MindmapFlowProps) {
   const [edges, , onEdgesChange] = useEdgesState(initialEdges);
 
   return (
-    <div className="w-full h-[800px] bg-gray-50 rounded-xl border-2 border-gray-200 overflow-hidden relative">
+    <div className="w-full h-[800px] bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl border-2 border-gray-700 overflow-hidden relative">
       {/* Debug Badge - Remove this after confirming it works */}
       <div className="absolute top-4 left-4 z-10 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg font-semibold">
         ✅ React Flow Active
       </div>
       
       <ReactFlow
+        className="bg-gray-900"
         nodes={nodes}
         edges={edges}
         onNodesChange={onNodesChange}
@@ -345,8 +346,8 @@ export default function MindmapFlow({ data, onSave }: MindmapFlowProps) {
         maxZoom={1.5}
         defaultViewport={{ x: 0, y: 0, zoom: 0.8 }}
       >
-        <Background variant={BackgroundVariant.Dots} gap={16} size={1} color="#d1d5db" />
-        <Controls className="bg-white border border-gray-300 rounded-lg shadow-lg" />
+        <Background variant={BackgroundVariant.Dots} gap={16} size={1} color="#4c1d95" />
+        <Controls className="bg-gray-800 border border-gray-600 rounded-lg shadow-lg text-white" />
         <MiniMap
           nodeColor={(node) => {
             if (node.style?.background) {
@@ -356,7 +357,7 @@ export default function MindmapFlow({ data, onSave }: MindmapFlowProps) {
             }
             return '#e5e7eb';
           }}
-          className="bg-white border border-gray-300 rounded-lg shadow-lg"
+          className="bg-gray-800 border border-gray-600 rounded-lg shadow-lg"
         />
       </ReactFlow>
 
