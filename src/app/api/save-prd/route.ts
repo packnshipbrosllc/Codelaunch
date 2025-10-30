@@ -131,6 +131,8 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    console.log('📖 [Get PRD] Fetching PRD for project:', projectId);
+
     // Get latest PRD for project
     const { data, error } = await supabase
       .from('prds')
@@ -141,10 +143,21 @@ export async function GET(request: NextRequest) {
       .limit(1)
       .single();
 
-    if (error && error.code !== 'PGRST116') { // PGRST116 = no rows
+    if (error) {
+      console.error('❌ [Get PRD] Error:', error as any);
+      if ((error as any).code === 'PGRST116') {
+        return NextResponse.json({
+          success: true,
+          data: null,
+          message: 'No PRD found for this project'
+        });
+      }
       throw error;
     }
 
+    if (data) {
+      console.log('✅ [Get PRD] Found PRD:', (data as any).id);
+    }
     return NextResponse.json({
       success: true,
       data: data || null,

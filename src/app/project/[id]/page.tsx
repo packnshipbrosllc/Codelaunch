@@ -17,6 +17,7 @@ export default function ProjectDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'mindmap' | 'prd' | 'tech' | 'code' | 'export'>('mindmap');
   const [prdData, setPrdData] = useState<any>(null);
+  const [loadingPrd, setLoadingPrd] = useState(false);
   const [techStack, setTechStack] = useState<any>(null);
   const [generatedCode, setGeneratedCode] = useState<any>(null);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -40,6 +41,25 @@ export default function ProjectDetailPage() {
       fetchProject();
     }
   }, [user, isLoaded, projectId, router]);
+  useEffect(() => {
+    if (projectId) {
+      fetchPRD();
+    }
+  }, [projectId]);
+
+  const downloadPRD = (data: any) => {
+    const content = data?.content?.rawText || JSON.stringify(data?.content, null, 2);
+    const name = data?.content?.metadata?.projectName || projectName || 'Project';
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `PRD-${name}-${new Date().toISOString().split('T')[0]}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
 
   const fetchProject = async () => {
     try {
@@ -60,6 +80,25 @@ export default function ProjectDetailPage() {
       console.error('Error fetching project:', error);
     } finally {
       setIsLoading(false);
+    }
+  };
+  const fetchPRD = async () => {
+    try {
+      if (!projectId) return;
+      setLoadingPrd(true);
+      console.log('📖 Fetching PRD for project:', projectId);
+      const response = await fetch(`/api/save-prd?projectId=${projectId}`);
+      const result = await response.json();
+      if (result.success && result.data) {
+        console.log('✅ PRD loaded successfully');
+        setPrdData(result.data);
+      } else {
+        console.log('ℹ️ No PRD found yet');
+      }
+    } catch (error) {
+      console.error('❌ Error fetching PRD:', error);
+    } finally {
+      setLoadingPrd(false);
     }
   };
 
@@ -339,6 +378,30 @@ export default function ProjectDetailPage() {
                 >
                   👁️ View PRD
                 </button>
+              )}
+            </div>
+            <div className="mt-8">
+              {loadingPrd && (
+                <p className="text-gray-600 text-center">Loading PRD...</p>
+              )}
+              {!loadingPrd && prdData && (
+                <div className="bg-gray-50 border rounded-lg p-6">
+                  <h3 className="text-xl font-bold mb-4">Product Requirements Document</h3>
+                  <div className="prose max-w-none">
+                    <pre className="whitespace-pre-wrap font-sans text-sm">
+{prdData.content?.rawText || JSON.stringify(prdData.content, null, 2)}
+                    </pre>
+                  </div>
+                  <button
+                    onClick={() => downloadPRD(prdData)}
+                    className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                  >
+                    Download PRD
+                  </button>
+                </div>
+              )}
+              {!loadingPrd && !prdData && (
+                <p className="text-gray-600 text-center">No PRD generated yet. Click "Generate PRD" to create one.</p>
               )}
             </div>
           </div>
