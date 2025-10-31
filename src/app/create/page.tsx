@@ -233,7 +233,13 @@ export default function CreateProjectPage() {
                     onClick={handleSave}
                     className="px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 rounded-lg font-semibold transition-all shadow-lg"
                   >
-                    💾 Save & Continue
+                    💾 Save Project
+                  </button>
+                  <button
+                    onClick={() => router.push('/dashboard')}
+                    className="px-6 py-3 bg-gray-700 hover:bg-gray-600 rounded-lg font-semibold transition-all"
+                  >
+                    Dashboard →
                   </button>
                 </div>
               </div>
