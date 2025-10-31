@@ -1,12 +1,12 @@
-// src/app/create/page.tsx
+// FILE PATH: src/app/create/page.tsx
+// Copy this entire file to: src/app/create/page.tsx
+
 'use client';
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
 import MindmapFlow from '@/components/MindmapFlow';
-import AIAssistantChat from '@/components/AIAssistantChat';
-import MoodBoard from '@/components/MoodBoard';
 import Header from '@/components/Header';
 import { MindmapData } from '@/types/mindmap';
 
@@ -24,11 +24,6 @@ export default function CreateProjectPage() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [mindmapData, setMindmapData] = useState<MindmapData | null>(null);
   const [error, setError] = useState('');
-  
-  // Panel state
-  const [showAIChat, setShowAIChat] = useState(true);
-  const [showMoodBoard, setShowMoodBoard] = useState(true);
-  const [moodBoardImages, setMoodBoardImages] = useState<any[]>([]);
 
   // Debug logging
   useEffect(() => {
@@ -206,74 +201,56 @@ export default function CreateProjectPage() {
             </div>
           </div>
         ) : (
-          /* Mindmap Display with Panels */
-          <div className="relative">
-            <MoodBoard
-              isCollapsed={!showMoodBoard}
-              onToggleCollapse={() => setShowMoodBoard(!showMoodBoard)}
-              onImagesChange={setMoodBoardImages}
-            />
-
-            <div className={`transition-all ${
-              showMoodBoard && showAIChat ? 'mx-80 px-4' : 
-              showMoodBoard ? 'ml-80 mr-4 pl-4' : 
-              showAIChat ? 'mr-96 ml-4 pr-4' : 'mx-4'
-            }`}>
-              <div className="mb-6 flex items-center justify-between">
-                <div>
-                  <h2 className="text-3xl font-bold mb-2">{mindmapData.projectName}</h2>
-                  <p className="text-gray-400">{mindmapData.projectDescription}</p>
-                </div>
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => {
-                      setMindmapData(null);
-                      setIdea('');
-                    }}
-                    className="px-6 py-3 bg-gray-700 hover:bg-gray-600 rounded-lg font-semibold transition-all"
-                  >
-                    ← Start Over
-                  </button>
-                  <button
-                    onClick={handleSave}
-                    className="px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 rounded-lg font-semibold transition-all shadow-lg"
-                  >
-                    💾 Save & Continue
-                  </button>
-                </div>
+          /* Mindmap Display */
+          <div>
+            <div className="mb-6 flex items-center justify-between">
+              <div>
+                <h2 className="text-3xl font-bold mb-2">{mindmapData.projectName}</h2>
+                <p className="text-gray-400">{mindmapData.projectDescription}</p>
               </div>
-
-              <MindmapFlow data={mindmapData} onSave={handleSave} />
-
-              <div className="mt-8 p-6 bg-gray-800/50 rounded-lg border border-purple-500/20">
-                <h3 className="text-xl font-semibold mb-4">🎯 Next Steps:</h3>
-                <ul className="space-y-2 text-gray-300">
-                  <li className="flex items-start gap-2">
-                    <span className="text-green-400">✓</span>
-                    <span>Save this mindmap to your dashboard</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-yellow-400">→</span>
-                    <span>Use AI Assistant to refine your project</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-yellow-400">→</span>
-                    <span>Add mood board images for design inspiration</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-yellow-400">→</span>
-                    <span>Generate a detailed PRD and production-ready code</span>
-                  </li>
-                </ul>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    setMindmapData(null);
+                    setIdea('');
+                  }}
+                  className="px-6 py-3 bg-gray-700 hover:bg-gray-600 rounded-lg font-semibold transition-all"
+                >
+                  ← Start Over
+                </button>
+                <button
+                  onClick={handleSave}
+                  className="px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 rounded-lg font-semibold transition-all shadow-lg"
+                >
+                  💾 Save & Continue
+                </button>
               </div>
             </div>
 
-            <AIAssistantChat
-              mindmapData={mindmapData}
-              moodBoardImages={moodBoardImages.map((img) => img.url)}
-              isCollapsed={!showAIChat}
-              onToggleCollapse={() => setShowAIChat(!showAIChat)}
-            />
+            <MindmapFlow data={mindmapData} onSave={handleSave} />
+
+            {/* Next Steps */}
+            <div className="mt-8 p-6 bg-gray-800/50 rounded-lg border border-purple-500/20">
+              <h3 className="text-xl font-semibold mb-4">🎯 Next Steps:</h3>
+              <ul className="space-y-2 text-gray-300">
+                <li className="flex items-start gap-2">
+                  <span className="text-green-400">✓</span>
+                  <span>Save this mindmap to your dashboard</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-yellow-400">→</span>
+                  <span>Generate a detailed PRD (Product Requirements Document)</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-yellow-400">→</span>
+                  <span>Generate production-ready code with Claude Sonnet</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-yellow-400">→</span>
+                  <span>Deploy to Vercel with one click</span>
+                </li>
+              </ul>
+            </div>
           </div>
         )}
       </div>
