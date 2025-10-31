@@ -5,8 +5,8 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
 import MindmapFlow from '@/components/MindmapFlow';
-import AIAssistantChat from '@/components/AIAssistantChat';
-import MoodBoard from '@/components/MoodBoard';
+import AIAssistantChatEnhanced from '@/components/AIAssistantChatEnhanced';
+import FloatingMoodBoard from '@/components/FloatingMoodBoard';
 import Header from '@/components/Header';
 import { MindmapData } from '@/types/mindmap';
 
@@ -27,7 +27,6 @@ export default function CreateProjectPage() {
   
   // Panel state
   const [showAIChat, setShowAIChat] = useState(true);
-  const [showMoodBoard, setShowMoodBoard] = useState(true);
   const [moodBoardImages, setMoodBoardImages] = useState<any[]>([]);
 
   // Debug logging
@@ -206,19 +205,15 @@ export default function CreateProjectPage() {
             </div>
           </div>
         ) : (
-          /* Mindmap Display with Panels */
+          /* Mindmap Display with Floating Panels */
           <div className="relative">
-            <MoodBoard
-              isCollapsed={!showMoodBoard}
-              onToggleCollapse={() => setShowMoodBoard(!showMoodBoard)}
+            {/* Floating Mood Board - Draggable! */}
+            <FloatingMoodBoard
               onImagesChange={setMoodBoardImages}
             />
 
-            <div className={`transition-all ${
-              showMoodBoard && showAIChat ? 'mx-80 px-4' : 
-              showMoodBoard ? 'ml-80 mr-4 pl-4' : 
-              showAIChat ? 'mr-96 ml-4 pr-4' : 'mx-4'
-            }`}>
+            {/* Main Content - Now uses full width! */}
+            <div className={`transition-all ${showAIChat ? 'mr-96 pr-4' : ''}`}>
               <div className="mb-6 flex items-center justify-between">
                 <div>
                   <h2 className="text-3xl font-bold mb-2">{mindmapData.projectName}</h2>
@@ -254,11 +249,11 @@ export default function CreateProjectPage() {
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="text-yellow-400">→</span>
-                    <span>Use AI Assistant to refine your project</span>
+                    <span>Use AI Assistant (Cmd/Ctrl+K) to refine your project</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="text-yellow-400">→</span>
-                    <span>Add mood board images for design inspiration</span>
+                    <span>Drag the mood board widget to add design inspiration</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="text-yellow-400">→</span>
@@ -268,7 +263,8 @@ export default function CreateProjectPage() {
               </div>
             </div>
 
-            <AIAssistantChat
+            {/* Enhanced AI Chat with Keyboard Shortcut */}
+            <AIAssistantChatEnhanced
               mindmapData={mindmapData}
               moodBoardImages={moodBoardImages.map((img) => img.url)}
               isCollapsed={!showAIChat}
