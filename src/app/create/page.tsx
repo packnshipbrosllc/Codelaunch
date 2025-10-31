@@ -186,7 +186,7 @@ export default function CreateProjectPage() {
                 <div className="text-3xl mb-3">🧠</div>
                 <h3 className="font-semibold mb-2">AI-Powered Analysis</h3>
                 <p className="text-sm text-gray-400">
-                  GPT-4o-mini analyzes your idea and generates a structured mindmap
+                  Advanced AI analyzes your idea and generates a structured mindmap
                 </p>
               </div>
               <div className="bg-gray-800/30 rounded-lg p-6 border border-gray-700">
