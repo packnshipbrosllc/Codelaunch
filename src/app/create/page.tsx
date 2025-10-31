@@ -89,8 +89,8 @@ export default function CreateProjectPage() {
       const result = await response.json();
 
       if (result.success) {
-        alert('Mindmap saved successfully!');
-        router.push('/dashboard');
+        alert('Mindmap saved successfully! You can continue working or go to dashboard.');
+        // Stay on this page - user can use Dashboard button to navigate away
       } else {
         throw new Error(result.error);
       }
