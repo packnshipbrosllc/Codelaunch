@@ -222,21 +222,13 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Action Buttons */}
-        <div className="mb-8 flex flex-wrap gap-4 items-center">
+        {/* Create New Project Button */}
+        <div className="mb-8">
           <Link
             href="/create"
             className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold rounded-xl shadow-lg hover:from-purple-700 hover:to-pink-700 transition-all hover:shadow-lg duration-200 transform hover:scale-105"
           >
             ➕ Create New Project
-          </Link>
-          
-          <Link
-            href="/dashboard/subscription"
-            className="inline-flex items-center gap-2 px-6 py-3 bg-gray-800/50 border border-purple-500/20 text-white font-semibold rounded-xl shadow-lg hover:bg-gray-700/50 hover:border-purple-500/40 transition-all hover:shadow-lg duration-200 transform hover:scale-105"
-          >
-            <CreditCard className="w-5 h-5" />
-            Subscription
           </Link>
         </div>
 

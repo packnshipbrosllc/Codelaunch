@@ -37,9 +37,15 @@ export default function SubscriptionPage() {
   const fetchSubscription = async () => {
     try {
       const response = await fetch('/api/subscription');
+      console.log('API Response status:', response.status);
       if (response.ok) {
         const data = await response.json();
+        console.log('📊 Full subscription data:', data);
+        console.log('📅 Current period end:', data.details?.currentPeriodEnd);
+        console.log('💰 Amount:', data.details?.amount);
         setSubscription(data);
+      } else {
+        console.error('API returned error status');
       }
     } catch (error) {
       console.error('Error fetching subscription:', error);
@@ -51,19 +57,25 @@ export default function SubscriptionPage() {
   const handleManageSubscription = async () => {
     setManagingSubscription(true);
     try {
+      console.log('🔄 Calling customer portal API...');
       const response = await fetch('/api/stripe/customer-portal', {
         method: 'POST',
       });
       
-      if (response.ok) {
-        const { url } = await response.json();
-        window.location.href = url;
+      console.log('📡 Response status:', response.status);
+      const data = await response.json();
+      console.log('📦 Response data:', data);
+      
+      if (response.ok && data.url) {
+        console.log('✅ Redirecting to:', data.url);
+        window.location.href = data.url;
       } else {
-        alert('Failed to open subscription management portal');
+        console.error('❌ Error:', data.error || 'Unknown error');
+        alert('Error: ' + (data.error || 'Unknown error'));
       }
     } catch (error) {
-      console.error('Error opening portal:', error);
-      alert('An error occurred');
+      console.error('❌ Exception:', error);
+      alert('An error occurred: ' + error);
     } finally {
       setManagingSubscription(false);
     }
