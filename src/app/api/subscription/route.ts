@@ -47,6 +47,10 @@ export async function GET() {
           const subscription = subscriptions.data[0];
           const item = subscription.items.data[0];
           
+          // Cast to any to bypass outdated Stripe TypeScript types
+          // These properties exist at runtime but aren't in the type definitions
+          const sub = subscription as any;
+          
           // Extract price information - Stripe uses Price objects in modern API
           const price = item?.price;
           const amount = price?.unit_amount ?? 0;
@@ -56,9 +60,9 @@ export async function GET() {
           subscriptionDetails = {
             id: subscription.id,
             status: subscription.status,
-            currentPeriodEnd: subscription.current_period_end,
-            cancelAtPeriodEnd: subscription.cancel_at_period_end,
-            cancelAt: subscription.cancel_at,
+            currentPeriodEnd: sub.current_period_end,
+            cancelAtPeriodEnd: sub.cancel_at_period_end,
+            cancelAt: sub.cancel_at,
             tier: user.subscription_plan || 'monthly',
             amount: amount,
             currency: currency,
