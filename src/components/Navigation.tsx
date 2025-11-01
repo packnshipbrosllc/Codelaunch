@@ -2,7 +2,7 @@
 
 import { UserButton } from '@clerk/nextjs'
 import Link from 'next/link'
-import { Rocket } from 'lucide-react'
+import { Rocket, CreditCard } from 'lucide-react'
 
 export default function Navigation() {
   return (
@@ -15,8 +15,18 @@ export default function Navigation() {
             <span className="text-xl font-bold">CodeLaunch</span>
           </Link>
 
-          {/* User Button (Sign out dropdown) */}
+          {/* Navigation Links and User Button */}
           <div className="flex items-center gap-4">
+            {/* Direct Subscription Link */}
+            <Link 
+              href="/user-profile/subscription" 
+              className="text-gray-300 hover:text-white transition-colors flex items-center gap-2 text-sm font-medium"
+            >
+              <CreditCard className="w-4 h-4" />
+              <span className="hidden sm:inline">Subscription</span>
+            </Link>
+            
+            {/* User Button */}
             <UserButton 
               afterSignOutUrl="/"
               userProfileMode="navigation"

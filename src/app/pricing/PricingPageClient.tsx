@@ -1,9 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { Check, Sparkles, Zap, Shield } from 'lucide-react';
+import { Check, Sparkles, Zap, Shield, ArrowLeft } from 'lucide-react';
 import { useUser } from '@clerk/nextjs';
 import { useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 
 export default function PricingPageClient() {
   const [billingInterval, setBillingInterval] = useState<'monthly' | 'yearly'>('yearly');
@@ -82,6 +83,16 @@ export default function PricingPageClient() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 py-20 px-4">
       <div className="max-w-7xl mx-auto">
+        {/* Back Button */}
+        <div className="mb-8">
+          <Link 
+            href="/dashboard"
+            className="inline-flex items-center gap-2 text-gray-300 hover:text-white transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to Dashboard
+          </Link>
+        </div>
         {/* Required Subscription Notice */}
         {isRedirected && (
           <div className="max-w-2xl mx-auto mb-8">
