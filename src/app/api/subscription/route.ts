@@ -45,7 +45,13 @@ export async function GET() {
 
         if (subscriptions.data.length > 0) {
           const subscription = subscriptions.data[0];
-          const price = subscription.items.data[0]?.price;
+          const item = subscription.items.data[0];
+          
+          // Extract price information - Stripe uses Price objects in modern API
+          const price = item?.price;
+          const amount = price?.unit_amount ?? 0;
+          const currency = price?.currency ?? 'usd';
+          const interval = price?.recurring?.interval ?? 'month';
           
           subscriptionDetails = {
             id: subscription.id,
@@ -54,9 +60,9 @@ export async function GET() {
             cancelAtPeriodEnd: subscription.cancel_at_period_end,
             cancelAt: subscription.cancel_at,
             tier: user.subscription_plan || 'monthly',
-            amount: price?.unit_amount || 0,
-            currency: price?.currency || 'usd',
-            interval: price?.recurring?.interval || 'month',
+            amount: amount,
+            currency: currency,
+            interval: interval,
           };
         }
       } catch (error) {
