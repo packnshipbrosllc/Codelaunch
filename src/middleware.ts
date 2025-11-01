@@ -48,8 +48,9 @@ export default clerkMiddleware(async (auth, req) => {
 
     const { hasSubscription } = await response.json();
 
-    // If no subscription, redirect to pricing
-    if (!hasSubscription && path !== '/pricing') {
+    // Allow access to user profile (for subscription management) and pricing page
+    const allowedPaths = ['/pricing', '/user-profile'];
+    if (!hasSubscription && !allowedPaths.some(allowedPath => path.startsWith(allowedPath))) {
       const pricingUrl = new URL('/pricing', req.url);
       pricingUrl.searchParams.set('redirect', 'true');
       return NextResponse.redirect(pricingUrl);
