@@ -69,13 +69,28 @@ export default function SubscriptionPage() {
     }
   };
 
-  const formatDate = (timestamp: number) => {
-    return new Date(timestamp * 1000).toLocaleDateString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
+  const formatDate = (timestamp: number | null | undefined) => {
+    if (!timestamp || isNaN(timestamp)) {
+      return 'Date not available';
+    }
+    
+    try {
+      const date = new Date(timestamp * 1000);
+      // Check if date is valid
+      if (isNaN(date.getTime())) {
+        return 'Date not available';
+      }
+      
+      return date.toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      });
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return 'Date not available';
+    }
   };
 
   const formatAmount = (amount: number, currency: string) => {
@@ -108,8 +123,31 @@ export default function SubscriptionPage() {
             <ArrowLeft className="w-4 h-4" />
             Back to Dashboard
           </Link>
-          <h1 className="text-3xl font-bold text-white">Subscription & Billing</h1>
-          <p className="text-gray-300 mt-2">Manage your subscription, payment methods, and billing history</p>
+          <div className="flex justify-between items-start flex-wrap gap-4">
+            <div>
+              <h1 className="text-3xl font-bold text-white">Subscription & Billing</h1>
+              <p className="text-gray-300 mt-2">Manage your subscription, payment methods, and billing history</p>
+            </div>
+            {subscription?.tier && subscription.tier !== 'FREE' && subscription.status !== 'inactive' && (
+              <button
+                onClick={handleManageSubscription}
+                disabled={managingSubscription}
+                className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-3 rounded-lg hover:from-purple-500 hover:to-pink-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium flex items-center gap-2 shadow-lg"
+              >
+                {managingSubscription ? (
+                  <>
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Opening...
+                  </>
+                ) : (
+                  <>
+                    <ExternalLink className="w-5 h-5" />
+                    Manage Subscription
+                  </>
+                )}
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -227,48 +265,34 @@ export default function SubscriptionPage() {
 
             {/* Actions */}
             <div className="bg-gray-800/50 rounded-xl shadow-xl border border-purple-500/20 backdrop-blur-sm p-6">
-              <h3 className="text-lg font-semibold text-white mb-4">Manage Subscription</h3>
+              <h3 className="text-lg font-semibold text-white mb-4">What You Can Manage</h3>
               
-              <button
-                onClick={handleManageSubscription}
-                disabled={managingSubscription}
-                className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-3 rounded-lg hover:from-purple-500 hover:to-pink-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium flex items-center justify-center gap-2 shadow-lg"
-              >
-                {managingSubscription ? (
-                  <>
-                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    Opening Portal...
-                  </>
-                ) : (
-                  <>
-                    <ExternalLink className="w-5 h-5" />
-                    Open Stripe Customer Portal
-                  </>
-                )}
-              </button>
-
-              <div className="mt-4 p-4 bg-gray-800/30 rounded-lg border border-gray-700">
-                <p className="text-sm font-medium text-white mb-2">In the customer portal you can:</p>
-                <ul className="space-y-1 text-sm text-gray-300">
+              <div className="p-4 bg-gray-800/30 rounded-lg border border-gray-700">
+                <p className="text-sm font-medium text-white mb-3">Click "Manage Subscription" above to:</p>
+                <ul className="space-y-2 text-sm text-gray-300">
                   <li className="flex items-center gap-2">
-                    <div className="w-1.5 h-1.5 bg-purple-400 rounded-full"></div>
+                    <CheckCircle className="w-4 h-4 text-green-400" />
                     Cancel your subscription
                   </li>
                   <li className="flex items-center gap-2">
-                    <div className="w-1.5 h-1.5 bg-purple-400 rounded-full"></div>
+                    <CheckCircle className="w-4 h-4 text-green-400" />
+                    Resume canceled subscription
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-green-400" />
                     Update payment methods
                   </li>
                   <li className="flex items-center gap-2">
-                    <div className="w-1.5 h-1.5 bg-purple-400 rounded-full"></div>
+                    <CheckCircle className="w-4 h-4 text-green-400" />
                     View and download invoices
                   </li>
                   <li className="flex items-center gap-2">
-                    <div className="w-1.5 h-1.5 bg-purple-400 rounded-full"></div>
+                    <CheckCircle className="w-4 h-4 text-green-400" />
                     Update billing information
                   </li>
                   <li className="flex items-center gap-2">
-                    <div className="w-1.5 h-1.5 bg-purple-400 rounded-full"></div>
-                    Change subscription plan
+                    <CheckCircle className="w-4 h-4 text-green-400" />
+                    Change subscription plan (monthly ↔ annual)
                   </li>
                 </ul>
               </div>
