@@ -296,6 +296,115 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* ROI Section */}
+      <section className="container mx-auto px-4 py-16 md:py-24">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4 text-white">
+              The Real Cost of Building From Scratch
+            </h2>
+            <p className="text-lg md:text-xl text-gray-400 max-w-2xl mx-auto">
+              Time is money. Here's what you're actually spending.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-6 mb-12">
+            <div className="bg-gray-800/50 p-6 rounded-xl border-2 border-gray-700 text-center">
+              <div className="text-4xl font-bold text-white mb-2">3-6</div>
+              <div className="text-gray-300 font-medium mb-2">Months</div>
+              <div className="text-sm text-gray-400">Average time to build auth, payments, and infrastructure</div>
+            </div>
+            <div className="bg-gray-800/50 p-6 rounded-xl border-2 border-gray-700 text-center">
+              <div className="text-4xl font-bold text-white mb-2">$30k-60k</div>
+              <div className="text-gray-300 font-medium mb-2">Developer Cost</div>
+              <div className="text-sm text-gray-400">At $100/hour for 3-6 months of work</div>
+            </div>
+            <div className="bg-gradient-to-br from-purple-900/50 to-pink-900/50 p-6 rounded-xl border-2 border-purple-500 text-center">
+              <div className="text-4xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent mb-2">1 Day</div>
+              <div className="text-purple-300 font-medium mb-2">With CodeLaunch</div>
+              <div className="text-sm text-purple-200 font-medium">Launch today. Start earning tomorrow.</div>
+            </div>
+          </div>
+
+          {/* Code Ownership Emphasis - Prominent Green Banner */}
+          <div className="bg-gradient-to-r from-green-600 via-emerald-600 to-green-600 rounded-2xl p-8 md:p-12 text-white mb-8 shadow-2xl shadow-green-500/20 border-2 border-green-400/30">
+            <div className="text-center max-w-4xl mx-auto">
+              <div className="inline-flex items-center justify-center w-20 h-20 bg-white/20 rounded-full mb-6 backdrop-blur-sm">
+                <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                </svg>
+              </div>
+              <h3 className="text-4xl md:text-5xl font-bold mb-4">You Own 100% of the Code</h3>
+              <p className="text-green-50 text-xl md:text-2xl mb-8 leading-relaxed">
+                This isn't a SaaS platform where you're locked in forever. When you subscribe, you download 
+                the complete source code. It's <span className="font-bold text-white">yours to keep, modify, and use forever</span>.
+              </p>
+              <div className="grid md:grid-cols-3 gap-6 mt-8">
+                <div className="bg-white/15 backdrop-blur rounded-xl p-6 border border-white/20 hover:bg-white/20 transition-all">
+                  <div className="text-3xl mb-3">🔓</div>
+                  <div className="font-bold text-lg mb-2">No Vendor Lock-in</div>
+                  <div className="text-green-100 text-sm">Host anywhere you want. Your infrastructure, your rules.</div>
+                </div>
+                <div className="bg-white/15 backdrop-blur rounded-xl p-6 border border-white/20 hover:bg-white/20 transition-all">
+                  <div className="text-3xl mb-3">⚙️</div>
+                  <div className="font-bold text-lg mb-2">Modify Freely</div>
+                  <div className="text-green-100 text-sm">Change anything you need. Full source code access.</div>
+                </div>
+                <div className="bg-white/15 backdrop-blur rounded-xl p-6 border border-white/20 hover:bg-white/20 transition-all">
+                  <div className="text-3xl mb-3">♾️</div>
+                  <div className="font-bold text-lg mb-2">Keep Forever</div>
+                  <div className="text-green-100 text-sm">Even if you cancel, you keep everything you've downloaded.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-gradient-to-r from-purple-900/50 to-pink-900/50 rounded-2xl p-8 border border-purple-500/30">
+            <div className="grid md:grid-cols-2 gap-8 items-center">
+              <div>
+                <h3 className="text-2xl font-bold mb-4 text-white">Your time is valuable</h3>
+                <p className="text-gray-300 mb-6 text-lg">
+                  Every day spent building authentication and payment systems is a day you're not building your unique features or acquiring customers.
+                </p>
+                <p className="text-gray-300 mb-4 text-lg">
+                  CodeLaunch pays for itself if it saves you just <span className="font-bold text-white">a few hours</span> of development time.
+                </p>
+                <div className="bg-purple-500/20 backdrop-blur rounded-lg p-4 border border-purple-400/30">
+                  <p className="text-sm text-purple-100">
+                    <span className="font-bold text-white">Best part:</span> The code is yours forever. 
+                    Use it in unlimited projects, modify it however you want, no recurring payments required after download.
+                  </p>
+                </div>
+              </div>
+              <div className="bg-gray-800/50 backdrop-blur rounded-xl p-6 border border-gray-700">
+                <div className="space-y-3 text-sm">
+                  <div className="flex justify-between items-center pb-3 border-b border-gray-600">
+                    <span className="text-gray-300">Authentication setup</span>
+                    <span className="font-bold text-white">2-3 weeks</span>
+                  </div>
+                  <div className="flex justify-between items-center pb-3 border-b border-gray-600">
+                    <span className="text-gray-300">Payment integration</span>
+                    <span className="font-bold text-white">1-2 weeks</span>
+                  </div>
+                  <div className="flex justify-between items-center pb-3 border-b border-gray-600">
+                    <span className="text-gray-300">Database setup</span>
+                    <span className="font-bold text-white">1 week</span>
+                  </div>
+                  <div className="flex justify-between items-center pb-3 border-b border-gray-600">
+                    <span className="text-gray-300">UI components</span>
+                    <span className="font-bold text-white">2-3 weeks</span>
+                  </div>
+                  <div className="flex justify-between items-center pt-3">
+                    <span className="font-bold text-white">Total time saved:</span>
+                    <span className="text-2xl font-bold text-green-400">6-9 weeks</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* CTA Section */}
       <section className="container mx-auto px-4 py-16 md:py-24">
         <div className="max-w-4xl mx-auto p-8 md:p-12 rounded-2xl bg-gradient-to-br from-purple-900/50 to-pink-900/50 border border-purple-500/30 text-center shadow-2xl">
