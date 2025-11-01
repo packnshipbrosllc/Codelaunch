@@ -22,7 +22,11 @@ export default function Header({ title, showBackButton = false, backUrl = '/dash
           )}
           <h1 className="text-2xl font-bold text-white">{title}</h1>
         </div>
-        <UserButton afterSignOutUrl="/" />
+        <UserButton 
+          afterSignOutUrl="/"
+          userProfileMode="navigation"
+          userProfileUrl="/user-profile"
+        />
       </div>
     </header>
   );

@@ -75,6 +75,8 @@ export default function LandingPage() {
                 </Link>
                 <UserButton 
                   afterSignOutUrl="/"
+                  userProfileMode="navigation"
+                  userProfileUrl="/user-profile"
                   appearance={{
                     elements: {
                       avatarBox: "w-10 h-10 ring-2 ring-purple-500/50 hover:ring-purple-500 transition-all",
