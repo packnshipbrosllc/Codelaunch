@@ -47,14 +47,6 @@ export async function GET() {
           const subscription = subscriptions.data[0];
           const item = subscription.items.data[0];
           
-          // These properties exist at runtime but TypeScript types are outdated
-          // @ts-expect-error - Stripe types are incorrect, properties exist in API response
-          const currentPeriodEnd: number = subscription.current_period_end;
-          // @ts-expect-error - Stripe types are incorrect
-          const cancelAtPeriodEnd: boolean = subscription.cancel_at_period_end;
-          // @ts-expect-error - Stripe types are incorrect
-          const cancelAt: number | null = subscription.cancel_at;
-          
           // Extract price information - Stripe uses Price objects in modern API
           const price = item?.price;
           const amount = price?.unit_amount ?? 0;
@@ -64,9 +56,9 @@ export async function GET() {
           subscriptionDetails = {
             id: subscription.id,
             status: subscription.status,
-            currentPeriodEnd,
-            cancelAtPeriodEnd,
-            cancelAt,
+            currentPeriodEnd: subscription.current_period_end,
+            cancelAtPeriodEnd: subscription.cancel_at_period_end,
+            cancelAt: subscription.cancel_at,
             tier: user.subscription_plan || 'monthly',
             amount: amount,
             currency: currency,
