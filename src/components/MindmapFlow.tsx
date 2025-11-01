@@ -345,7 +345,7 @@ export default function MindmapFlow({ data, onSave }: MindmapFlowProps) {
             if (hasMatchingNodes) {
               setNodes((currentNodes) =>
                 currentNodes.map((node) => {
-                  const savedPos = savedPositions.get(node.id);
+                  const savedPos = savedPositions.get(node.id) as { x: number; y: number } | undefined;
                   // Only update position if savedPos has valid x and y coordinates
                   if (savedPos && typeof savedPos.x === 'number' && typeof savedPos.y === 'number') {
                     return { 
