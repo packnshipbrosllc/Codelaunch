@@ -19,6 +19,8 @@ export default function Navigation() {
           <div className="flex items-center gap-4">
             <UserButton 
               afterSignOutUrl="/"
+              userProfileMode="navigation"
+              userProfileUrl="/user-profile"
               appearance={{
                 elements: {
                   avatarBox: "w-10 h-10"

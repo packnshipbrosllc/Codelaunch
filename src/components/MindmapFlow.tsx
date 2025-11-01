@@ -1,7 +1,7 @@
 // src/components/MindmapFlow.tsx
 'use client';
 
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useEffect } from 'react';
 import ReactFlow, {
   Node,
   Edge,
@@ -325,8 +325,53 @@ export default function MindmapFlow({ data, onSave }: MindmapFlowProps) {
     return { initialNodes: nodes, initialEdges: edges };
   }, [data]);
 
-  const [nodes, , onNodesChange] = useNodesState(initialNodes);
-  const [edges, , onEdgesChange] = useEdgesState(initialEdges);
+  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
+  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+
+  // Restore saved node positions after initial render
+  useEffect(() => {
+    if (typeof window !== 'undefined' && nodes.length > 0 && nodes[0]?.id) {
+      const savedState = localStorage.getItem(`flow-state-${data.projectName}`);
+      if (savedState) {
+        try {
+          const parsed = JSON.parse(savedState);
+          if (parsed.nodes && Array.isArray(parsed.nodes) && parsed.nodes.length > 0) {
+            // Create a map of saved node positions by ID
+            const savedPositions = new Map(
+              parsed.nodes.map((n: Node) => [n.id, n.position])
+            );
+            // Only restore if we have matching node IDs (don't restore if data changed)
+            const hasMatchingNodes = nodes.some(n => savedPositions.has(n.id));
+            if (hasMatchingNodes) {
+              setNodes((currentNodes) =>
+                currentNodes.map((node) => {
+                  const savedPos = savedPositions.get(node.id);
+                  return savedPos ? { ...node, position: savedPos } : node;
+                })
+              );
+            }
+          }
+          if (parsed.edges && Array.isArray(parsed.edges)) {
+            setEdges(parsed.edges);
+          }
+        } catch (e) {
+          console.error('Error restoring saved flow state:', e);
+        }
+      }
+    }
+  }, [data.projectName]); // Re-run when project name changes
+
+  // Save flow state to localStorage when nodes or edges change
+  useEffect(() => {
+    if (typeof window !== 'undefined' && nodes.length > 0) {
+      const flowState = {
+        nodes: nodes.map((n) => ({ id: n.id, position: n.position, data: n.data, type: n.type })),
+        edges,
+        timestamp: Date.now(),
+      };
+      localStorage.setItem(`flow-state-${data.projectName}`, JSON.stringify(flowState));
+    }
+  }, [nodes, edges, data.projectName, setNodes, setEdges]);
 
   return (
     <div className="w-full h-[800px] bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl border-2 border-gray-700 overflow-hidden relative">
