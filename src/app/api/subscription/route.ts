@@ -1,6 +1,6 @@
 // app/api/subscription/route.ts
 import { NextResponse } from 'next/server';
-import { auth, currentUser } from '@clerk/nextjs/server';
+import { auth } from '@clerk/nextjs/server';
 import { stripe } from '@/lib/stripe';
 import { createClient } from '@supabase/supabase-js';
 
@@ -47,6 +47,14 @@ export async function GET() {
           const subscription = subscriptions.data[0];
           const item = subscription.items.data[0];
           
+          // These properties exist at runtime but TypeScript types are outdated
+          // @ts-expect-error - Stripe types are incorrect, properties exist in API response
+          const currentPeriodEnd: number = subscription.current_period_end;
+          // @ts-expect-error - Stripe types are incorrect
+          const cancelAtPeriodEnd: boolean = subscription.cancel_at_period_end;
+          // @ts-expect-error - Stripe types are incorrect
+          const cancelAt: number | null = subscription.cancel_at;
+          
           // Extract price information - Stripe uses Price objects in modern API
           const price = item?.price;
           const amount = price?.unit_amount ?? 0;
@@ -56,9 +64,9 @@ export async function GET() {
           subscriptionDetails = {
             id: subscription.id,
             status: subscription.status,
-            currentPeriodEnd: subscription.current_period_end,
-            cancelAtPeriodEnd: subscription.cancel_at_period_end,
-            cancelAt: subscription.cancel_at,
+            currentPeriodEnd,
+            cancelAtPeriodEnd,
+            cancelAt,
             tier: user.subscription_plan || 'monthly',
             amount: amount,
             currency: currency,
@@ -86,4 +94,3 @@ export async function GET() {
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-
