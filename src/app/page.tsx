@@ -1,52 +1,51 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { SignInButton, SignUpButton, UserButton, useUser } from '@clerk/nextjs';
 
 export default function LandingPage() {
   const { isSignedIn } = useUser();
-  const [matrixChars, setMatrixChars] = useState<string[]>([]);
+  const [contactForm, setContactForm] = useState({ name: '', email: '', message: '' });
 
-  useEffect(() => {
-    // Generate random matrix characters
-    const chars = '01アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン';
-    const columns = 15;
-    const streams: string[] = [];
-    
-    for (let i = 0; i < columns; i++) {
-      const length = Math.floor(Math.random() * 8) + 5;
-      let stream = '';
-      for (let j = 0; j < length; j++) {
-        stream += chars[Math.floor(Math.random() * chars.length)];
-      }
-      streams.push(stream);
-    }
-    
-    setMatrixChars(streams);
-  }, []);
+  const handleContactSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    // Handle form submission - could send to API endpoint
+    console.log('Contact form submitted:', contactForm);
+    alert('Thank you for your message! We\'ll get back to you at ' + contactForm.email);
+    setContactForm({ name: '', email: '', message: '' });
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-black text-white">
+    <div className="min-h-screen bg-gradient-to-b from-gray-950 via-purple-950/20 to-gray-950 text-white">
       {/* Header Navigation */}
-      <header className="sticky top-0 z-50 bg-gray-900/80 backdrop-blur-lg border-b border-purple-500/20">
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
+      <header className="sticky top-0 z-50 bg-gray-900/80 backdrop-blur-lg border-b border-purple-900/30">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
           <Link 
             href="/" 
-            className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent hover:opacity-80 transition-opacity"
+            className="flex items-center gap-3"
           >
-            CodeLaunch
+            <span className="text-3xl">🚀</span>
+            <span className="text-2xl font-bold text-white">
+              Code<span className="text-purple-400">Launch</span>
+            </span>
           </Link>
           
-          <nav className="hidden md:flex gap-8 items-center">
-            <Link href="#features" className="text-gray-300 hover:text-white transition-colors">
-              Features
-            </Link>
-            <Link href="/pricing" className="text-gray-300 hover:text-white transition-colors">
+          <nav className="hidden md:flex gap-6 items-center">
+            <Link href="#pricing" className="text-gray-300 hover:text-purple-400 transition-colors">
               Pricing
             </Link>
+            <Link href="#features" className="text-gray-300 hover:text-purple-400 transition-colors">
+              Features
+            </Link>
+            <Link href="#how-it-works" className="text-gray-300 hover:text-purple-400 transition-colors">
+              How It Works
+            </Link>
+            <Link href="#contact" className="text-gray-300 hover:text-purple-400 transition-colors">
+              Contact
+            </Link>
             {isSignedIn && (
-              <Link href="/dashboard" className="text-gray-300 hover:text-white transition-colors">
+              <Link href="/dashboard" className="text-gray-300 hover:text-purple-400 transition-colors">
                 Dashboard
               </Link>
             )}
@@ -56,36 +55,27 @@ export default function LandingPage() {
             {!isSignedIn ? (
               <>
                 <SignInButton mode="modal">
-                  <button className="px-5 py-2 rounded-lg border border-purple-400 hover:bg-purple-400/10 transition-all text-sm font-medium">
+                  <button className="px-4 py-2 text-gray-300 hover:text-white transition-colors text-sm font-medium">
                     Sign In
                   </button>
                 </SignInButton>
                 <SignUpButton mode="modal">
-                  <button className="px-5 py-2 rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 transition-all text-sm font-medium shadow-lg shadow-purple-500/30">
-                    Get Started Free
+                  <button className="bg-purple-600 hover:bg-purple-500 text-white px-6 py-2 rounded-lg font-medium transition shadow-lg shadow-purple-600/20">
+                    Start Free
                   </button>
                 </SignUpButton>
               </>
             ) : (
               <>
                 <Link href="/dashboard">
-                  <button className="px-5 py-2 rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 transition-all text-sm font-medium shadow-lg shadow-purple-500/30">
-                    Go to Dashboard
+                  <button className="bg-purple-600 hover:bg-purple-500 text-white px-6 py-2 rounded-lg font-medium transition shadow-lg shadow-purple-600/20">
+                    Dashboard
                   </button>
                 </Link>
                 <UserButton 
                   afterSignOutUrl="/"
                   userProfileMode="navigation"
                   userProfileUrl="/user-profile"
-                  appearance={{
-                    elements: {
-                      avatarBox: "w-10 h-10 ring-2 ring-purple-500/50 hover:ring-purple-500 transition-all",
-                      userButtonPopoverCard: "bg-gray-900 border border-purple-500/30 shadow-xl",
-                      userButtonPopoverActionButton: "hover:bg-purple-500/10 text-gray-200",
-                      userButtonPopoverActionButtonText: "text-gray-200",
-                      userButtonPopoverFooter: "hidden"
-                    }
-                  }}
                 />
               </>
             )}
@@ -93,213 +83,344 @@ export default function LandingPage() {
         </div>
       </header>
 
-      {/* Hero Section */}
-      <section className="container mx-auto px-4 py-16 md:py-24 text-center">
-        {/* Rocket with Matrix Code Effect */}
-        <div className="relative inline-block mb-8">
-          <div className="relative w-32 h-32 mx-auto">
-            {/* Matrix Code Background */}
-            <div className="absolute inset-0 overflow-hidden rounded-full">
-              <div className="grid grid-cols-5 gap-0 h-full w-full opacity-40">
-                {matrixChars.slice(0, 15).map((stream, i) => (
-                  <div
-                    key={i}
-                    className="flex flex-col items-center justify-start text-[8px] leading-tight font-mono text-green-400 animate-matrix-fall"
-                    style={{
-                      animationDelay: `${i * 0.1}s`,
-                      animationDuration: `${2 + Math.random() * 2}s`
-                    }}
-                  >
-                    {stream.split('').map((char, j) => (
-                      <span
-                        key={j}
-                        className="opacity-70"
-                        style={{
-                          textShadow: '0 0 8px rgba(34, 197, 94, 0.8)'
-                        }}
-                      >
-                        {char}
-                      </span>
-                    ))}
-                  </div>
-                ))}
-              </div>
+      {/* Hero Section with Matrix Effect */}
+      <section className="container mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center relative overflow-hidden">
+        {/* Matrix-style falling code background - 10 columns */}
+        <div className="absolute inset-0 pointer-events-none">
+          {/* Column 1 */}
+          <div className="absolute left-[5%] top-0 h-full">
+            <div className="text-green-400 font-mono text-sm opacity-30 animate-matrix-fall" style={{ animationDelay: '0s' }}>
+              <div className="mb-2">{'<>'}</div>
+              <div className="mb-2">{'01'}</div>
+              <div className="mb-2">{'{}'}</div>
+              <div className="mb-2">{'10'}</div>
+              <div className="mb-2">{';'}</div>
+              <div className="mb-2">{'11'}</div>
+              <div className="mb-2">{'()'}</div>
+              <div className="mb-2">{'00'}</div>
             </div>
+          </div>
 
-            {/* Rocket SVG */}
-            <svg
-              viewBox="0 0 100 100"
-              className="relative z-10 w-full h-full animate-bounce-slow drop-shadow-2xl"
-              style={{ filter: 'drop-shadow(0 0 20px rgba(168, 85, 247, 0.4))' }}
-            >
-              <path
-                d="M50 10 L60 60 L50 70 L40 60 Z"
-                fill="url(#rocketGradient)"
-                stroke="#8b5cf6"
-                strokeWidth="1"
-              />
-              <circle cx="50" cy="35" r="8" fill="#1e1b4b" stroke="#a78bfa" strokeWidth="1" />
-              <circle cx="50" cy="35" r="6" fill="#312e81" opacity="0.8" />
-              <path d="M40 60 L30 80 L40 70 Z" fill="url(#finGradient)" stroke="#8b5cf6" strokeWidth="1" />
-              <path d="M60 60 L70 80 L60 70 Z" fill="url(#finGradient)" stroke="#8b5cf6" strokeWidth="1" />
-              <g className="animate-pulse">
-                <path d="M45 70 L50 85 L55 70 Z" fill="#ef4444" opacity="0.9" />
-                <path d="M47 70 L50 82 L53 70 Z" fill="#fbbf24" opacity="0.8" />
-              </g>
-              <defs>
-                <linearGradient id="rocketGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" stopColor="#a78bfa" />
-                  <stop offset="100%" stopColor="#8b5cf6" />
-                </linearGradient>
-                <linearGradient id="finGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" stopColor="#8b5cf6" />
-                  <stop offset="100%" stopColor="#6d28d9" />
-                </linearGradient>
-              </defs>
-            </svg>
+          {/* Column 2 */}
+          <div className="absolute left-[15%] top-0 h-full">
+            <div className="text-green-500 font-mono text-xs opacity-40 animate-matrix-fall" style={{ animationDelay: '2s' }}>
+              <div className="mb-2">{'[]'}</div>
+              <div className="mb-2">{'if'}</div>
+              <div className="mb-2">{'=>'}</div>
+              <div className="mb-2">{'01'}</div>
+              <div className="mb-2">{'&&'}</div>
+              <div className="mb-2">{'10'}</div>
+              <div className="mb-2">{'//'}</div>
+            </div>
+          </div>
+
+          {/* Column 3 */}
+          <div className="absolute left-[25%] top-0 h-full">
+            <div className="text-green-300 font-mono text-sm opacity-30 animate-matrix-fall" style={{ animationDelay: '4s' }}>
+              <div className="mb-2">{'{'}</div>
+              <div className="mb-2">{'11'}</div>
+              <div className="mb-2">{'fn'}</div>
+              <div className="mb-2">{'00'}</div>
+              <div className="mb-2">{'}'}</div>
+              <div className="mb-2">{'10'}</div>
+              <div className="mb-2">{'||'}</div>
+            </div>
+          </div>
+
+          {/* Column 4 */}
+          <div className="absolute left-[35%] top-0 h-full">
+            <div className="text-green-400 font-mono text-xs opacity-35 animate-matrix-fall" style={{ animationDelay: '1s' }}>
+              <div className="mb-2">{'01'}</div>
+              <div className="mb-2">{'</'}</div>
+              <div className="mb-2">{'11'}</div>
+              <div className="mb-2">{'::'}</div>
+              <div className="mb-2">{'00'}</div>
+              <div className="mb-2">{'=='}</div>
+              <div className="mb-2">{'10'}</div>
+            </div>
+          </div>
+
+          {/* Column 5 */}
+          <div className="absolute left-[45%] top-0 h-full">
+            <div className="text-green-500 font-mono text-sm opacity-25 animate-matrix-fall" style={{ animationDelay: '3s' }}>
+              <div className="mb-2">{'const'}</div>
+              <div className="mb-2">{'101'}</div>
+              <div className="mb-2">{'return'}</div>
+              <div className="mb-2">{'010'}</div>
+              <div className="mb-2">{'async'}</div>
+              <div className="mb-2">{'110'}</div>
+            </div>
+          </div>
+
+          {/* Column 6 */}
+          <div className="absolute left-[55%] top-0 h-full">
+            <div className="text-green-400 font-mono text-xs opacity-40 animate-matrix-fall" style={{ animationDelay: '5s' }}>
+              <div className="mb-2">{'()'}</div>
+              <div className="mb-2">{'11'}</div>
+              <div className="mb-2">{'[]'}</div>
+              <div className="mb-2">{'00'}</div>
+              <div className="mb-2">{'{}'}</div>
+              <div className="mb-2">{'01'}</div>
+              <div className="mb-2">{'<>'}</div>
+            </div>
+          </div>
+
+          {/* Column 7 */}
+          <div className="absolute left-[65%] top-0 h-full">
+            <div className="text-green-300 font-mono text-sm opacity-30 animate-matrix-fall" style={{ animationDelay: '2.5s' }}>
+              <div className="mb-2">{'=>'}</div>
+              <div className="mb-2">{'101'}</div>
+              <div className="mb-2">{'import'}</div>
+              <div className="mb-2">{'001'}</div>
+              <div className="mb-2">{'export'}</div>
+              <div className="mb-2">{'110'}</div>
+            </div>
+          </div>
+
+          {/* Column 8 */}
+          <div className="absolute left-[75%] top-0 h-full">
+            <div className="text-green-500 font-mono text-xs opacity-35 animate-matrix-fall" style={{ animationDelay: '4.5s' }}>
+              <div className="mb-2">{'10'}</div>
+              <div className="mb-2">{'?:'}</div>
+              <div className="mb-2">{'01'}</div>
+              <div className="mb-2">{'..'}</div>
+              <div className="mb-2">{'11'}</div>
+              <div className="mb-2">{'!='}</div>
+              <div className="mb-2">{'00'}</div>
+            </div>
+          </div>
+
+          {/* Column 9 */}
+          <div className="absolute left-[85%] top-0 h-full">
+            <div className="text-green-400 font-mono text-sm opacity-30 animate-matrix-fall" style={{ animationDelay: '1.5s' }}>
+              <div className="mb-2">{'for'}</div>
+              <div className="mb-2">{'110'}</div>
+              <div className="mb-2">{'let'}</div>
+              <div className="mb-2">{'010'}</div>
+              <div className="mb-2">{'var'}</div>
+              <div className="mb-2">{'101'}</div>
+            </div>
+          </div>
+
+          {/* Column 10 */}
+          <div className="absolute left-[95%] top-0 h-full">
+            <div className="text-green-300 font-mono text-xs opacity-40 animate-matrix-fall" style={{ animationDelay: '3.5s' }}>
+              <div className="mb-2">{'01'}</div>
+              <div className="mb-2">{'&&'}</div>
+              <div className="mb-2">{'10'}</div>
+              <div className="mb-2">{'||'}</div>
+              <div className="mb-2">{'11'}</div>
+              <div className="mb-2">{'??'}</div>
+              <div className="mb-2">{'00'}</div>
+            </div>
           </div>
         </div>
 
-        <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6 bg-gradient-to-r from-purple-400 via-pink-400 to-purple-400 bg-clip-text text-transparent animate-gradient">
-          Build Your SaaS in Minutes
-        </h1>
-        <p className="text-lg md:text-xl lg:text-2xl text-gray-300 mb-10 max-w-3xl mx-auto leading-relaxed">
-          From idea to deployed app with AI-powered mindmaps, PRDs, and instant code generation
-        </p>
-        
-        <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+        <div className="max-w-4xl mx-auto relative z-10">
+          {/* Bouncing Rocket */}
+          <div className="mb-8 flex justify-center">
+            <div className="text-8xl animate-rocket-bounce">
+              🚀
+            </div>
+          </div>
+
+          <h1 className="text-5xl md:text-6xl font-bold text-white mb-6 leading-tight">
+            Launch Your SaaS in <span className="text-purple-400">24 Hours</span>, Not 3 Months
+          </h1>
+          <p className="text-xl text-gray-300 mb-8 leading-relaxed">
+            AI generates your complete app—from mindmaps to production-ready code. 
+            <br />You own it forever. No lock-in, no monthly fees after download.
+          </p>
+          
           {!isSignedIn ? (
             <>
               <SignUpButton mode="modal">
-                <button className="w-full sm:w-auto px-8 py-4 text-lg rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 transition-all shadow-lg hover:shadow-purple-500/50 font-semibold">
-                  Start Building Free →
+                <button className="bg-purple-600 hover:bg-purple-500 text-white px-10 py-4 rounded-lg text-lg font-semibold transition transform hover:scale-105 shadow-lg shadow-purple-600/30 mb-4">
+                  Build Your First App Free
                 </button>
               </SignUpButton>
-              <Link href="/pricing">
-                <button className="w-full sm:w-auto px-8 py-4 text-lg rounded-lg border border-purple-400 hover:bg-purple-400/10 transition-all font-semibold">
-                  View Pricing
-                </button>
-              </Link>
+              <p className="text-gray-400 text-sm">
+                3 free mindmaps • No credit card required
+              </p>
             </>
           ) : (
             <>
               <Link href="/dashboard">
-                <button className="w-full sm:w-auto px-8 py-4 text-lg rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 transition-all shadow-lg hover:shadow-purple-500/50 font-semibold">
+                <button className="bg-purple-600 hover:bg-purple-500 text-white px-10 py-4 rounded-lg text-lg font-semibold transition transform hover:scale-105 shadow-lg shadow-purple-600/30 mb-4">
                   Go to Dashboard →
                 </button>
               </Link>
-              <Link href="/pricing">
-                <button className="w-full sm:w-auto px-8 py-4 text-lg rounded-lg border border-purple-400 hover:bg-purple-400/10 transition-all font-semibold">
-                  View Pricing
-                </button>
-              </Link>
+              <p className="text-gray-400 text-sm">
+                Continue building your projects
+              </p>
             </>
           )}
         </div>
       </section>
 
-      {/* Features Grid */}
-      <section id="features" className="container mx-auto px-4 py-16 md:py-24">
-        <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4 bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
-            Everything You Need to Launch
+      {/* How It Works Section */}
+      <section id="how-it-works" className="container mx-auto px-4 sm:px-6 lg:px-8 py-20">
+        <div className="max-w-5xl mx-auto">
+          <h2 className="text-4xl font-bold text-white text-center mb-12">
+            From Idea to Live App in 3 Steps
           </h2>
-          <p className="text-lg text-gray-400 max-w-2xl mx-auto">
-            Stop wasting time on boilerplate. Focus on building features that matter.
-          </p>
-        </div>
-        
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {/* Feature 1 */}
-          <div className="group p-8 rounded-2xl bg-gradient-to-br from-purple-900/50 to-pink-900/50 border border-purple-500/20 hover:border-purple-500/50 transition-all hover:scale-105 hover:shadow-xl hover:shadow-purple-500/20">
-            <div className="text-5xl mb-6 group-hover:scale-110 transition-transform">🧠</div>
-            <h3 className="text-xl font-bold mb-3 text-white">AI Mindmap Creator</h3>
-            <p className="text-gray-300 leading-relaxed">
-              Visualize your app idea with intelligent, auto-generated mindmaps that map out your entire product
-            </p>
-          </div>
 
-          {/* Feature 2 */}
-          <div className="group p-8 rounded-2xl bg-gradient-to-br from-purple-900/50 to-pink-900/50 border border-purple-500/20 hover:border-purple-500/50 transition-all hover:scale-105 hover:shadow-xl hover:shadow-purple-500/20">
-            <div className="text-5xl mb-6 group-hover:scale-110 transition-transform">📄</div>
-            <h3 className="text-xl font-bold mb-3 text-white">PRD Generator</h3>
-            <p className="text-gray-300 leading-relaxed">
-              Transform mindmaps into comprehensive Product Requirements Documents instantly
-            </p>
-          </div>
-
-          {/* Feature 3 */}
-          <div className="group p-8 rounded-2xl bg-gradient-to-br from-purple-900/50 to-pink-900/50 border border-purple-500/20 hover:border-purple-500/50 transition-all hover:scale-105 hover:shadow-xl hover:shadow-purple-500/20">
-            <div className="text-5xl mb-6 group-hover:scale-110 transition-transform">💻</div>
-            <h3 className="text-xl font-bold mb-3 text-white">Code Generation</h3>
-            <p className="text-gray-300 leading-relaxed">
-              Get production-ready code for your entire application with best practices built-in
-            </p>
-          </div>
-
-          {/* Feature 4 */}
-          <div className="group p-8 rounded-2xl bg-gradient-to-br from-purple-900/50 to-pink-900/50 border border-purple-500/20 hover:border-purple-500/50 transition-all hover:scale-105 hover:shadow-xl hover:shadow-purple-500/20">
-            <div className="text-5xl mb-6 group-hover:scale-110 transition-transform">🚀</div>
-            <h3 className="text-xl font-bold mb-3 text-white">Instant Deploy</h3>
-            <p className="text-gray-300 leading-relaxed">
-              One-click deployment to Vercel with automatic configuration and setup
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* How It Works */}
-      <section className="container mx-auto px-4 py-16 md:py-24">
-        <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4 text-white">
-            Launch in 3 Simple Steps
-          </h2>
-          <p className="text-lg text-gray-400 max-w-2xl mx-auto">
-            From idea to live app in minutes, not months
-          </p>
-        </div>
-
-        <div className="max-w-4xl mx-auto space-y-8">
-          <div className="flex flex-col md:flex-row gap-6 items-center">
-            <div className="flex-shrink-0 w-16 h-16 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center text-2xl font-bold">
-              1
-            </div>
-            <div className="flex-1">
-              <h3 className="text-2xl font-bold mb-2 text-white">Describe Your Idea</h3>
-              <p className="text-gray-300 text-lg">
-                Tell our AI what you want to build in plain English. No technical knowledge required.
+          <div className="grid md:grid-cols-3 gap-8">
+            <div className="bg-gray-900/50 p-8 rounded-xl border border-purple-900/30 hover:border-purple-600/50 transition">
+              <div className="w-12 h-12 bg-purple-600 rounded-lg flex items-center justify-center text-white font-bold text-xl mb-4">
+                1
+              </div>
+              <h3 className="text-xl font-semibold text-white mb-3">
+                Describe Your Idea
+              </h3>
+              <p className="text-gray-300">
+                Tell our AI what you want to build in plain English. No technical knowledge required. 
+                Get an intelligent mindmap of your entire product.
               </p>
             </div>
-          </div>
 
-          <div className="flex flex-col md:flex-row gap-6 items-center">
-            <div className="flex-shrink-0 w-16 h-16 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center text-2xl font-bold">
-              2
-            </div>
-            <div className="flex-1">
-              <h3 className="text-2xl font-bold mb-2 text-white">Review & Customize</h3>
-              <p className="text-gray-300 text-lg">
-                Edit the AI-generated mindmap and PRD to match your exact vision.
+            <div className="bg-gray-900/50 p-8 rounded-xl border border-purple-900/30 hover:border-purple-600/50 transition">
+              <div className="w-12 h-12 bg-purple-600 rounded-lg flex items-center justify-center text-white font-bold text-xl mb-4">
+                2
+              </div>
+              <h3 className="text-xl font-semibold text-white mb-3">
+                Review & Customize
+              </h3>
+              <p className="text-gray-300">
+                Edit the AI-generated mindmap and PRD to match your exact vision. 
+                Add features, remove complexity, make it yours.
               </p>
             </div>
-          </div>
 
-          <div className="flex flex-col md:flex-row gap-6 items-center">
-            <div className="flex-shrink-0 w-16 h-16 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center text-2xl font-bold">
-              3
-            </div>
-            <div className="flex-1">
-              <h3 className="text-2xl font-bold mb-2 text-white">Deploy & Launch</h3>
-              <p className="text-gray-300 text-lg">
-                Generate production-ready code and deploy to Vercel with one click.
+            <div className="bg-gray-900/50 p-8 rounded-xl border border-purple-900/30 hover:border-purple-600/50 transition">
+              <div className="w-12 h-12 bg-purple-600 rounded-lg flex items-center justify-center text-white font-bold text-xl mb-4">
+                3
+              </div>
+              <h3 className="text-xl font-semibold text-white mb-3">
+                Generate & Deploy
+              </h3>
+              <p className="text-gray-300">
+                Get production-ready code with best practices built-in. 
+                Deploy to Vercel with one click. Go live in minutes.
               </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ROI Section */}
-      <section className="container mx-auto px-4 py-16 md:py-24">
+      {/* Features Section */}
+      <section id="features" className="container mx-auto px-4 sm:px-6 lg:px-8 py-20 bg-gradient-to-b from-transparent via-purple-950/10 to-transparent">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold text-white mb-4">
+              Everything You Need to Ship Fast
+            </h2>
+            <p className="text-gray-300 text-lg">
+              Powerful AI features that turn your ideas into production-ready applications
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-8 mb-12">
+            {/* AI Mindmap Creator */}
+            <div className="bg-gray-900/50 p-8 rounded-xl border border-purple-900/30 hover:border-purple-600/50 transition group">
+              <div className="flex items-start gap-4">
+                <div className="w-14 h-14 bg-purple-600/20 rounded-lg flex items-center justify-center text-3xl flex-shrink-0 group-hover:bg-purple-600/30 transition">
+                  🧠
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-white mb-3">
+                    AI Mindmap Creator
+                  </h3>
+                  <p className="text-gray-300">
+                    Visualize your entire application architecture instantly. Our AI analyzes your idea 
+                    and creates an intelligent mindmap showing all features, user flows, and technical requirements.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* PRD Generation */}
+            <div className="bg-gray-900/50 p-8 rounded-xl border border-purple-900/30 hover:border-purple-600/50 transition group">
+              <div className="flex items-start gap-4">
+                <div className="w-14 h-14 bg-purple-600/20 rounded-lg flex items-center justify-center text-3xl flex-shrink-0 group-hover:bg-purple-600/30 transition">
+                  📋
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-white mb-3">
+                    PRD Generation
+                  </h3>
+                  <p className="text-gray-300">
+                    Transform your mindmap into a comprehensive Product Requirements Document. 
+                    Get detailed specifications, user stories, and technical requirements ready for development.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Code Generation */}
+            <div className="bg-gray-900/50 p-8 rounded-xl border border-purple-900/30 hover:border-purple-600/50 transition group">
+              <div className="flex items-start gap-4">
+                <div className="w-14 h-14 bg-purple-600/20 rounded-lg flex items-center justify-center text-3xl flex-shrink-0 group-hover:bg-purple-600/30 transition">
+                  💻
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-white mb-3">
+                    Code Generation
+                  </h3>
+                  <p className="text-gray-300">
+                    Get production-ready, fully functional code for your entire application. 
+                    Built with modern best practices, authentication, payments, and database integration included.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Instant Deploy */}
+            <div className="bg-gray-900/50 p-8 rounded-xl border border-purple-900/30 hover:border-purple-600/50 transition group">
+              <div className="flex items-start gap-4">
+                <div className="w-14 h-14 bg-purple-600/20 rounded-lg flex items-center justify-center text-3xl flex-shrink-0 group-hover:bg-purple-600/30 transition">
+                  🚀
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-white mb-3">
+                    Instant Deploy
+                  </h3>
+                  <p className="text-gray-300">
+                    Deploy your application to Vercel with a single click. 
+                    Your app goes live with automatic SSL, CDN, and global edge network—no DevOps required.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Feature highlight banner */}
+          <div className="bg-gradient-to-r from-purple-600/10 via-purple-500/10 to-purple-600/10 border border-purple-600/20 rounded-xl p-8 text-center">
+            <h3 className="text-2xl font-bold text-white mb-3">
+              All Features Included in Every Plan
+            </h3>
+            <p className="text-gray-300 text-lg mb-6">
+              No hidden tiers. No feature gates. Every paid plan gets full access to our entire platform.
+            </p>
+            {!isSignedIn ? (
+              <SignUpButton mode="modal">
+                <button className="bg-purple-600 hover:bg-purple-500 text-white px-8 py-3 rounded-lg font-semibold transition">
+                  Start Building Now
+                </button>
+              </SignUpButton>
+            ) : (
+              <Link href="/dashboard">
+                <button className="bg-purple-600 hover:bg-purple-500 text-white px-8 py-3 rounded-lg font-semibold transition">
+                  Go to Dashboard
+                </button>
+              </Link>
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* ROI Section with Code Ownership */}
+      <section className="container mx-auto px-4 sm:px-6 lg:px-8 py-20">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4 text-white">
@@ -308,24 +429,6 @@ export default function LandingPage() {
             <p className="text-lg md:text-xl text-gray-400 max-w-2xl mx-auto">
               Time is money. Here's what you're actually spending.
             </p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-6 mb-12">
-            <div className="bg-gray-800/50 p-6 rounded-xl border-2 border-gray-700 text-center">
-              <div className="text-4xl font-bold text-white mb-2">3-6</div>
-              <div className="text-gray-300 font-medium mb-2">Months</div>
-              <div className="text-sm text-gray-400">Average time to build auth, payments, and infrastructure</div>
-            </div>
-            <div className="bg-gray-800/50 p-6 rounded-xl border-2 border-gray-700 text-center">
-              <div className="text-4xl font-bold text-white mb-2">$30k-60k</div>
-              <div className="text-gray-300 font-medium mb-2">Developer Cost</div>
-              <div className="text-sm text-gray-400">At $100/hour for 3-6 months of work</div>
-            </div>
-            <div className="bg-gradient-to-br from-purple-900/50 to-pink-900/50 p-6 rounded-xl border-2 border-purple-500 text-center">
-              <div className="text-4xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent mb-2">1 Day</div>
-              <div className="text-purple-300 font-medium mb-2">With CodeLaunch</div>
-              <div className="text-sm text-purple-200 font-medium">Launch today. Start earning tomorrow.</div>
-            </div>
           </div>
 
           {/* Code Ownership Emphasis - Prominent Green Banner */}
@@ -360,180 +463,336 @@ export default function LandingPage() {
               </div>
             </div>
           </div>
+        </div>
+      </section>
 
-          <div className="bg-gradient-to-r from-purple-900/50 to-pink-900/50 rounded-2xl p-8 border border-purple-500/30">
-            <div className="grid md:grid-cols-2 gap-8 items-center">
-              <div>
-                <h3 className="text-2xl font-bold mb-4 text-white">Your time is valuable</h3>
-                <p className="text-gray-300 mb-6 text-lg">
-                  Every day spent building authentication and payment systems is a day you're not building your unique features or acquiring customers.
-                </p>
-                <p className="text-gray-300 mb-4 text-lg">
-                  CodeLaunch pays for itself if it saves you just <span className="font-bold text-white">a few hours</span> of development time.
-                </p>
-                <div className="bg-purple-500/20 backdrop-blur rounded-lg p-4 border border-purple-400/30">
-                  <p className="text-sm text-purple-100">
-                    <span className="font-bold text-white">Best part:</span> The code is yours forever. 
-                    Use it in unlimited projects, modify it however you want, no recurring payments required after download.
-                  </p>
-                </div>
+      {/* Pricing Section */}
+      <section id="pricing" className="container mx-auto px-4 sm:px-6 lg:px-8 py-20">
+        <div className="max-w-5xl mx-auto">
+          <h2 className="text-4xl font-bold text-white text-center mb-4">
+            Simple, Transparent Pricing
+          </h2>
+          <p className="text-gray-300 text-center mb-12 text-lg">
+            Start free. Upgrade when you're ready to build.
+          </p>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            {/* Free Tier */}
+            <div className="bg-gray-900/50 p-8 rounded-xl border border-purple-900/30">
+              <div className="text-center mb-6">
+                <h3 className="text-2xl font-bold text-white mb-2">Free</h3>
+                <div className="text-4xl font-bold text-white mb-2">$0</div>
+                <p className="text-gray-400">Try it out</p>
               </div>
-              <div className="bg-gray-800/50 backdrop-blur rounded-xl p-6 border border-gray-700">
-                <div className="space-y-3 text-sm">
-                  <div className="flex justify-between items-center pb-3 border-b border-gray-600">
-                    <span className="text-gray-300">Authentication setup</span>
-                    <span className="font-bold text-white">2-3 weeks</span>
-                  </div>
-                  <div className="flex justify-between items-center pb-3 border-b border-gray-600">
-                    <span className="text-gray-300">Payment integration</span>
-                    <span className="font-bold text-white">1-2 weeks</span>
-                  </div>
-                  <div className="flex justify-between items-center pb-3 border-b border-gray-600">
-                    <span className="text-gray-300">Database setup</span>
-                    <span className="font-bold text-white">1 week</span>
-                  </div>
-                  <div className="flex justify-between items-center pb-3 border-b border-gray-600">
-                    <span className="text-gray-300">UI components</span>
-                    <span className="font-bold text-white">2-3 weeks</span>
-                  </div>
-                  <div className="flex justify-between items-center pt-3">
-                    <span className="font-bold text-white">Total time saved:</span>
-                    <span className="text-2xl font-bold text-green-400">6-9 weeks</span>
-                  </div>
-                </div>
+              
+              <ul className="space-y-3 mb-8 text-gray-300">
+                <li className="flex items-start">
+                  <span className="text-green-400 mr-2">✓</span>
+                  <span>3 mindmap generations</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-green-400 mr-2">✓</span>
+                  <span>Full editing & export</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-green-400 mr-2">✓</span>
+                  <span>See the workflow</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-green-400 mr-2">✓</span>
+                  <span>No credit card required</span>
+                </li>
+              </ul>
+
+              {!isSignedIn ? (
+                <SignUpButton mode="modal">
+                  <button className="w-full bg-gray-800 hover:bg-gray-700 text-white py-3 rounded-lg font-medium transition border border-purple-900/30">
+                    Start Free
+                  </button>
+                </SignUpButton>
+              ) : (
+                <Link href="/dashboard">
+                  <button className="w-full bg-gray-800 hover:bg-gray-700 text-white py-3 rounded-lg font-medium transition border border-purple-900/30">
+                    Go to Dashboard
+                  </button>
+                </Link>
+              )}
+            </div>
+
+            {/* Pro Tier */}
+            <div className="bg-gradient-to-b from-purple-900/30 to-gray-900/50 p-8 rounded-xl border-2 border-purple-600 relative shadow-xl shadow-purple-600/20">
+              <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                <span className="bg-purple-600 text-white px-4 py-1 rounded-full text-sm font-semibold">
+                  Most Popular
+                </span>
               </div>
+              
+              <div className="text-center mb-6">
+                <h3 className="text-2xl font-bold text-white mb-2">Pro</h3>
+                <div className="text-4xl font-bold text-white mb-2">
+                  $39<span className="text-xl text-gray-400">.99/mo</span>
+                </div>
+                <p className="text-gray-400">For serious builders</p>
+              </div>
+              
+              <ul className="space-y-3 mb-8 text-gray-300">
+                <li className="flex items-start">
+                  <span className="text-green-400 mr-2">✓</span>
+                  <span><strong className="text-white">Unlimited mindmaps</strong></span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-green-400 mr-2">✓</span>
+                  <span><strong className="text-white">Unlimited PRD generation</strong></span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-green-400 mr-2">✓</span>
+                  <span><strong className="text-white">5 code generations/month</strong></span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-green-400 mr-2">✓</span>
+                  <span>One-click deployment</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-green-400 mr-2">✓</span>
+                  <span>Own the code forever</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-green-400 mr-2">✓</span>
+                  <span>Priority support</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-green-400 mr-2">✓</span>
+                  <span>Cancel anytime</span>
+                </li>
+              </ul>
+
+              <Link href="/pricing">
+                <button className="w-full bg-purple-600 hover:bg-purple-500 text-white py-3 rounded-lg font-medium transition shadow-lg shadow-purple-600/30">
+                  Get Started
+                </button>
+              </Link>
+            </div>
+
+            {/* Annual Tier */}
+            <div className="bg-gray-900/50 p-8 rounded-xl border border-purple-900/30">
+              <div className="text-center mb-6">
+                <h3 className="text-2xl font-bold text-white mb-2">Annual</h3>
+                <div className="text-4xl font-bold text-white mb-2">
+                  $299<span className="text-xl text-gray-400">/yr</span>
+                </div>
+                <p className="text-green-400 font-medium">Save $180/year</p>
+              </div>
+              
+              <ul className="space-y-3 mb-8 text-gray-300">
+                <li className="flex items-start">
+                  <span className="text-green-400 mr-2">✓</span>
+                  <span>Everything in Pro</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-green-400 mr-2">✓</span>
+                  <span><strong className="text-white">60 code generations/year</strong></span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-green-400 mr-2">✓</span>
+                  <span>Lifetime template updates</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-green-400 mr-2">✓</span>
+                  <span>Priority support</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-green-400 mr-2">✓</span>
+                  <span>Early access to new features</span>
+                </li>
+              </ul>
+
+              <Link href="/pricing">
+                <button className="w-full bg-gray-800 hover:bg-gray-700 text-white py-3 rounded-lg font-medium transition border border-purple-900/30">
+                  Get Annual
+                </button>
+              </Link>
             </div>
           </div>
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="container mx-auto px-4 py-16 md:py-24">
-        <div className="max-w-4xl mx-auto p-8 md:p-12 rounded-2xl bg-gradient-to-br from-purple-900/50 to-pink-900/50 border border-purple-500/30 text-center shadow-2xl">
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4 text-white">
-            Ready to Launch Your Idea?
-          </h2>
-          <p className="text-lg md:text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
-            Join founders who are shipping their SaaS products faster than ever with CodeLaunch
-          </p>
-          {!isSignedIn ? (
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <SignUpButton mode="modal">
-                <button className="w-full sm:w-auto px-8 py-4 text-lg rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 transition-all shadow-lg hover:shadow-purple-500/50 font-semibold">
-                  Get Started Free →
-                </button>
-              </SignUpButton>
-              <Link href="/pricing">
-                <button className="w-full sm:w-auto px-8 py-4 text-lg rounded-lg border-2 border-purple-400 hover:bg-purple-400/10 transition-all font-semibold">
-                  View Pricing
-                </button>
-              </Link>
+      {/* Contact Section */}
+      <section id="contact" className="container mx-auto px-4 sm:px-6 lg:px-8 py-20">
+        <div className="max-w-4xl mx-auto">
+          <div className="bg-gray-900/50 rounded-2xl p-12 border border-purple-900/30">
+            <div className="text-center mb-10">
+              <h2 className="text-3xl font-bold text-white mb-3">
+                Get in Touch
+              </h2>
+              <p className="text-gray-300 text-lg">
+                Have questions? We're here to help you build your SaaS.
+              </p>
             </div>
-          ) : (
-            <Link href="/dashboard">
-              <button className="px-8 py-4 text-lg rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 transition-all shadow-lg hover:shadow-purple-500/50 font-semibold">
-                Go to Dashboard →
-              </button>
-            </Link>
-          )}
+
+            <div className="grid md:grid-cols-2 gap-8">
+              {/* Contact Info */}
+              <div className="space-y-6">
+                <div>
+                  <h3 className="text-xl font-semibold text-white mb-4">
+                    Contact Information
+                  </h3>
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-purple-600/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <span className="text-xl">📧</span>
+                      </div>
+                      <div>
+                        <div className="text-gray-400 text-sm">Email</div>
+                        <a href="mailto:support@codelaunch.ai" className="text-purple-400 hover:text-purple-300 font-medium">
+                          support@codelaunch.ai
+                        </a>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-purple-600/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <span className="text-xl">⚡</span>
+                      </div>
+                      <div>
+                        <div className="text-gray-400 text-sm">Response Time</div>
+                        <div className="text-white font-medium">Within 24 hours</div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-purple-600/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <span className="text-xl">💬</span>
+                      </div>
+                      <div>
+                        <div className="text-gray-400 text-sm">Support</div>
+                        <div className="text-white font-medium">Technical & Sales</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-6 border-t border-purple-900/30">
+                  <p className="text-gray-400 text-sm">
+                    For urgent issues or enterprise inquiries, please email us directly at{' '}
+                    <a href="mailto:support@codelaunch.ai" className="text-purple-400 hover:text-purple-300">
+                      support@codelaunch.ai
+                    </a>
+                  </p>
+                </div>
+              </div>
+
+              {/* Quick Contact Form */}
+              <div>
+                <form onSubmit={handleContactSubmit} className="space-y-4">
+                  <div>
+                    <label className="block text-gray-300 mb-2 text-sm font-medium">
+                      Name
+                    </label>
+                    <input
+                      type="text"
+                      value={contactForm.name}
+                      onChange={(e) => setContactForm({ ...contactForm, name: e.target.value })}
+                      className="w-full bg-gray-800 text-white px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600 border border-purple-900/30"
+                      placeholder="Your name"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-gray-300 mb-2 text-sm font-medium">
+                      Email
+                    </label>
+                    <input
+                      type="email"
+                      value={contactForm.email}
+                      onChange={(e) => setContactForm({ ...contactForm, email: e.target.value })}
+                      className="w-full bg-gray-800 text-white px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600 border border-purple-900/30"
+                      placeholder="you@example.com"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-gray-300 mb-2 text-sm font-medium">
+                      Message
+                    </label>
+                    <textarea
+                      rows={4}
+                      value={contactForm.message}
+                      onChange={(e) => setContactForm({ ...contactForm, message: e.target.value })}
+                      className="w-full bg-gray-800 text-white px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600 border border-purple-900/30 resize-none"
+                      placeholder="How can we help you?"
+                      required
+                    ></textarea>
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="w-full bg-purple-600 hover:bg-purple-500 text-white py-3 rounded-lg font-semibold transition shadow-lg shadow-purple-600/30"
+                  >
+                    Send Message
+                  </button>
+
+                  <p className="text-gray-500 text-xs text-center">
+                    Or email us directly at support@codelaunch.ai
+                  </p>
+                </form>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="container mx-auto px-4 py-12 border-t border-purple-500/20">
-        <div className="grid md:grid-cols-4 gap-8 mb-8">
-          <div>
-            <div className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent mb-4">
-              CodeLaunch
+      <footer className="container mx-auto px-4 sm:px-6 lg:px-8 py-12 border-t border-purple-900/30">
+        <div className="max-w-5xl mx-auto">
+          <div className="grid md:grid-cols-4 gap-8 mb-8">
+            <div>
+              <div className="flex items-center gap-2 mb-4">
+                <span className="text-2xl">🚀</span>
+                <span className="text-xl font-bold text-white">
+                  Code<span className="text-purple-400">Launch</span>
+                </span>
+              </div>
+              <p className="text-gray-400 text-sm">
+                Ship your SaaS faster with AI-powered code generation.
+              </p>
             </div>
-            <p className="text-gray-400 text-sm">
-              Build and launch your SaaS in minutes with AI-powered development tools.
-            </p>
+
+            <div>
+              <h4 className="text-white font-semibold mb-3">Product</h4>
+              <ul className="space-y-2 text-gray-400 text-sm">
+                <li><Link href="#features" className="hover:text-purple-400 transition">Features</Link></li>
+                <li><Link href="#pricing" className="hover:text-purple-400 transition">Pricing</Link></li>
+                {isSignedIn && (
+                  <li><Link href="/dashboard" className="hover:text-purple-400 transition">Dashboard</Link></li>
+                )}
+              </ul>
+            </div>
+
+            <div>
+              <h4 className="text-white font-semibold mb-3">Company</h4>
+              <ul className="space-y-2 text-gray-400 text-sm">
+                <li><a href="#how-it-works" className="hover:text-purple-400 transition">How It Works</a></li>
+                <li><a href="#contact" className="hover:text-purple-400 transition">Contact</a></li>
+                <li><a href="mailto:support@codelaunch.ai" className="hover:text-purple-400 transition">support@codelaunch.ai</a></li>
+              </ul>
+            </div>
+
+            <div>
+              <h4 className="text-white font-semibold mb-3">Legal</h4>
+              <ul className="space-y-2 text-gray-400 text-sm">
+                <li><a href="#" className="hover:text-purple-400 transition">Privacy</a></li>
+                <li><a href="#" className="hover:text-purple-400 transition">Terms</a></li>
+              </ul>
+            </div>
           </div>
-          
-          <div>
-            <h4 className="font-semibold text-white mb-4">Product</h4>
-            <ul className="space-y-2 text-sm">
-              <li><Link href="#features" className="text-gray-400 hover:text-white transition-colors">Features</Link></li>
-              <li><Link href="/pricing" className="text-gray-400 hover:text-white transition-colors">Pricing</Link></li>
-              {isSignedIn && (
-                <li><Link href="/dashboard" className="text-gray-400 hover:text-white transition-colors">Dashboard</Link></li>
-              )}
-            </ul>
+
+          <div className="pt-8 border-t border-purple-900/30 text-center text-gray-400 text-sm">
+            © 2025 CodeLaunch. All rights reserved.
           </div>
-          
-          <div>
-            <h4 className="font-semibold text-white mb-4">Company</h4>
-            <ul className="space-y-2 text-sm">
-              <li><a href="#" className="text-gray-400 hover:text-white transition-colors">About</a></li>
-              <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Blog</a></li>
-              <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Careers</a></li>
-            </ul>
-          </div>
-          
-          <div>
-            <h4 className="font-semibold text-white mb-4">Legal</h4>
-            <ul className="space-y-2 text-sm">
-              <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Privacy Policy</a></li>
-              <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Terms of Service</a></li>
-            </ul>
-          </div>
-        </div>
-        
-        <div className="text-center pt-8 border-t border-purple-500/20">
-          <p className="text-gray-400 text-sm">© 2025 CodeLaunch. Built with ❤️ for founders.</p>
         </div>
       </footer>
-
-      <style jsx>{`
-        @keyframes bounce-slow {
-          0%, 100% {
-            transform: translateY(0);
-          }
-          50% {
-            transform: translateY(-10px);
-          }
-        }
-        
-        @keyframes matrix-fall {
-          0% {
-            transform: translateY(-100%);
-            opacity: 0;
-          }
-          10% {
-            opacity: 1;
-          }
-          90% {
-            opacity: 1;
-          }
-          100% {
-            transform: translateY(200%);
-            opacity: 0;
-          }
-        }
-        
-        @keyframes gradient {
-          0%, 100% {
-            background-position: 0% 50%;
-          }
-          50% {
-            background-position: 100% 50%;
-          }
-        }
-        
-        .animate-bounce-slow {
-          animation: bounce-slow 3s ease-in-out infinite;
-        }
-        
-        .animate-matrix-fall {
-          animation: matrix-fall linear infinite;
-        }
-        
-        .animate-gradient {
-          background-size: 200% 200%;
-          animation: gradient 3s ease infinite;
-        }
-      `}</style>
     </div>
   );
 }
