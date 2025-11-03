@@ -130,7 +130,7 @@ IMPORTANT REQUIREMENTS:
 - Include pricing models if relevant
 - Add unique value propositions
 
-Return ONLY valid JSON matching this structure:
+Return ONLY valid JSON matching this exact structure (no extra fields):
 {
   "projectName": "App Name",
   "projectDescription": "Detailed description",
@@ -138,42 +138,36 @@ Return ONLY valid JSON matching this structure:
   "competitors": [
     {
       "name": "Competitor Name",
-      "description": "What they do",
-      "pricing": "Their pricing model",
-      "keyFeatures": ["Feature 1", "Feature 2"]
+      "url": "https://competitor.com",
+      "strength": "What they do well",
+      "ourAdvantage": "How we're better"
     }
   ],
-  "competitiveAdvantages": [
-    "What makes this app unique",
-    "Key differentiators"
-  ],
   "techStack": {
-    "frontend": "Specific framework",
-    "backend": "Specific backend",
-    "database": "Specific database chosen",
-    "authentication": "Specific auth provider chosen",
-    "payment": "Specific payment processor chosen",
-    "hosting": "Specific hosting platform chosen"
+    "frontend": "Specific framework chosen",
+    "backend": "Specific backend chosen",
+    "database": "Specific database chosen (e.g., Supabase, Firebase)",
+    "auth": "Specific auth provider chosen (e.g., Clerk, Auth0)",
+    "payments": "Specific payment processor chosen (e.g., Stripe, PayPal)",
+    "hosting": "Specific hosting platform chosen (e.g., Vercel, AWS)"
   },
   "features": [
     {
       "id": "feature1",
-      "name": "Feature Name",
-      "description": "What it does",
-      "technology": "Specific tech from their choices",
-      "priority": "high|medium|low"
+      "title": "Feature Name",
+      "description": "What it does - be specific about the technology chosen",
+      "priority": "high"
     }
   ],
   "monetization": {
-    "model": "Pricing model",
-    "pricing": "Specific pricing"
+    "model": "subscription|one-time|freemium|usage-based",
+    "pricing": "Specific pricing based on their choices"
   },
   "userPersona": {
     "name": "Persona name",
-    "age": "Age range",
-    "occupation": "Job type",
-    "goals": ["Goal 1", "Goal 2"],
-    "painPoints": ["Pain point 1", "Pain point 2"]
+    "description": "Brief description",
+    "painPoint": "Main problem they face",
+    "goal": "What they want to achieve"
   }
 }
 
