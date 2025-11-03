@@ -7,6 +7,7 @@ import ReactFlow, {
   Edge,
   Controls,
   Background,
+  BackgroundVariant,
   useNodesState,
   useEdgesState,
   addEdge,
@@ -335,7 +336,7 @@ export default function InteractiveBuilder({ userId }: InteractiveBuilderProps) 
           fitView
           className="bg-gradient-to-br from-gray-900 via-purple-900/20 to-gray-900"
         >
-          <Background color="#1f2937" gap={20} variant="dots" />
+          <Background color="#1f2937" gap={20} variant={BackgroundVariant.Dots} />
           <Controls />
         </ReactFlow>
       </div>
