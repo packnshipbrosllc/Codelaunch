@@ -3,10 +3,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
 import { auth } from '@clerk/nextjs/server';
+import { createClient } from '@supabase/supabase-js';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
+
+const FREE_MINDMAP_LIMIT = 3;
 
 export async function POST(req: NextRequest) {
   try {
@@ -20,6 +28,78 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // 🔒 STRICT: Check limit and increment counter BEFORE calling OpenAI
+    // This protects your API costs - you pay for generation, not saving
+    
+    // Get user's subscription status and mindmap count
+    const { data: user, error: userError } = await supabase
+      .from('users')
+      .select('subscription_status, mindmaps_created')
+      .eq('id', userId)
+      .single();
+
+    // If user doesn't exist yet, create them with 0 mindmaps
+    if (userError && userError.code === 'PGRST116') {
+      const { error: insertError } = await supabase
+        .from('users')
+        .insert({
+          id: userId,
+          subscription_status: 'inactive',
+          mindmaps_created: 0,
+        });
+
+      if (insertError) {
+        console.error('Error creating user:', insertError);
+        return NextResponse.json({
+          error: 'Failed to create user profile',
+          details: insertError.message,
+        }, { status: 500 });
+      }
+    } else if (userError) {
+      console.error('Error fetching user:', userError);
+      return NextResponse.json({
+        error: 'Failed to check user subscription',
+        details: userError.message,
+      }, { status: 500 });
+    }
+
+    // 🚨 ENFORCE 3 MINDMAP LIMIT FOR FREE USERS
+    const isSubscribed = user?.subscription_status === 'active';
+    const mindmapsCreated = user?.mindmaps_created || 0;
+
+    if (!isSubscribed && mindmapsCreated >= FREE_MINDMAP_LIMIT) {
+      return NextResponse.json({
+        success: false,
+        error: 'FREE_LIMIT_REACHED',
+        message: 'You\'ve used all 3 free mindmap generations. Upgrade to continue building!',
+        mindmapsCreated,
+        limit: FREE_MINDMAP_LIMIT,
+        upgradeUrl: '/#pricing',
+      }, { status: 403 });
+    }
+
+    // 🔒 STRICT: INCREMENT COUNTER BEFORE GENERATION (locks the slot immediately)
+    // This prevents users from spamming generate button or exploiting race conditions
+    const newCounterValue = mindmapsCreated + 1;
+    const { error: incrementError } = await supabase
+      .from('users')
+      .update({
+        mindmaps_created: newCounterValue,
+      })
+      .eq('id', userId);
+
+    if (incrementError) {
+      console.error('Error incrementing mindmaps_created counter:', incrementError);
+      return NextResponse.json({
+        success: false,
+        error: 'Failed to update usage counter',
+        details: incrementError.message,
+      }, { status: 500 });
+    }
+
+    console.log(`✅ Counter incremented: ${mindmapsCreated} → ${newCounterValue} (STRICT: before generation)`);
+
+    // Now proceed with generation (counter already locked)
     const { idea } = await req.json();
 
     if (!idea || idea.trim().length < 10) {
@@ -116,18 +196,28 @@ Rules:
 
     console.log('✅ Mindmap generated:', mindmapData.projectName);
 
+    // Return mindmap data with usage info
     return NextResponse.json({
       success: true,
-      data: mindmapData
+      data: mindmapData,
+      usage: {
+        mindmapsCreated: newCounterValue,
+        limit: isSubscribed ? 'unlimited' : FREE_MINDMAP_LIMIT,
+        remaining: isSubscribed ? 'unlimited' : Math.max(0, FREE_MINDMAP_LIMIT - newCounterValue),
+        isProUser: isSubscribed,
+      }
     });
 
   } catch (error: any) {
-    console.error('❌ Error generating mindmap:', error);
+    console.error('❌ Error generating mindmap (counter already incremented):', error);
     
+    // Counter already incremented - we don't roll it back (STRICT enforcement)
+    // User "used" their slot even if generation failed
     return NextResponse.json(
       {
         success: false,
-        error: error.message || 'Failed to generate mindmap'
+        error: error.message || 'Failed to generate mindmap',
+        note: 'Your usage counter was incremented. Contact support if this was an error.',
       },
       { status: 500 }
     );

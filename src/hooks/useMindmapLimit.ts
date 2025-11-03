@@ -36,20 +36,22 @@ export function useMindmapLimit(): MindmapLimitData {
     // Fetch user's mindmap usage from Supabase
     const fetchLimitData = async () => {
       try {
-        const response = await fetch('/api/user/usage', {
+        // Use check-usage endpoint (simpler, dedicated for this purpose)
+        const response = await fetch('/api/check-usage', {
           method: 'GET',
         });
 
         if (response.ok) {
           const data = await response.json();
-          const isSubscribed = data.subscription_status === 'active';
-          const mindmapsCreated = data.mindmaps_created || 0;
-          const freeLimit = 3;
+          const isSubscribed = data.isProUser;
+          const mindmapsCreated = data.mindmapsCreated || 0;
+          const freeLimit = typeof data.limit === 'number' ? data.limit : 3;
+          const remaining = typeof data.remaining === 'number' ? data.remaining : (freeLimit - mindmapsCreated);
 
           setLimitData({
             canCreateMore: isSubscribed || mindmapsCreated < freeLimit,
             isSubscribed,
-            remainingFreeMindmaps: isSubscribed ? null : Math.max(0, freeLimit - mindmapsCreated),
+            remainingFreeMindmaps: isSubscribed ? null : Math.max(0, remaining),
             mindmapsCreated,
             freeLimit,
           });

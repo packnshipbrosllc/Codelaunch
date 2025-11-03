@@ -51,44 +51,15 @@ export async function POST(request: Request) {
       }, { status: 500 });
     }
 
-    // 🚨 ENFORCE 3 MINDMAP LIMIT FOR FREE USERS
-    const isSubscribed = user?.subscription_status === 'active';
-    const mindmapsCreated = user?.mindmaps_created || 0;
-
-    if (!isSubscribed && mindmapsCreated >= 3) {
-      return NextResponse.json({
-        error: 'FREE_LIMIT_REACHED',
-        message: 'You\'ve used all 3 free mindmaps. Upgrade to continue building!',
-        mindmapsCreated,
-        limit: 3,
-      }, { status: 403 });
-    }
+    // ✅ NOTE: Limit is enforced at GENERATION, not save
+    // Counter is incremented when user clicks "Generate", not when they save
+    // This protects your OpenAI API costs - you pay for generation, not saving
 
     const body = await request.json();
     console.log('Received mindmap data:', body);
 
     // Extract the actual mindmap data (supports both { mindmapData } and raw object)
     const mindmapData = body?.mindmapData ?? body;
-
-    // 🔒 STRICT: INCREMENT COUNTER BEFORE SAVE (locks the slot immediately)
-    // This prevents users from spamming save button or exploiting race conditions
-    const newCounterValue = mindmapsCreated + 1;
-    const { error: incrementError } = await supabase
-      .from('users')
-      .update({
-        mindmaps_created: newCounterValue,
-      })
-      .eq('id', userId);
-
-    if (incrementError) {
-      console.error('Error incrementing mindmaps_created counter:', incrementError);
-      return NextResponse.json({
-        error: 'Failed to update usage counter',
-        details: incrementError.message,
-      }, { status: 500 });
-    }
-
-    console.log(`✅ Counter incremented: ${mindmapsCreated} → ${newCounterValue} (STRICT: before save)`);
 
     // 1) Create a project entry first so it appears on the dashboard
     const { data: project, error: projectError } = await supabase
@@ -103,13 +74,10 @@ export async function POST(request: Request) {
       .single();
 
     if (projectError) {
-      console.error('Project creation error (counter already incremented):', projectError);
-      // Counter already incremented - we don't roll it back (STRICT enforcement)
+      console.error('Project creation error:', projectError);
       return NextResponse.json({
         error: 'Failed to create project',
         details: projectError.message,
-        note: 'Your usage counter was incremented. Contact support if this was an error.',
-        mindmapsCreated: newCounterValue,
       }, { status: 500 });
     }
 
@@ -125,15 +93,12 @@ export async function POST(request: Request) {
       .single();
 
     if (mindmapError) {
-      console.error('Mindmap save error (counter already incremented):', mindmapError);
-      // Counter already incremented - we don't roll it back (STRICT enforcement)
+      console.error('Mindmap save error:', mindmapError);
       // Project exists but mindmap failed
       return NextResponse.json({
         error: 'Failed to save mindmap',
         details: mindmapError.message,
-        note: 'Your usage counter was incremented. Contact support if this was an error.',
         project,
-        mindmapsCreated: newCounterValue,
       }, { status: 500 });
     }
 
@@ -141,9 +106,6 @@ export async function POST(request: Request) {
       success: true, 
       project, 
       mindmap: savedMindmap,
-      mindmapsCreated: newCounterValue,
-      isSubscribed,
-      remainingFreeMindmaps: isSubscribed ? null : Math.max(0, 3 - newCounterValue),
     });
   } catch (error) {
     console.error('Error saving mindmap:', error);

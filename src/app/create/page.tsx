@@ -51,7 +51,7 @@ export default function CreateProjectPage() {
       return;
     }
 
-    // Check if user can create more mindmaps
+    // Frontend check (API will also enforce, but this prevents unnecessary API calls)
     if (!canCreateMore) {
       setError('You\'ve reached your free mindmap limit. Please upgrade to Pro to continue creating mindmaps.');
       return;
@@ -69,14 +69,34 @@ export default function CreateProjectPage() {
 
       const result = await response.json();
 
+      // Handle limit reached error from API
+      if (response.status === 403 && result.error === 'FREE_LIMIT_REACHED') {
+        setError(result.message || 'You\'ve reached your free mindmap limit. Please upgrade to Pro.');
+        return;
+      }
+
       if (!response.ok || !result.success) {
         throw new Error(result.error || 'Failed to generate mindmap');
       }
 
+      // Success! Show mindmap and usage info
       setMindmapData(result.data);
+      
+      // Show usage info if available
+      if (result.usage && !result.usage.isProUser) {
+        const remaining = result.usage.remaining;
+        if (remaining !== 'unlimited') {
+          // The useMindmapLimit hook will automatically refetch on next render
+          // or we can trigger a manual refresh by updating a dependency
+        }
+      }
     } catch (err: any) {
       console.error('Error generating mindmap:', err);
-      setError(err.message || 'Failed to generate mindmap. Please try again.');
+      if (err.message?.includes('FREE_LIMIT_REACHED')) {
+        setError('You\'ve reached your free mindmap limit. Please upgrade to Pro to continue.');
+      } else {
+        setError(err.message || 'Failed to generate mindmap. Please try again.');
+      }
     } finally {
       setIsGenerating(false);
     }
