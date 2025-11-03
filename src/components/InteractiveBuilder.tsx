@@ -1,7 +1,7 @@
 // components/InteractiveBuilder.tsx
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import ReactFlow, {
   Node,
   Edge,
@@ -47,14 +47,24 @@ export default function InteractiveBuilder({ userId }: InteractiveBuilderProps) 
   const [isLoading, setIsLoading] = useState(false);
   const [progress, setProgress] = useState({ currentStep: 0, totalSteps: 0, percentage: 0 });
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  // Prevent double initialization
+  const isInitialized = useRef(false);
+  const processedQuestions = useRef<Set<string>>(new Set());
 
   // Initialize with root question
   useEffect(() => {
-    fetchNextQuestion();
+    if (!isInitialized.current) {
+      isInitialized.current = true;
+      fetchNextQuestion();
+    }
   }, []);
 
   // Fetch next question from API
   const fetchNextQuestion = async () => {
+    if (isLoading || isProcessing) return; // Prevent double calls
+    
     setIsLoading(true);
     try {
       const response = await fetch('/api/decision-tree/next', {
@@ -75,7 +85,8 @@ export default function InteractiveBuilder({ userId }: InteractiveBuilderProps) 
         return;
       }
 
-      if (data.question) {
+      if (data.question && !processedQuestions.current.has(data.question.id)) {
+        processedQuestions.current.add(data.question.id);
         setCurrentQuestion(data.question);
         setProgress(data.progress);
         addQuestionToFlow(data.question);
@@ -137,47 +148,54 @@ export default function InteractiveBuilder({ userId }: InteractiveBuilderProps) 
 
   // Handle when user selects a choice
   const handleChoiceSelect = async (choice: Choice) => {
-    if (!currentQuestion) return;
+    if (!currentQuestion || isProcessing) return; // Prevent double clicks
+    
+    setIsProcessing(true);
 
-    // Update decisions
-    const newDecisions = {
-      ...decisions,
-      [currentQuestion.id]: choice.value
-    };
-    setDecisions(newDecisions);
+    try {
+      // Update decisions
+      const newDecisions = {
+        ...decisions,
+        [currentQuestion.id]: choice.value
+      };
+      setDecisions(newDecisions);
 
-    // Update app purpose/type if this was root or platform question
-    if (currentQuestion.id === 'root') {
-      setAppPurpose(choice.value as AppPurpose);
-    } else if (currentQuestion.id === 'platform') {
-      setAppType(choice.value as AppType);
-    }
+      // Update app purpose/type if this was root or platform question
+      if (currentQuestion.id === 'root') {
+        setAppPurpose(choice.value as AppPurpose);
+      } else if (currentQuestion.id === 'platform') {
+        setAppType(choice.value as AppType);
+      }
 
-    // Mark current node as completed
-    setNodes((nds) =>
-      nds.map((node) =>
-        node.id === currentQuestion.id
-          ? {
-              ...node,
-              data: {
-                ...node.data,
-                isClickable: false,
-                isCompleted: true,
-                label: `${choice.label}` // Update label to show choice
+      // Mark current node as completed
+      setNodes((nds) =>
+        nds.map((node) =>
+          node.id === currentQuestion.id
+            ? {
+                ...node,
+                data: {
+                  ...node.data,
+                  isClickable: false,
+                  isCompleted: true,
+                  label: `${choice.label}`, // Update label to show choice
+                  selectedValue: choice.value
+                }
               }
-            }
-          : node
-      )
-    );
+            : node
+        )
+      );
 
-    // Close panel
-    setShowChoicePanel(false);
+      // Close panel
+      setShowChoicePanel(false);
 
-    // Save progress to database
-    await saveProgress(newDecisions);
+      // Save progress to database
+      await saveProgress(newDecisions);
 
-    // Fetch next question
-    await fetchNextQuestion();
+      // Fetch next question
+      await fetchNextQuestion();
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   // Save progress to Supabase
@@ -262,7 +280,7 @@ export default function InteractiveBuilder({ userId }: InteractiveBuilderProps) 
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            mindmapData: data.data
+            mindmapData: data.data || data.mindmapData
           })
         });
 
@@ -273,7 +291,7 @@ export default function InteractiveBuilder({ userId }: InteractiveBuilderProps) 
           router.push(`/project/${saveData.project.id}`);
         } else {
           // Fallback: redirect to create page with data in URL
-          const encodedData = encodeURIComponent(JSON.stringify(data.data));
+          const encodedData = encodeURIComponent(JSON.stringify(data.data || data.mindmapData));
           router.push(`/create?data=${encodedData}`);
         }
       } else {
@@ -315,9 +333,9 @@ export default function InteractiveBuilder({ userId }: InteractiveBuilderProps) 
           onConnect={onConnect}
           nodeTypes={nodeTypes}
           fitView
-          className="bg-gradient-to-br from-purple-50 to-blue-50"
+          className="bg-gradient-to-br from-gray-900 via-purple-900/20 to-gray-900"
         >
-          <Background color="#e5e7eb" gap={20} />
+          <Background color="#1f2937" gap={20} variant="dots" />
           <Controls />
         </ReactFlow>
       </div>
@@ -333,25 +351,30 @@ export default function InteractiveBuilder({ userId }: InteractiveBuilderProps) 
 
       {/* Loading overlay */}
       {(isLoading || isGenerating) && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-8 flex flex-col items-center gap-4">
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-gradient-to-br from-gray-900 to-gray-800 border-2 border-purple-500/50 rounded-xl p-8 flex flex-col items-center gap-4 shadow-2xl">
             <div className="animate-spin rounded-full h-12 w-12 border-4 border-purple-500 border-t-transparent" />
-            <div className="font-semibold text-gray-700">
+            <div className="font-semibold text-white text-lg">
               {isGenerating ? 'Generating your app...' : 'Loading...'}
             </div>
+            {isGenerating && (
+              <p className="text-sm text-gray-400 text-center max-w-sm">
+                Creating your custom mindmap with competitor research...
+              </p>
+            )}
           </div>
         </div>
       )}
 
       {/* Welcome message when starting */}
       {nodes.length === 0 && !isLoading && (
-        <div className="absolute inset-0 flex items-center justify-center">
+        <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-gray-900 via-purple-900/20 to-gray-900">
           <div className="text-center max-w-2xl px-6">
-            <span className="text-6xl mb-4 block">🚀</span>
-            <h1 className="text-4xl font-bold text-gray-900 mb-4">
+            <span className="text-6xl mb-4 block animate-rocket-bounce">🚀</span>
+            <h1 className="text-4xl font-bold text-white mb-4">
               Let's Build Your App Together!
             </h1>
-            <p className="text-lg text-gray-600 mb-8">
+            <p className="text-lg text-gray-300 mb-8">
               Answer a few questions and we'll create a custom app structure just for you.
               Don't worry - we'll explain everything along the way! 
             </p>

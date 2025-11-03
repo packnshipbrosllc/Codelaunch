@@ -1,161 +1,184 @@
 // api/decision-tree/generate/route.ts
-import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { createClient } from '@supabase/supabase-js';
-import OpenAI from 'openai';
+import { NextResponse } from 'next/server';
+import Anthropic from '@anthropic-ai/sdk';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-
-export async function POST(req: NextRequest) {
+export async function POST(request: Request) {
   try {
     const { userId } = await auth();
+    
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { sessionId, decisions, appPurpose, appType } = await req.json();
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
 
-    if (!sessionId || !decisions || !appPurpose || !appType) {
+    const body = await request.json();
+    const { sessionId, decisions, appPurpose, appType } = body;
+
+    if (!decisions || Object.keys(decisions).length === 0) {
       return NextResponse.json(
-        { error: 'Missing required fields' },
+        { error: 'No decisions provided' },
         { status: 400 }
       );
     }
 
-    // Build a comprehensive prompt for Claude/OpenAI
-    const decisionsText = Object.entries(decisions)
-      .map(([key, value]) => `- ${key}: ${value}`)
-      .join('\n');
+    // Build a detailed prompt based on user's decisions
+    const prompt = buildPromptFromDecisions(decisions, appPurpose, appType);
 
-    const prompt = `You are an expert app architect. Based on the user's decisions, create a comprehensive mindmap structure for their ${appPurpose} ${appType} app.
+    // Call Claude to generate the mindmap
+    const anthropic = new Anthropic({
+      apiKey: process.env.ANTHROPIC_API_KEY!,
+    });
 
-User Decisions:
-${decisionsText}
-
-App Purpose: ${appPurpose}
-App Type: ${appType}
-
-Create a detailed mindmap JSON structure that includes:
-1. projectName - A descriptive name for the app
-2. projectDescription - A clear description
-3. targetAudience - Who will use this app
-4. competitors - 3-5 similar apps/services
-5. techStack - Based on the decisions (e.g., Stripe for payments, Clerk for auth, Supabase for database)
-6. features - Array of features based on their choices
-7. monetization - How the app will make money
-8. userPersona - A typical user profile
-
-Return ONLY valid JSON matching this structure:
-{
-  "projectName": "...",
-  "projectDescription": "...",
-  "targetAudience": "...",
-  "competitors": ["...", "..."],
-  "techStack": {
-    "frontend": "...",
-    "backend": "...",
-    "database": "...",
-    "authentication": "...",
-    "payment": "...",
-    "hosting": "..."
-  },
-  "features": [
-    {
-      "id": "feature1",
-      "name": "...",
-      "description": "...",
-      "priority": "high|medium|low"
-    }
-  ],
-  "monetization": {
-    "model": "...",
-    "pricing": "..."
-  },
-  "userPersona": {
-    "name": "...",
-    "age": "...",
-    "occupation": "...",
-    "goals": ["...", "..."],
-    "painPoints": ["...", "..."]
-  }
-}`;
-
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-4o',
+    const message = await anthropic.messages.create({
+      model: 'claude-sonnet-4-5-20250929',
+      max_tokens: 8096,
       messages: [
-        {
-          role: 'system',
-          content: 'You are an expert app architect. Generate detailed, actionable app structures based on user requirements. Always return valid JSON.'
-        },
         {
           role: 'user',
           content: prompt
         }
-      ],
-      temperature: 0.7,
-      max_tokens: 2000
+      ]
     });
 
-    const content = completion.choices[0]?.message?.content;
-    if (!content) {
-      throw new Error('No content received from OpenAI');
-    }
+    const responseText = message.content[0].type === 'text' 
+      ? message.content[0].text 
+      : '';
 
-    // Parse the JSON response
     let mindmapData;
     try {
-      // Try to extract JSON from markdown code blocks if present
-      const jsonMatch = content.match(/```json\s*([\s\S]*?)\s*```/) || content.match(/```\s*([\s\S]*?)\s*```/);
-      const jsonString = jsonMatch ? jsonMatch[1] : content;
-      mindmapData = JSON.parse(jsonString);
+      const cleanJson = responseText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+      mindmapData = JSON.parse(cleanJson);
     } catch (parseError) {
-      console.error('Error parsing OpenAI response:', parseError);
-      // Fallback: try to parse as-is
-      mindmapData = JSON.parse(content);
+      console.error('Failed to parse mindmap:', parseError);
+      return NextResponse.json({
+        error: 'Failed to parse generated mindmap',
+        rawResponse: responseText
+      }, { status: 500 });
     }
 
-    // Validate structure
-    if (!mindmapData.projectName || !mindmapData.features) {
-      throw new Error('Invalid mindmap structure received from AI');
-    }
-
-    // Update decision path with generated mindmap
+    // Save the generated mindmap to decision_paths table
     const { error: updateError } = await supabase
       .from('decision_paths')
       .update({
         generated_mindmap: mindmapData,
-        completed_at: new Date().toISOString()
+        completed_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
       })
-      .eq('session_id', sessionId);
+      .eq('session_id', sessionId)
+      .eq('user_id', userId);
 
     if (updateError) {
-      console.error('Error updating decision path with mindmap:', updateError);
-      // Don't fail the request if DB update fails
+      console.error('Error saving mindmap:', updateError);
     }
 
     return NextResponse.json({
       success: true,
       data: mindmapData,
-      sessionId
+      message: 'App structure generated successfully!'
     });
 
   } catch (error: any) {
-    console.error('Error generating mindmap:', error);
+    console.error('Error generating app:', error);
     return NextResponse.json(
-      { 
-        success: false,
-        error: error.message || 'Failed to generate mindmap',
-        details: error instanceof Error ? error.stack : undefined
-      },
+      { error: 'Failed to generate app', details: error.message },
       { status: 500 }
     );
   }
 }
 
+function buildPromptFromDecisions(
+  decisions: Record<string, string>,
+  appPurpose: string,
+  appType: string
+): string {
+  const decisionsText = Object.entries(decisions)
+    .map(([key, value]) => `- ${key}: ${value}`)
+    .join('\n');
+
+  return `You are an expert software architect. Based on the user's decisions, create a detailed, production-ready mindmap for their app.
+
+USER'S APP CONFIGURATION:
+Purpose: ${appPurpose}
+Platform: ${appType}
+
+DECISIONS MADE:
+${decisionsText}
+
+Create a comprehensive mindmap that includes:
+1. **Root Node**: The app name/purpose
+2. **Core Features**: Based on their chosen functionality
+3. **Technical Stack**: The exact technologies they selected (database, auth, payment, etc.)
+4. **User Flow**: How users will interact with the app
+5. **Database Schema**: Tables and relationships needed
+6. **API Endpoints**: RESTful routes for backend
+7. **Integrations**: External services (Stripe, email, etc.)
+8. **Deployment**: Their chosen hosting platform
+9. **Competitor Research**: 3-5 top competitors in this space with their key features and pricing
+10. **Competitive Advantages**: What makes this app unique compared to competitors
+
+IMPORTANT REQUIREMENTS:
+- Include ALL user selections in the mindmap (e.g., if they chose Stripe, specify Stripe integration details)
+- Add competitor research section with 3-5 real competitors
+- List competitive advantages - what makes this app different
+- Be specific about technologies chosen (don't use generic terms)
+- Include pricing models if relevant
+- Add unique value propositions
+
+Return ONLY valid JSON matching this structure:
+{
+  "projectName": "App Name",
+  "projectDescription": "Detailed description",
+  "targetAudience": "Who will use this",
+  "competitors": [
+    {
+      "name": "Competitor Name",
+      "description": "What they do",
+      "pricing": "Their pricing model",
+      "keyFeatures": ["Feature 1", "Feature 2"]
+    }
+  ],
+  "competitiveAdvantages": [
+    "What makes this app unique",
+    "Key differentiators"
+  ],
+  "techStack": {
+    "frontend": "Specific framework",
+    "backend": "Specific backend",
+    "database": "Specific database chosen",
+    "authentication": "Specific auth provider chosen",
+    "payment": "Specific payment processor chosen",
+    "hosting": "Specific hosting platform chosen"
+  },
+  "features": [
+    {
+      "id": "feature1",
+      "name": "Feature Name",
+      "description": "What it does",
+      "technology": "Specific tech from their choices",
+      "priority": "high|medium|low"
+    }
+  ],
+  "monetization": {
+    "model": "Pricing model",
+    "pricing": "Specific pricing"
+  },
+  "userPersona": {
+    "name": "Persona name",
+    "age": "Age range",
+    "occupation": "Job type",
+    "goals": ["Goal 1", "Goal 2"],
+    "painPoints": ["Pain point 1", "Pain point 2"]
+  }
+}
+
+IMPORTANT: 
+- Include specific technologies based on their choices. If they chose Stripe, mention Stripe. If they chose Clerk, mention Clerk. Be precise and actionable.
+- Add real competitor research with actual competitor names and details
+- Highlight competitive advantages that differentiate this app`;
+}

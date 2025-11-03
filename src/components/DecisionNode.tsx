@@ -1,109 +1,118 @@
 // components/DecisionNode.tsx
 'use client';
 
+import { memo } from 'react';
 import { Handle, Position, NodeProps } from 'reactflow';
-import { CheckCircle2, Circle, Lock } from 'lucide-react';
+import { NodeType } from '@/types/decision-tree';
 
 interface DecisionNodeData {
   label: string;
   description?: string;
   category?: string;
-  nodeType: 'decision' | 'completed' | 'locked' | 'info' | 'generate';
+  nodeType: NodeType;
   isClickable: boolean;
   isCompleted: boolean;
   isLocked: boolean;
+  selectedValue?: string;
   onClick?: () => void;
 }
 
-export default function DecisionNode({ data }: NodeProps<DecisionNodeData>) {
-  const { 
-    label, 
-    description, 
-    category, 
-    nodeType, 
-    isClickable, 
-    isCompleted, 
+function DecisionNode({ data }: NodeProps<DecisionNodeData>) {
+  const {
+    label,
+    description,
+    category,
+    nodeType,
+    isClickable,
+    isCompleted,
     isLocked,
-    onClick 
+    selectedValue,
+    onClick
   } = data;
 
-  const isGenerate = nodeType === 'generate';
+  const getNodeStyles = () => {
+    if (isLocked) {
+      return 'bg-gray-800/50 border-gray-600 text-gray-500 cursor-not-allowed backdrop-blur-sm';
+    }
+    if (isCompleted) {
+      return 'bg-gradient-to-br from-green-900/90 to-emerald-800/90 border-green-500 text-white shadow-2xl shadow-green-500/30 backdrop-blur-sm';
+    }
+    if (isClickable) {
+      return 'bg-gradient-to-br from-purple-900/90 to-purple-700/90 border-purple-400 text-white cursor-pointer hover:shadow-2xl hover:shadow-purple-500/50 hover:scale-105 transition-all duration-300 backdrop-blur-sm animate-pulse-subtle';
+    }
+    return 'bg-gray-900/80 border-gray-600 text-gray-300 backdrop-blur-sm';
+  };
+
+  const getIcon = () => {
+    if (isLocked) return '🔒';
+    if (isCompleted) return '✅';
+    if (isClickable) return '👆';
+    if (nodeType === 'info') return '💡';
+    if (nodeType === 'generate') return '🚀';
+    return '⭕';
+  };
 
   return (
-    <div className="relative">
-      {/* Input handle */}
-      <Handle type="target" position={Position.Left} className="w-3 h-3" />
+    <div
+      className={`px-6 py-5 rounded-2xl border-2 min-w-[220px] max-w-[300px] ${getNodeStyles()}`}
+      onClick={isClickable ? onClick : undefined}
+      style={{
+        boxShadow: isCompleted 
+          ? '0 0 30px rgba(34, 197, 94, 0.3)' 
+          : isClickable 
+          ? '0 0 30px rgba(147, 51, 234, 0.4)' 
+          : 'none'
+      }}
+    >
+      <Handle 
+        type="target" 
+        position={Position.Left} 
+        className="w-3 h-3 bg-purple-500 border-2 border-purple-300" 
+      />
       
-      {/* Node content */}
-      <div
-        onClick={isClickable && !isLocked ? onClick : undefined}
-        className={`
-          min-w-[200px] max-w-[280px] p-4 rounded-xl shadow-lg border-2 transition-all
-          ${isGenerate 
-            ? 'bg-gradient-to-br from-green-500 to-emerald-600 border-green-400 hover:border-green-300 cursor-pointer' 
-            : isCompleted
-            ? 'bg-gradient-to-br from-purple-500 to-purple-600 border-purple-400'
-            : isLocked
-            ? 'bg-gray-300 border-gray-400 cursor-not-allowed opacity-50'
-            : isClickable
-            ? 'bg-gradient-to-br from-purple-400 to-purple-500 border-purple-300 hover:border-purple-200 hover:shadow-xl cursor-pointer transform hover:scale-105'
-            : 'bg-white border-gray-300'
-          }
-        `}
-      >
-        {/* Status icon */}
-        <div className="flex items-start gap-2 mb-2">
-          {isCompleted ? (
-            <CheckCircle2 className="w-5 h-5 text-white flex-shrink-0 mt-0.5" />
-          ) : isLocked ? (
-            <Lock className="w-5 h-5 text-gray-500 flex-shrink-0 mt-0.5" />
-          ) : (
-            <Circle className="w-5 h-5 text-white/70 flex-shrink-0 mt-0.5" />
-          )}
-          
-          {/* Category badge */}
+      <div className="flex items-start gap-3">
+        <span className="text-3xl flex-shrink-0 drop-shadow-lg">{getIcon()}</span>
+        <div className="flex-1">
           {category && (
-            <span className={`
-              text-xs font-semibold px-2 py-1 rounded-full
-              ${isGenerate || isCompleted 
-                ? 'bg-white/20 text-white' 
-                : 'bg-purple-100 text-purple-700'
-              }
-            `}>
+            <div className="text-xs font-bold uppercase tracking-wider opacity-70 mb-1.5 text-purple-300">
               {category}
-            </span>
+            </div>
+          )}
+          <div className="font-bold text-base mb-1.5 leading-tight">{label}</div>
+          {description && (
+            <div className="text-xs opacity-80 line-clamp-2 leading-relaxed">{description}</div>
+          )}
+          {selectedValue && isCompleted && (
+            <div className="mt-2 px-3 py-1.5 bg-green-500/30 rounded-lg text-xs font-bold border border-green-400/50">
+              ✓ {selectedValue}
+            </div>
+          )}
+          {isClickable && (
+            <div className="mt-3 text-xs font-bold text-purple-300 flex items-center gap-1 animate-bounce">
+              <span>Click to choose</span>
+              <span>→</span>
+            </div>
+          )}
+          {isCompleted && !selectedValue && (
+            <div className="mt-2 text-xs font-bold text-green-300">
+              ✓ Completed
+            </div>
+          )}
+          {isLocked && (
+            <div className="mt-2 text-xs font-semibold text-gray-500">
+              Complete previous steps
+            </div>
           )}
         </div>
-
-        {/* Label */}
-        <h3 className={`
-          font-bold text-sm mb-1
-          ${isGenerate || isCompleted ? 'text-white' : 'text-gray-900'}
-        `}>
-          {label}
-        </h3>
-
-        {/* Description */}
-        {description && (
-          <p className={`
-            text-xs mt-2
-            ${isGenerate || isCompleted ? 'text-white/80' : 'text-gray-600'}
-          `}>
-            {description}
-          </p>
-        )}
-
-        {/* Click hint */}
-        {isClickable && !isLocked && !isCompleted && (
-          <p className="text-xs text-white/60 mt-2 italic">
-            Click to choose →
-          </p>
-        )}
       </div>
 
-      {/* Output handle */}
-      <Handle type="source" position={Position.Right} className="w-3 h-3" />
+      <Handle 
+        type="source" 
+        position={Position.Right} 
+        className="w-3 h-3 bg-purple-500 border-2 border-purple-300" 
+      />
     </div>
   );
 }
 
+export default memo(DecisionNode);
