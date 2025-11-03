@@ -28,40 +28,13 @@ export default clerkMiddleware(async (auth, req) => {
     return NextResponse.redirect(signInUrl);
   }
 
-  // Check if user has active subscription
-  const path = req.nextUrl.pathname;
+  // ✅ FREE TIER ENABLED: Allow all authenticated users to access the app
+  // The API will enforce the 3-mindmap limit when users try to save
+  // Users can use the app for FREE until they hit the limit
   
-  try {
-    const response = await fetch(
-      `${req.nextUrl.origin}/api/check-subscription`,
-      {
-        headers: {
-          'x-user-id': userId,
-        },
-      }
-    );
-
-    if (!response.ok) {
-      // If check fails, allow through (fail open)
-      return NextResponse.next();
-    }
-
-    const { hasSubscription } = await response.json();
-
-    // Allow access to user profile (for subscription management) and pricing page
-    const allowedPaths = ['/pricing', '/user-profile'];
-    if (!hasSubscription && !allowedPaths.some(allowedPath => path.startsWith(allowedPath))) {
-      const pricingUrl = new URL('/pricing', req.url);
-      pricingUrl.searchParams.set('redirect', 'true');
-      return NextResponse.redirect(pricingUrl);
-    }
-
-    return NextResponse.next();
-  } catch (error) {
-    console.error('Subscription check error:', error);
-    // Fail open - allow access if check fails
-    return NextResponse.next();
-  }
+  // Allow access to all routes for authenticated users
+  // Subscription checks happen in the API routes, not middleware
+  return NextResponse.next();
 });
 
 export const config = {
