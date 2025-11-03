@@ -22,6 +22,19 @@ interface MindmapFlowProps {
 }
 
 export default function MindmapFlow({ data, onSave }: MindmapFlowProps) {
+  // Safety check: if data is missing, show error
+  if (!data) {
+    return (
+      <div className="w-full h-[800px] bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl border-2 border-gray-700 overflow-hidden flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-6xl mb-4">⚠️</div>
+          <h3 className="text-2xl font-bold text-white mb-2">Missing Mindmap Data</h3>
+          <p className="text-gray-400">Unable to display mindmap. Data is missing or invalid.</p>
+        </div>
+      </div>
+    );
+  }
+
   // Generate nodes and edges from mindmap data
   const { initialNodes, initialEdges } = useMemo(() => {
     const nodes: Node[] = [];
@@ -366,6 +379,7 @@ export default function MindmapFlow({ data, onSave }: MindmapFlowProps) {
         }
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data.projectName]); // Re-run when project name changes
 
   // Save flow state to localStorage when nodes or edges change
@@ -378,7 +392,8 @@ export default function MindmapFlow({ data, onSave }: MindmapFlowProps) {
       };
       localStorage.setItem(`flow-state-${data.projectName}`, JSON.stringify(flowState));
     }
-  }, [nodes, edges, data.projectName, setNodes, setEdges]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nodes, edges, data.projectName]);
 
   return (
     <div className="w-full h-[800px] bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl border-2 border-gray-700 overflow-hidden relative">

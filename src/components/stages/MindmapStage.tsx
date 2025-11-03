@@ -1,6 +1,8 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { ArrowRight, Users, Zap, Database, Shield, Globe } from 'lucide-react';
-import { AppData, Node, Edge } from '@/types';
+import React, { useMemo } from 'react';
+import { ArrowRight, Users, Zap, Database } from 'lucide-react';
+import { AppData } from '@/types';
+import MindmapFlow from '@/components/MindmapFlow';
+import { MindmapData } from '@/types/mindmap';
 
 interface MindmapStageProps {
   appData: AppData;
@@ -8,73 +10,66 @@ interface MindmapStageProps {
 }
 
 export default function MindmapStage({ appData, onContinue }: MindmapStageProps) {
-  const [nodes, setNodes] = useState<Node[]>([]);
-  const [edges, setEdges] = useState<Edge[]>([]);
-  const [draggedNode, setDraggedNode] = useState<number | null>(null);
-  const svgRef = useRef<SVGSVGElement>(null);
-
-  useEffect(() => {
-    // Generate initial nodes based on app data
-    const initialNodes: Node[] = [
-      { id: 1, x: 400, y: 200, label: appData.name, type: 'core', icon: '🚀' },
-      { id: 2, x: 200, y: 100, label: 'Users', type: 'user', icon: '👥' },
-      { id: 3, x: 600, y: 100, label: 'Dashboard', type: 'feature', icon: '📊' },
-      { id: 4, x: 200, y: 300, label: 'Authentication', type: 'backend', icon: '🔐' },
-      { id: 5, x: 600, y: 300, label: 'Database', type: 'backend', icon: '🗄️' },
-      { id: 6, x: 400, y: 400, label: 'API', type: 'integration', icon: '🔌' }
-    ];
-
-    const initialEdges: Edge[] = [
-      { from: 1, to: 2 },
-      { from: 1, to: 3 },
-      { from: 1, to: 4 },
-      { from: 1, to: 5 },
-      { from: 1, to: 6 },
-      { from: 2, to: 4 },
-      { from: 3, to: 5 },
-      { from: 4, to: 6 },
-      { from: 5, to: 6 }
-    ];
-
-    setNodes(initialNodes);
-    setEdges(initialEdges);
+  // Convert AppData to MindmapData format for React Flow
+  const mindmapData: MindmapData = useMemo(() => {
+    // Extract tech stack components from array
+    const techStackArray = appData.techStack || [];
+    const database = techStackArray.find(t => t.toLowerCase().includes('postgres') || t.toLowerCase().includes('mongodb') || t.toLowerCase().includes('sql')) || techStackArray[0] || 'PostgreSQL';
+    const frontend = techStackArray.find(t => t.toLowerCase().includes('react') || t.toLowerCase().includes('next') || t.toLowerCase().includes('vue')) || techStackArray[1] || 'React';
+    const backend = techStackArray.find(t => t.toLowerCase().includes('node') || t.toLowerCase().includes('express') || t.toLowerCase().includes('api')) || techStackArray[2] || 'Node.js';
+    
+    return {
+      projectName: appData.name,
+      projectDescription: appData.description,
+      targetAudience: appData.platform === 'web' ? 'Web users' : 'Mobile users',
+      competitors: [
+        {
+          name: 'Competitor 1',
+          strength: 'Established market presence',
+          ourAdvantage: 'Modern tech stack and better UX'
+        },
+        {
+          name: 'Competitor 2',
+          strength: 'Large user base',
+          ourAdvantage: 'More affordable pricing'
+        },
+        {
+          name: 'Competitor 3',
+          strength: 'Feature-rich platform',
+          ourAdvantage: 'Simpler, more intuitive interface'
+        }
+      ],
+      techStack: {
+        frontend: frontend,
+        backend: backend,
+        database: database,
+        auth: 'Clerk',
+        payments: 'Stripe',
+        hosting: 'Vercel'
+      },
+      features: appData.features.map((feature, index) => ({
+        id: `feature-${index}`,
+        title: feature,
+        description: `Core functionality: ${feature}`,
+        priority: index < 3 ? 'high' as const : index < 6 ? 'medium' as const : 'low' as const
+      })),
+      monetization: {
+        model: 'subscription' as const,
+        pricing: '$39.99/month',
+        freeTier: '3 free mindmaps',
+        paidTier: 'Unlimited features'
+      },
+      userPersona: {
+        name: `${appData.platform === 'web' ? 'Web' : 'Mobile'} Entrepreneurs`,
+        description: `Builders creating ${appData.platform === 'web' ? 'web' : 'mobile'} applications`,
+        painPoint: 'Slow development process and complex setup',
+        goal: 'Ship products faster with AI-powered tools'
+      }
+    };
   }, [appData]);
 
-  const handleMouseDown = (nodeId: number) => {
-    setDraggedNode(nodeId);
-  };
-
-  const handleMouseMove = (e: React.MouseEvent<SVGSVGElement>) => {
-    if (draggedNode === null) return;
-
-    const rect = svgRef.current?.getBoundingClientRect();
-    if (!rect) return;
-
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-
-    setNodes(prev => prev.map(node => 
-      node.id === draggedNode ? { ...node, x, y } : node
-    ));
-  };
-
-  const handleMouseUp = () => {
-    setDraggedNode(null);
-  };
-
-  const getNodeColor = (type: Node['type']) => {
-    switch (type) {
-      case 'user': return 'fill-blue-500';
-      case 'feature': return 'fill-green-500';
-      case 'backend': return 'fill-purple-500';
-      case 'core': return 'fill-orange-500';
-      case 'integration': return 'fill-pink-500';
-      default: return 'fill-gray-500';
-    }
-  };
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-slate-950 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-slate-950 flex flex-col items-center justify-center p-4">
       <div className="max-w-6xl w-full">
         {/* Header */}
         <div className="text-center mb-8">
@@ -82,95 +77,13 @@ export default function MindmapStage({ appData, onContinue }: MindmapStageProps)
             Your App Architecture
           </h1>
           <p className="text-xl text-gray-300 max-w-2xl mx-auto">
-            Here's how your {appData.name} will be structured. Drag the nodes to explore the relationships.
+            Here's how your {appData.name} will be structured. Explore the interactive mindmap below.
           </p>
         </div>
 
-        {/* Mindmap Container */}
-        <div className="bg-white/5 backdrop-blur-sm rounded-xl p-8 mb-8">
-          <div className="bg-white/5 rounded-lg p-4 mb-6">
-            <svg
-              ref={svgRef}
-              width="100%"
-              height="500"
-              className="cursor-grab active:cursor-grabbing"
-              onMouseMove={handleMouseMove}
-              onMouseUp={handleMouseUp}
-              onMouseLeave={handleMouseUp}
-            >
-              {/* Edges */}
-              {edges.map((edge, idx) => {
-                const fromNode = nodes.find(n => n.id === edge.from);
-                const toNode = nodes.find(n => n.id === edge.to);
-                if (!fromNode || !toNode) return null;
-
-                return (
-                  <line
-                    key={idx}
-                    x1={fromNode.x}
-                    y1={fromNode.y}
-                    x2={toNode.x}
-                    y2={toNode.y}
-                    stroke="rgba(255, 255, 255, 0.3)"
-                    strokeWidth="2"
-                  />
-                );
-              })}
-
-              {/* Nodes */}
-              {nodes.map((node) => (
-                <g key={node.id}>
-                  <circle
-                    cx={node.x}
-                    cy={node.y}
-                    r="40"
-                    className={`${getNodeColor(node.type)} cursor-pointer hover:opacity-80 transition-opacity`}
-                    onMouseDown={() => handleMouseDown(node.id)}
-                  />
-                  <text
-                    x={node.x}
-                    y={node.y - 5}
-                    textAnchor="middle"
-                    className="fill-white text-sm font-bold pointer-events-none"
-                  >
-                    {node.icon}
-                  </text>
-                  <text
-                    x={node.x}
-                    y={node.y + 60}
-                    textAnchor="middle"
-                    className="fill-white text-xs font-semibold pointer-events-none"
-                  >
-                    {node.label}
-                  </text>
-                </g>
-              ))}
-            </svg>
-          </div>
-
-          {/* Legend */}
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-orange-500 rounded-full"></div>
-              <span className="text-white text-sm">Core</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-blue-500 rounded-full"></div>
-              <span className="text-white text-sm">Users</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-green-500 rounded-full"></div>
-              <span className="text-white text-sm">Features</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-purple-500 rounded-full"></div>
-              <span className="text-white text-sm">Backend</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-pink-500 rounded-full"></div>
-              <span className="text-white text-sm">Integration</span>
-            </div>
-          </div>
+        {/* React Flow Mindmap */}
+        <div className="mb-8">
+          <MindmapFlow data={mindmapData} />
         </div>
 
         {/* App Details */}

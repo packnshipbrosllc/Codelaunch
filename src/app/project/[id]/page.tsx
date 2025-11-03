@@ -352,7 +352,23 @@ export default function ProjectDetailPage() {
         {/* Mindmap Tab */}
         {activeTab === 'mindmap' && (
           <div className="bg-gray-800/50 backdrop-blur-sm border border-purple-500/20 rounded-2xl shadow-xl overflow-hidden" style={{ height: '700px' }}>
-            <MindmapFlow data={mindmapData} />
+            {mindmapData ? (
+              <MindmapFlow data={mindmapData} />
+            ) : (
+              <div className="flex items-center justify-center h-full">
+                <div className="text-center">
+                  <div className="text-6xl mb-4">🧠</div>
+                  <h3 className="text-2xl font-bold text-white mb-2">No Mindmap Data</h3>
+                  <p className="text-gray-400 mb-4">This project doesn't have a mindmap yet.</p>
+                  <button
+                    onClick={() => router.push(`/create?projectId=${projectId}`)}
+                    className="px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 rounded-lg font-semibold transition-all"
+                  >
+                    Generate Mindmap →
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
