@@ -226,13 +226,19 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Create New Project Button */}
-        <div className="mb-8">
+        {/* Create New Project Buttons */}
+        <div className="mb-8 flex flex-wrap gap-4">
           <Link
             href="/create"
             className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold rounded-xl shadow-lg hover:from-purple-700 hover:to-pink-700 transition-all hover:shadow-lg duration-200 transform hover:scale-105"
           >
             ➕ Create New Project
+          </Link>
+          <Link
+            href="/build"
+            className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-semibold rounded-xl shadow-lg hover:from-blue-700 hover:to-cyan-700 transition-all hover:shadow-lg duration-200 transform hover:scale-105 border-2 border-blue-400/30"
+          >
+            🎯 Interactive Builder (NEW!)
           </Link>
         </div>
 

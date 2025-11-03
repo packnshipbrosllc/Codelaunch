@@ -275,23 +275,37 @@ export default function LandingPage() {
           
           {!isSignedIn ? (
             <>
-              <SignUpButton mode="modal">
-                <button className="bg-purple-600 hover:bg-purple-500 text-white px-10 py-4 rounded-lg text-lg font-semibold transition transform hover:scale-105 shadow-lg shadow-purple-600/30 mb-4">
-                  Build Your First App Free
-                </button>
-              </SignUpButton>
-              <p className="text-gray-400 text-sm">
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <SignUpButton mode="modal">
+                  <button className="bg-purple-600 hover:bg-purple-500 text-white px-10 py-4 rounded-lg text-lg font-semibold transition transform hover:scale-105 shadow-lg shadow-purple-600/30">
+                    Build Your First App Free
+                  </button>
+                </SignUpButton>
+                <Link href="/sign-in">
+                  <button className="bg-gray-800/50 hover:bg-gray-800 border border-purple-500/30 text-white px-10 py-4 rounded-lg text-lg font-semibold transition transform hover:scale-105">
+                    Try Interactive Builder →
+                  </button>
+                </Link>
+              </div>
+              <p className="text-gray-400 text-sm mt-4">
                 3 free mindmaps • No credit card required
               </p>
             </>
           ) : (
             <>
-              <Link href="/dashboard">
-                <button className="bg-purple-600 hover:bg-purple-500 text-white px-10 py-4 rounded-lg text-lg font-semibold transition transform hover:scale-105 shadow-lg shadow-purple-600/30 mb-4">
-                  Go to Dashboard →
-                </button>
-              </Link>
-              <p className="text-gray-400 text-sm">
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Link href="/dashboard">
+                  <button className="bg-purple-600 hover:bg-purple-500 text-white px-10 py-4 rounded-lg text-lg font-semibold transition transform hover:scale-105 shadow-lg shadow-purple-600/30">
+                    Go to Dashboard →
+                  </button>
+                </Link>
+                <Link href="/build">
+                  <button className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white px-10 py-4 rounded-lg text-lg font-semibold transition transform hover:scale-105 shadow-lg shadow-blue-600/30 border-2 border-blue-400/30">
+                    🎯 Try Interactive Builder (NEW!)
+                  </button>
+                </Link>
+              </div>
+              <p className="text-gray-400 text-sm mt-4">
                 Continue building your projects
               </p>
             </>
