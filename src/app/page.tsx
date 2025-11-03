@@ -3,10 +3,13 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { SignInButton, SignUpButton, UserButton, useUser } from '@clerk/nextjs';
+import { useRouter } from 'next/navigation';
 
 export default function LandingPage() {
   const { isSignedIn } = useUser();
+  const router = useRouter();
   const [contactForm, setContactForm] = useState({ name: '', email: '', message: '' });
+  const [checkoutLoading, setCheckoutLoading] = useState<'monthly' | 'yearly' | null>(null);
 
   const handleContactSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -14,6 +17,44 @@ export default function LandingPage() {
     console.log('Contact form submitted:', contactForm);
     alert('Thank you for your message! We\'ll get back to you at ' + contactForm.email);
     setContactForm({ name: '', email: '', message: '' });
+  };
+
+  const handleCheckout = async (plan: 'monthly' | 'yearly') => {
+    if (!isSignedIn) {
+      router.push('/sign-in?redirect=/');
+      return;
+    }
+
+    setCheckoutLoading(plan);
+
+    try {
+      const priceId = plan === 'monthly' 
+        ? process.env.NEXT_PUBLIC_STRIPE_MONTHLY_PRICE_ID 
+        : process.env.NEXT_PUBLIC_STRIPE_YEARLY_PRICE_ID;
+
+      const response = await fetch(`${window.location.origin}/api/stripe/create-checkout`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          priceId,
+          plan,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to create checkout session');
+      }
+
+      const { url } = await response.json();
+      window.location.href = url;
+    } catch (error: any) {
+      console.error('Checkout error:', error);
+      alert(error.message || 'Something went wrong. Please try again.');
+      setCheckoutLoading(null);
+    }
   };
 
   return (
@@ -566,11 +607,24 @@ export default function LandingPage() {
                 </li>
               </ul>
 
-              <Link href="/pricing">
-                <button className="w-full bg-purple-600 hover:bg-purple-500 text-white py-3 rounded-lg font-medium transition shadow-lg shadow-purple-600/30">
-                  Get Started
-                </button>
-              </Link>
+              <button
+                onClick={() => handleCheckout('monthly')}
+                disabled={checkoutLoading === 'monthly'}
+                className={`w-full py-3 rounded-lg font-medium transition shadow-lg ${
+                  checkoutLoading === 'monthly'
+                    ? 'bg-gray-700 text-gray-400 cursor-not-allowed'
+                    : 'bg-purple-600 hover:bg-purple-500 text-white shadow-purple-600/30'
+                }`}
+              >
+                {checkoutLoading === 'monthly' ? (
+                  <>
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin inline-block mr-2" />
+                    Processing...
+                  </>
+                ) : (
+                  'Get Started'
+                )}
+              </button>
             </div>
 
             {/* Annual Tier */}
@@ -606,11 +660,24 @@ export default function LandingPage() {
                 </li>
               </ul>
 
-              <Link href="/pricing">
-                <button className="w-full bg-gray-800 hover:bg-gray-700 text-white py-3 rounded-lg font-medium transition border border-purple-900/30">
-                  Get Annual
-                </button>
-              </Link>
+              <button
+                onClick={() => handleCheckout('yearly')}
+                disabled={checkoutLoading === 'yearly'}
+                className={`w-full py-3 rounded-lg font-medium transition border ${
+                  checkoutLoading === 'yearly'
+                    ? 'bg-gray-700 text-gray-400 cursor-not-allowed border-gray-600'
+                    : 'bg-gray-800 hover:bg-gray-700 text-white border-purple-900/30'
+                }`}
+              >
+                {checkoutLoading === 'yearly' ? (
+                  <>
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin inline-block mr-2" />
+                    Processing...
+                  </>
+                ) : (
+                  'Get Annual'
+                )}
+              </button>
             </div>
           </div>
         </div>

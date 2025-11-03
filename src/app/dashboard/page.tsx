@@ -7,6 +7,7 @@ import { useUser } from '@clerk/nextjs';
 import Link from 'next/link';
 import { CreditCard } from 'lucide-react';
 import Header from '@/components/Header';
+import { MindmapLimitBanner } from '@/components/MindmapLimitBanner';
 
 interface Project {
   id: string;
@@ -138,6 +139,9 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900">
       <Header title="My Projects" />
       <div className="container mx-auto px-4 py-8">
+        {/* Mindmap Limit Banner */}
+        <MindmapLimitBanner />
+        
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-400 to-pink-500 bg-clip-text text-transparent mb-2">

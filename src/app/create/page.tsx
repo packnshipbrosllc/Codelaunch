@@ -9,6 +9,8 @@ import AIAssistantChatEnhanced from '@/components/AIAssistantChatEnhanced';
 import FloatingMoodBoard from '@/components/FloatingMoodBoard';
 import Header from '@/components/Header';
 import { MindmapData } from '@/types/mindmap';
+import { useMindmapLimit } from '@/hooks/useMindmapLimit';
+import Link from 'next/link';
 
 // Debug logging
 if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
@@ -19,6 +21,7 @@ if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
 export default function CreateProjectPage() {
   const router = useRouter();
   const { user, isLoaded } = useUser();
+  const { canCreateMore, isSubscribed, remainingFreeMindmaps } = useMindmapLimit();
   
   const [idea, setIdea] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
@@ -45,6 +48,12 @@ export default function CreateProjectPage() {
   const handleGenerate = async () => {
     if (!idea.trim() || idea.trim().length < 10) {
       setError('Please provide a detailed app idea (at least 10 characters)');
+      return;
+    }
+
+    // Check if user can create more mindmaps
+    if (!canCreateMore) {
+      setError('You\'ve reached your free mindmap limit. Please upgrade to Pro to continue creating mindmaps.');
       return;
     }
 
@@ -88,15 +97,30 @@ export default function CreateProjectPage() {
 
       const result = await response.json();
 
+      // Check if limit was reached during save
+      if (response.status === 403 && result.error === 'FREE_LIMIT_REACHED') {
+        setError(result.message || 'You\'ve reached your free mindmap limit. Please upgrade to Pro.');
+        setMindmapData(null); // Clear the mindmap so user can't try to save again
+        return;
+      }
+
       if (result.success) {
-        alert('Mindmap saved successfully! You can continue working or go to dashboard.');
+        const message = isSubscribed 
+          ? 'Mindmap saved successfully! You can continue working or go to dashboard.'
+          : `Mindmap saved! You have ${result.remainingFreeMindmaps || remainingFreeMindmaps || 0} free mindmap${(result.remainingFreeMindmaps || remainingFreeMindmaps || 0) !== 1 ? 's' : ''} remaining.`;
+        alert(message);
         // Stay on this page - user can use Dashboard button to navigate away
       } else {
-        throw new Error(result.error);
+        throw new Error(result.error || 'Failed to save mindmap');
       }
     } catch (err: any) {
       console.error('Error saving mindmap:', err);
-      alert('Failed to save mindmap: ' + err.message);
+      if (err.message?.includes('FREE_LIMIT_REACHED')) {
+        setError('You\'ve reached your free mindmap limit. Please upgrade to Pro to continue.');
+        setMindmapData(null);
+      } else {
+        alert('Failed to save mindmap: ' + err.message);
+      }
     }
   };
 
@@ -135,15 +159,32 @@ export default function CreateProjectPage() {
               </label>
 
               {error && (
-                <div className="mb-4 p-4 bg-red-500/10 border border-red-500/50 rounded-lg text-red-400">
-                  {error}
+                <div className="mb-4 p-4 bg-red-500/10 border border-red-500/50 rounded-lg">
+                  <p className="text-red-400 mb-3">{error}</p>
+                  {error.includes('limit') && (
+                    <Link href="/#pricing">
+                      <button className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white px-6 py-2 rounded-lg font-medium transition">
+                        Upgrade to Pro →
+                      </button>
+                    </Link>
+                  )}
+                </div>
+              )}
+
+              {/* Show remaining mindmaps for free users */}
+              {!isSubscribed && remainingFreeMindmaps !== null && remainingFreeMindmaps < 3 && (
+                <div className="mb-4 p-4 bg-purple-500/10 border border-purple-500/50 rounded-lg">
+                  <p className="text-purple-300 text-sm">
+                    ⚠️ You have {remainingFreeMindmaps} free mindmap{remainingFreeMindmaps !== 1 ? 's' : ''} remaining. 
+                    {remainingFreeMindmaps === 0 && ' Upgrade to Pro for unlimited mindmaps.'}
+                  </p>
                 </div>
               )}
 
               <div className="flex gap-4">
                 <button
                   onClick={handleGenerate}
-                  disabled={isGenerating || !idea.trim()}
+                  disabled={isGenerating || !idea.trim() || !canCreateMore}
                   className="flex-1 px-8 py-4 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 disabled:from-gray-600 disabled:to-gray-600 disabled:cursor-not-allowed rounded-lg font-semibold text-lg transition-all shadow-lg hover:shadow-purple-500/50 flex items-center justify-center gap-2"
                 >
                   {isGenerating ? (
