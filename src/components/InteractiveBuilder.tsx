@@ -48,13 +48,13 @@ export default function InteractiveBuilder({ userId }: InteractiveBuilderProps) 
   const [isLoading, setIsLoading] = useState(false);
   const [progress, setProgress] = useState({ currentStep: 0, totalSteps: 0, percentage: 0 });
   const [isGenerating, setIsGenerating] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
-
+  const [isCompleted, setIsCompleted] = useState(false);
+  
   // Prevent double initialization
   const isInitialized = useRef(false);
-  const processedQuestions = useRef<Set<string>>(new Set());
+  const isProcessing = useRef(false);
 
-  // Initialize with root question
+  // Initialize with root question (only once)
   useEffect(() => {
     if (!isInitialized.current) {
       isInitialized.current = true;
@@ -63,20 +63,38 @@ export default function InteractiveBuilder({ userId }: InteractiveBuilderProps) 
   }, []);
 
   // Fetch next question from API
-  const fetchNextQuestion = async () => {
-    if (isLoading || isProcessing) return; // Prevent double calls
+  const fetchNextQuestion = async (
+    currentDecisions = decisions,
+    currentPurpose = appPurpose,
+    currentType = appType
+  ) => {
+    if (isProcessing.current) return; // Prevent double calls
     
+    isProcessing.current = true;
     setIsLoading(true);
+    
     try {
+      console.log('🔍 Fetching next question with:', {
+        decisions: currentDecisions,
+        appPurpose: currentPurpose,
+        appType: currentType
+      });
+
       const response = await fetch('/api/decision-tree/next', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          currentDecisions: decisions,
-          appPurpose,
-          appType
+          currentDecisions: currentDecisions,
+          appPurpose: currentPurpose,
+          appType: currentType
         })
       });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('❌ API Error:', errorData);
+        throw new Error(errorData.error || 'Failed to fetch question');
+      }
 
       const data = await response.json();
 
@@ -86,8 +104,8 @@ export default function InteractiveBuilder({ userId }: InteractiveBuilderProps) 
         return;
       }
 
-      if (data.question && !processedQuestions.current.has(data.question.id)) {
-        processedQuestions.current.add(data.question.id);
+      if (data.question) {
+        console.log('✅ Next question:', data.question.question);
         setCurrentQuestion(data.question);
         setProgress(data.progress);
         addQuestionToFlow(data.question);
@@ -99,17 +117,21 @@ export default function InteractiveBuilder({ userId }: InteractiveBuilderProps) 
       alert('Failed to load next question. Please try again.');
     } finally {
       setIsLoading(false);
+      isProcessing.current = false;
     }
   };
 
   // Add question node to React Flow
   const addQuestionToFlow = (question: DecisionNodeType) => {
+    const nodeExists = nodes.some(n => n.id === question.id);
+    if (nodeExists) return; // Prevent duplicates
+
     const newNode: Node = {
       id: question.id,
       type: 'decision',
       position: { 
-        x: 100 + (progress.currentStep * 250), 
-        y: 100 
+        x: 150 + (progress.currentStep * 280), 
+        y: 150 
       },
       data: {
         label: question.question,
@@ -134,8 +156,8 @@ export default function InteractiveBuilder({ userId }: InteractiveBuilderProps) 
         target: question.id,
         type: 'smoothstep',
         animated: true,
-        style: { stroke: '#9333ea', strokeWidth: 2 },
-        markerEnd: { type: MarkerType.ArrowClosed, color: '#9333ea' }
+        style: { stroke: '#a855f7', strokeWidth: 3 },
+        markerEnd: { type: MarkerType.ArrowClosed, color: '#a855f7' }
       };
       setEdges((eds) => [...eds, newEdge]);
     }
@@ -149,66 +171,78 @@ export default function InteractiveBuilder({ userId }: InteractiveBuilderProps) 
 
   // Handle when user selects a choice
   const handleChoiceSelect = async (choice: Choice) => {
-    if (!currentQuestion || isProcessing) return; // Prevent double clicks
+    if (!currentQuestion || isProcessing.current) return;
     
-    setIsProcessing(true);
+    isProcessing.current = true;
+    
+    console.log('✅ Choice selected:', choice.label, 'for question:', currentQuestion.id);
 
-    try {
-      // Update decisions
-      const newDecisions = {
-        ...decisions,
-        [currentQuestion.id]: choice.value
-      };
-      setDecisions(newDecisions);
+    // Update decisions with the selected value
+    const newDecisions = {
+      ...decisions,
+      [currentQuestion.id]: choice.value
+    };
+    setDecisions(newDecisions);
 
-      // Update app purpose/type if this was root or platform question
-      if (currentQuestion.id === 'root') {
-        setAppPurpose(choice.value as AppPurpose);
-      } else if (currentQuestion.id === 'platform') {
-        setAppType(choice.value as AppType);
-      }
-
-      // Mark current node as completed
-      setNodes((nds) =>
-        nds.map((node) =>
-          node.id === currentQuestion.id
-            ? {
-                ...node,
-                data: {
-                  ...node.data,
-                  isClickable: false,
-                  isCompleted: true,
-                  label: `${choice.label}`, // Update label to show choice
-                  selectedValue: choice.value
-                }
-              }
-            : node
-        )
-      );
-
-      // Close panel
-      setShowChoicePanel(false);
-
-      // Save progress to database
-      await saveProgress(newDecisions);
-
-      // Fetch next question
-      await fetchNextQuestion();
-    } finally {
-      setIsProcessing(false);
+    // Update app purpose/type if this was root or platform question
+    let newAppPurpose = appPurpose;
+    let newAppType = appType;
+    
+    if (currentQuestion.id === 'root') {
+      newAppPurpose = choice.value as AppPurpose;
+      setAppPurpose(newAppPurpose);
+    } else if (currentQuestion.id === 'platform') {
+      newAppType = choice.value as AppType;
+      setAppType(newAppType);
     }
+
+    // Mark current node as completed and show selected value
+    setNodes((nds) =>
+      nds.map((node) =>
+        node.id === currentQuestion.id
+          ? {
+              ...node,
+              data: {
+                ...node.data,
+                isClickable: false,
+                isCompleted: true,
+                selectedValue: choice.label,
+                label: currentQuestion.category || currentQuestion.question
+              }
+            }
+          : node
+      )
+    );
+
+    // Close panel
+    setShowChoicePanel(false);
+
+    // Save progress to database (non-blocking)
+    saveProgress(newDecisions, newAppPurpose, newAppType).catch(err => 
+      console.error('Failed to save progress:', err)
+    );
+
+    // Delay before fetching next question to ensure state is updated
+    setTimeout(() => {
+      isProcessing.current = false;
+      fetchNextQuestion(newDecisions, newAppPurpose, newAppType);
+    }, 500);
   };
 
   // Save progress to Supabase
-  const saveProgress = async (currentDecisions: Record<string, string>) => {
+  const saveProgress = async (
+    currentDecisions: Record<string, string>,
+    currentPurpose?: AppPurpose | null,
+    currentType?: AppType | null
+  ) => {
     try {
       await fetch('/api/decision-tree/save', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           sessionId,
-          appPurpose,
-          appType,
+          appPurpose: currentPurpose || appPurpose,
+          appType: currentType || appType,
           decisions: currentDecisions,
           currentStep: progress.currentStep,
           totalSteps: progress.totalSteps
@@ -216,20 +250,21 @@ export default function InteractiveBuilder({ userId }: InteractiveBuilderProps) 
       });
     } catch (error) {
       console.error('Error saving progress:', error);
-      // Don't block user flow if save fails
     }
   };
 
   // Handle completion - all questions answered
   const handleCompletion = () => {
+    setIsCompleted(true);
+    
     // Add final "Generate" node
     const generateNode: Node = {
       id: 'generate',
       type: 'decision',
-      position: { x: 100 + (progress.currentStep * 250), y: 100 },
+      position: { x: 150 + (progress.currentStep * 280), y: 150 },
       data: {
-        label: '🚀 Generate My App!',
-        description: 'Click to create your app structure',
+        label: '🚀 Generate My Custom App!',
+        description: 'Click to create your personalized app structure',
         category: 'Final Step',
         nodeType: 'generate',
         isClickable: true,
@@ -250,18 +285,24 @@ export default function InteractiveBuilder({ userId }: InteractiveBuilderProps) 
         target: 'generate',
         type: 'smoothstep',
         animated: true,
-        style: { stroke: '#10b981', strokeWidth: 3 },
+        style: { stroke: '#10b981', strokeWidth: 4 },
         markerEnd: { type: MarkerType.ArrowClosed, color: '#10b981' }
       };
       setEdges((eds) => [...eds, newEdge]);
     }
+
+    isProcessing.current = false;
   };
 
-  // Generate the final mindmap/PRD/code
+  // Generate the final mindmap with all user selections
   const handleGenerate = async () => {
+    if (isGenerating || isProcessing.current) return;
+    
     setIsGenerating(true);
     
     try {
+      console.log('🚀 Generating mindmap with:', { decisions, appPurpose, appType });
+      
       const response = await fetch('/api/decision-tree/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -276,7 +317,7 @@ export default function InteractiveBuilder({ userId }: InteractiveBuilderProps) 
       const data = await response.json();
 
       if (data.success && data.data) {
-        // Save the mindmap and redirect to create page with the data
+        // Save the mindmap and redirect to project page
         const saveResponse = await fetch('/api/save-mindmap', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -291,9 +332,8 @@ export default function InteractiveBuilder({ userId }: InteractiveBuilderProps) 
           // Redirect to project page
           router.push(`/project/${saveData.project.id}`);
         } else {
-          // Fallback: redirect to create page with data in URL
-          const encodedData = encodeURIComponent(JSON.stringify(data.data || data.mindmapData));
-          router.push(`/create?data=${encodedData}`);
+          // Fallback: redirect to dashboard
+          router.push('/dashboard');
         }
       } else {
         throw new Error(data.error || 'Failed to generate app');
@@ -313,7 +353,7 @@ export default function InteractiveBuilder({ userId }: InteractiveBuilderProps) 
   );
 
   return (
-    <div className="h-screen w-full relative">
+    <div className="h-screen w-full relative bg-gradient-to-br from-gray-900 via-black to-gray-900">
       {/* Progress tracker */}
       {progress.currentStep > 0 && (
         <ProgressTracker
@@ -325,7 +365,7 @@ export default function InteractiveBuilder({ userId }: InteractiveBuilderProps) 
       )}
 
       {/* React Flow canvas */}
-      <div className={`h-full ${progress.currentStep > 0 ? 'pt-32' : ''}`}>
+      <div className={`h-full ${progress.currentStep > 0 ? 'pt-36' : ''}`}>
         <ReactFlow
           nodes={nodes}
           edges={edges}
@@ -334,15 +374,30 @@ export default function InteractiveBuilder({ userId }: InteractiveBuilderProps) 
           onConnect={onConnect}
           nodeTypes={nodeTypes}
           fitView
-          className="bg-gradient-to-br from-gray-900 via-purple-900/20 to-gray-900"
+          fitViewOptions={{
+            padding: 0.3,
+            minZoom: 0.5,
+            maxZoom: 1.5
+          }}
+          defaultViewport={{ x: 0, y: 0, zoom: 0.8 }}
+          minZoom={0.3}
+          maxZoom={2}
+          className="bg-gradient-to-br from-gray-900 via-black to-purple-900/20"
         >
-          <Background color="#1f2937" gap={20} variant={BackgroundVariant.Dots} />
-          <Controls />
+          <Background 
+            color="#4b5563" 
+            gap={24}
+            variant={BackgroundVariant.Dots}
+            className="opacity-30"
+          />
+          <Controls 
+            className="bg-gray-800 border border-gray-700 rounded-lg shadow-xl"
+          />
         </ReactFlow>
       </div>
 
       {/* Choice panel */}
-      {showChoicePanel && currentQuestion && (
+      {showChoicePanel && currentQuestion && !isCompleted && (
         <ChoicePanel
           question={currentQuestion}
           onSelect={handleChoiceSelect}
@@ -353,15 +408,18 @@ export default function InteractiveBuilder({ userId }: InteractiveBuilderProps) 
       {/* Loading overlay */}
       {(isLoading || isGenerating) && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-gradient-to-br from-gray-900 to-gray-800 border-2 border-purple-500/50 rounded-xl p-8 flex flex-col items-center gap-4 shadow-2xl">
-            <div className="animate-spin rounded-full h-12 w-12 border-4 border-purple-500 border-t-transparent" />
-            <div className="font-semibold text-white text-lg">
-              {isGenerating ? 'Generating your app...' : 'Loading...'}
+          <div className="bg-gradient-to-br from-gray-900 to-gray-800 border-2 border-purple-500 rounded-2xl p-10 flex flex-col items-center gap-4 shadow-2xl shadow-purple-500/50">
+            <div className="relative">
+              <div className="animate-spin rounded-full h-16 w-16 border-4 border-purple-500 border-t-transparent" />
+              <div className="absolute inset-0 rounded-full bg-purple-500/20 blur-xl" />
+            </div>
+            <div className="font-bold text-white text-xl">
+              {isGenerating ? '🚀 Generating Your Custom App...' : 'Loading...'}
             </div>
             {isGenerating && (
-              <p className="text-sm text-gray-400 text-center max-w-sm">
-                Creating your custom mindmap with competitor research...
-              </p>
+              <div className="text-gray-400 text-sm text-center max-w-md">
+                Creating a personalized mindmap with all your selections, competitor research, and technical stack...
+              </div>
             )}
           </div>
         </div>
@@ -369,18 +427,25 @@ export default function InteractiveBuilder({ userId }: InteractiveBuilderProps) 
 
       {/* Welcome message when starting */}
       {nodes.length === 0 && !isLoading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-gray-900 via-purple-900/20 to-gray-900">
-          <div className="text-center max-w-2xl px-6">
-            <span className="text-6xl mb-4 block animate-rocket-bounce">🚀</span>
-            <h1 className="text-4xl font-bold text-white mb-4">
+        <div className="absolute inset-0 flex items-center justify-center p-6">
+          <div className="text-center max-w-3xl">
+            <div className="mb-6 animate-rocket-bounce">
+              <span className="text-8xl drop-shadow-2xl">🚀</span>
+            </div>
+            <h1 className="text-5xl font-bold bg-gradient-to-r from-purple-400 via-pink-400 to-purple-400 bg-clip-text text-transparent mb-6 leading-tight">
               Let's Build Your App Together!
             </h1>
-            <p className="text-lg text-gray-300 mb-8">
-              Answer a few questions and we'll create a custom app structure just for you.
-              Don't worry - we'll explain everything along the way! 
+            <p className="text-xl text-gray-300 mb-4 leading-relaxed">
+              Answer a few questions and we'll create a <span className="text-purple-400 font-semibold">custom app structure</span> just for you.
+            </p>
+            <p className="text-lg text-gray-400 mb-10">
+              Don't worry - we'll explain everything along the way! 💡
             </p>
             <div className="inline-block animate-bounce">
-              <span className="text-2xl">👇</span>
+              <div className="text-4xl drop-shadow-lg">👇</div>
+            </div>
+            <div className="mt-8 text-sm text-gray-500">
+              Your first question will appear in a moment...
             </div>
           </div>
         </div>
@@ -388,4 +453,3 @@ export default function InteractiveBuilder({ userId }: InteractiveBuilderProps) 
     </div>
   );
 }
-
