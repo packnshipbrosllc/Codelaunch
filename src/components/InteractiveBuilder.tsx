@@ -121,18 +121,43 @@ export default function InteractiveBuilder({ userId }: InteractiveBuilderProps) 
     }
   };
 
-  // Add question node to React Flow
+  // Add question node to React Flow with smart S-curve positioning
   const addQuestionToFlow = (question: DecisionNodeType) => {
     const nodeExists = nodes.some(n => n.id === question.id);
     if (nodeExists) return; // Prevent duplicates
 
+    // Calculate position based on progress step
+    const step = progress.currentStep - 1; // 0-indexed
+    
+    // Create a flowing S-curve layout
+    let x, y;
+    
+    if (step === 0) {
+      // Root question - center top
+      x = 400;
+      y = 50;
+    } else if (step === 1) {
+      // Platform question - slightly below and right
+      x = 700;
+      y = 150;
+    } else {
+      // Subsequent questions - flowing path
+      const row = Math.floor((step - 2) / 3); // 3 nodes per row
+      const col = (step - 2) % 3;
+      
+      // Alternate direction each row for visual flow
+      const isEvenRow = row % 2 === 0;
+      const xBase = isEvenRow ? 200 : 800;
+      const xDirection = isEvenRow ? 1 : -1;
+      
+      x = xBase + (col * 300 * xDirection);
+      y = 300 + (row * 200);
+    }
+
     const newNode: Node = {
       id: question.id,
       type: 'decision',
-      position: { 
-        x: 150 + (progress.currentStep * 280), 
-        y: 150 
-      },
+      position: { x, y },
       data: {
         label: question.question,
         description: question.explanation,
@@ -147,7 +172,7 @@ export default function InteractiveBuilder({ userId }: InteractiveBuilderProps) 
 
     setNodes((nds) => [...nds, newNode]);
 
-    // Add edge from previous node if exists
+    // Add flowing edge from previous node
     if (nodes.length > 0) {
       const previousNode = nodes[nodes.length - 1];
       const newEdge: Edge = {
@@ -257,11 +282,21 @@ export default function InteractiveBuilder({ userId }: InteractiveBuilderProps) 
   const handleCompletion = () => {
     setIsCompleted(true);
     
+    // Calculate position for generate button based on S-curve layout
+    const step = progress.currentStep - 1;
+    const row = Math.floor((step - 2) / 3);
+    const col = (step - 2) % 3;
+    const isEvenRow = row % 2 === 0;
+    
+    // Place generate button at the end of the flow
+    const generateX = isEvenRow ? 200 + (col * 300) + 300 : 800 - (col * 300) - 300;
+    const generateY = 300 + (row * 200);
+    
     // Add final "Generate" node
     const generateNode: Node = {
       id: 'generate',
       type: 'decision',
-      position: { x: 150 + (progress.currentStep * 280), y: 150 },
+      position: { x: generateX, y: generateY },
       data: {
         label: '🚀 Generate My Custom App!',
         description: 'Click to create your personalized app structure',
@@ -278,10 +313,10 @@ export default function InteractiveBuilder({ userId }: InteractiveBuilderProps) 
 
     // Add edge to generate node
     if (nodes.length > 0) {
-      const lastNode = nodes[nodes.length - 1];
+      const lastNodeInFlow = nodes[nodes.length - 1];
       const newEdge: Edge = {
-        id: `e-${lastNode.id}-generate`,
-        source: lastNode.id,
+        id: `e-${lastNodeInFlow.id}-generate`,
+        source: lastNodeInFlow.id,
         target: 'generate',
         type: 'smoothstep',
         animated: true,
