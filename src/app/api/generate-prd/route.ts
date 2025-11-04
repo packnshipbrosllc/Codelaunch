@@ -25,8 +25,40 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { projectName, mindmapData, idea, features, competitors, techStack } = body;
 
+    // Extract data from mindmapData if it's provided (handles decision tree format)
+    let extractedProjectName = projectName;
+    let extractedIdea = idea;
+    let extractedFeatures = features;
+    let extractedCompetitors = competitors;
+    let extractedTechStack = techStack;
+
+    if (mindmapData && typeof mindmapData === 'object' && Object.keys(mindmapData).length > 0) {
+      // Extract from mindmapData structure (decision tree format)
+      extractedProjectName = extractedProjectName || mindmapData.projectName;
+      extractedIdea = extractedIdea || mindmapData.projectDescription || mindmapData.description;
+      extractedFeatures = extractedFeatures || mindmapData.features;
+      extractedCompetitors = extractedCompetitors || mindmapData.competitors;
+      extractedTechStack = extractedTechStack || mindmapData.techStack;
+      
+      // Also extract other useful fields
+      const targetAudience = mindmapData.targetAudience;
+      const userPersona = mindmapData.userPersona;
+      const monetization = mindmapData.monetization;
+      
+      console.log('📦 [Backend] Extracted from mindmapData:', {
+        hasProjectName: !!extractedProjectName,
+        hasIdea: !!extractedIdea,
+        featuresCount: extractedFeatures?.length || 0,
+        competitorsCount: extractedCompetitors?.length || 0,
+        hasTechStack: !!extractedTechStack,
+        hasTargetAudience: !!targetAudience,
+        hasUserPersona: !!userPersona,
+        hasMonetization: !!monetization,
+      });
+    }
+
     // Validate required inputs
-    if (!projectName) {
+    if (!extractedProjectName) {
       console.warn('⚠️ [Backend] Missing projectName');
       return NextResponse.json(
         { success: false, error: 'Project name is required' },
@@ -52,11 +84,14 @@ IMPORTANT:
 - Focus only on the product requirements
 
 PROJECT DETAILS:
-- Project Name: ${projectName}
-- Description: ${idea}
-${features ? `- Key Features: ${JSON.stringify(features)}` : ''}
-${competitors ? `- Competitors: ${JSON.stringify(competitors)}` : ''}
-${techStack ? `- Suggested Tech Stack: ${JSON.stringify(techStack)}` : ''}
+- Project Name: ${extractedProjectName}
+- Description: ${extractedIdea || 'No description provided'}
+${extractedFeatures ? `- Key Features: ${JSON.stringify(extractedFeatures, null, 2)}` : ''}
+${extractedCompetitors ? `- Competitors: ${JSON.stringify(extractedCompetitors, null, 2)}` : ''}
+${extractedTechStack ? `- Tech Stack: ${JSON.stringify(extractedTechStack, null, 2)}` : ''}
+${mindmapData?.targetAudience ? `- Target Audience: ${mindmapData.targetAudience}` : ''}
+${mindmapData?.userPersona ? `- User Persona: ${JSON.stringify(mindmapData.userPersona, null, 2)}` : ''}
+${mindmapData?.monetization ? `- Monetization Strategy: ${JSON.stringify(mindmapData.monetization, null, 2)}` : ''}
 
 Create a detailed PRD that includes:
 
@@ -131,7 +166,11 @@ Create a detailed PRD that includes:
 Return the PRD in a structured JSON format with clear sections and subsections. Make it professional, comprehensive, and actionable.`;
 
     console.log('📦 [Backend] Request validated:', {
-      projectName,
+      projectName: extractedProjectName,
+      idea: extractedIdea?.substring(0, 100) + '...',
+      featuresCount: extractedFeatures?.length || 0,
+      competitorsCount: extractedCompetitors?.length || 0,
+      hasTechStack: !!extractedTechStack,
       mindmapSize: JSON.stringify(mindmapData).length,
     });
 
@@ -177,7 +216,7 @@ Return the PRD in a structured JSON format with clear sections and subsections. 
       data: {
         rawText: cleanedPrdContent,
         metadata: {
-          projectName,
+          projectName: extractedProjectName,
           generatedAt: new Date().toISOString(),
           model: 'redacted',
           // @ts-ignore usage may be present
