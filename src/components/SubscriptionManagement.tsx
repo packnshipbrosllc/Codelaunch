@@ -111,7 +111,7 @@ export default function SubscriptionManagement() {
                 You're currently on the free plan. Upgrade to unlock premium features!
               </p>
               <button
-                onClick={() => window.location.href = '/pricing'}
+                onClick={() => window.location.href = '/#pricing'}
                 className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-4 py-2 rounded-lg hover:from-purple-500 hover:to-pink-500 transition-colors text-sm font-medium"
               >
                 View Pricing Plans

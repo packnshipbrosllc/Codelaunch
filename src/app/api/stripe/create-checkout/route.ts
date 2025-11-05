@@ -73,7 +73,7 @@ export async function POST(request: Request) {
       userId,
       userEmail,
       successUrl: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard?success=true`,
-      cancelUrl: `${process.env.NEXT_PUBLIC_APP_URL}/pricing?canceled=true`,
+      cancelUrl: `${process.env.NEXT_PUBLIC_APP_URL}/?canceled=true`,
     });
 
     console.log('✅ Session created:', session.sessionId);

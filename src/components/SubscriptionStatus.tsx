@@ -30,7 +30,7 @@ export default function SubscriptionStatus() {
             </div>
           </div>
           <Link
-            href="/pricing"
+            href="/#pricing"
             className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all"
           >
             View Plans

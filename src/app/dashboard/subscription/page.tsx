@@ -175,7 +175,7 @@ export default function SubscriptionPage() {
             <p className="text-gray-300 mb-6 max-w-md mx-auto">
               Subscribe to CodeLaunch to unlock all features and start building your SaaS product today.
             </p>
-            <Link href="/pricing">
+            <Link href="/#pricing">
               <button className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-3 rounded-lg hover:from-purple-500 hover:to-pink-500 transition-colors font-medium shadow-lg">
                 View Pricing Plans
               </button>
