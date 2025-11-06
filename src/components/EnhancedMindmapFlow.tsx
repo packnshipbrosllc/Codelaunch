@@ -26,7 +26,6 @@ import { EnhancedPersonaNode } from './nodes/EnhancedPersonaNode';
 import { 
   EnhancedMindmapData, 
   NodeExpansionState,
-  DetailPanelState 
 } from '@/types/enhanced-mindmap';
 
 // Custom node types
@@ -51,34 +50,10 @@ export function EnhancedMindmapFlow({
 }: EnhancedMindmapFlowProps) {
   const [expandedNodes, setExpandedNodes] = useState<NodeExpansionState>({});
 
-  const handleNodeExpand = useCallback((nodeId: string) => {
-    setExpandedNodes(prev => ({
-      ...prev,
-      [nodeId]: !prev[nodeId],
-    }));
-    
-    // Update the node data
-    setNodes(nds => 
-      nds.map(node => {
-        if (node.id === nodeId) {
-          return {
-            ...node,
-            data: {
-              ...node.data,
-              isExpanded: !expandedNodes[nodeId],
-            },
-          };
-        }
-        return node;
-      })
-    );
-  }, [expandedNodes]);
-
   // Generate initial nodes and edges from data
   const { initialNodes, initialEdges } = useMemo(() => {
     const nodes: Node[] = [];
     const edges: Edge[] = [];
-    let nodeId = 0;
 
     // Central Overview Node
     if (data.overview) {
@@ -145,7 +120,7 @@ export function EnhancedMindmapFlow({
         data: {
           ...feature,
           isExpanded: expandedNodes[id] || false,
-          onExpand: handleNodeExpand,
+          onExpand: () => {}, // Placeholder - will be set in useEffect
         },
       });
 
@@ -172,7 +147,7 @@ export function EnhancedMindmapFlow({
         data: {
           ...competitor,
           isExpanded: expandedNodes[id] || false,
-          onExpand: handleNodeExpand,
+          onExpand: () => {}, // Placeholder - will be set in useEffect
         },
       });
 
@@ -198,203 +173,7 @@ export function EnhancedMindmapFlow({
         data: {
           ...persona,
           isExpanded: expandedNodes[id] || false,
-          onExpand: handleNodeExpand,
-        },
-      });
-
-      edges.push({
-        id: `e-overview-${id}`,
-        source: 'overview',
-        target: id,
-        type: 'smoothstep',
-        style: { stroke: '#3b82f6', strokeWidth: 2 },
-      });
-    });
-
-    // Tech Stack Nodes
-    data.techStack.forEach((tech, index) => {
-      const id = `tech-${tech.id}`;
-      nodes.push({
-        id,
-        type: 'default',
-        position: { 
-          x: 800 + (index % 3) * 200, 
-          y: 850 + Math.floor(index / 3) * 100
-        },
-        data: {
-          label: (
-            <div className="text-center">
-              <div className="font-bold text-white">{tech.title}</div>
-              <div className="text-xs text-gray-400">{tech.category}</div>
-            </div>
-          ),
-        },
-        style: {
-          background: '#1f2937',
-          border: '2px solid #10b981',
-          borderRadius: '8px',
-          padding: '10px',
-          color: 'white',
-          width: 180,
-        },
-      });
-
-      // Connect tech stack to relevant features
-      const relevantFeatures = data.features.filter(f => 
-        f.technicalImplementation?.frontend?.some(item => item.includes(tech.title)) ||
-        f.technicalImplementation?.backend?.some(item => item.includes(tech.title))
-      );
-
-      relevantFeatures.forEach(feature => {
-        edges.push({
-          id: `e-${id}-feature-${feature.id}`,
-          source: id,
-          target: `feature-${feature.id}`,
-          type: 'smoothstep',
-          style: { stroke: '#10b981', strokeWidth: 1, strokeDasharray: '5,5' },
-        });
-      });
-    });
-
-export function EnhancedMindmapFlow({ 
-  data, 
-  onSave, 
-  onAddNode,
-  editable = true 
-}: EnhancedMindmapFlowProps) {
-  const [expandedNodes, setExpandedNodes] = useState<NodeExpansionState>({});
-
-  // Generate initial nodes and edges from data
-  const { initialNodes, initialEdges } = useMemo(() => {
-    const nodes: Node[] = [];
-    const edges: Edge[] = [];
-    let nodeId = 0;
-
-    // Central Overview Node
-    if (data.overview) {
-      nodes.push({
-        id: 'overview',
-        type: 'default',
-        position: { x: 400, y: 50 },
-        data: {
-          label: (
-            <div className="text-center">
-              <div className="text-xl font-bold text-white mb-2">{data.projectName}</div>
-              <div className="text-sm text-gray-300">{data.overview.elevatorPitch}</div>
-            </div>
-          ),
-        },
-        style: {
-          width: 400,
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-          color: 'white',
-          border: '2px solid #764ba2',
-          borderRadius: '12px',
-          padding: '20px',
-          fontSize: '18px',
-          fontWeight: 'bold',
-        },
-      });
-    } else {
-      // Fallback overview node
-      nodes.push({
-        id: 'overview',
-        type: 'default',
-        position: { x: 400, y: 50 },
-        data: {
-          label: (
-            <div className="text-center">
-              <div className="text-xl font-bold text-white mb-2">{data.projectName}</div>
-              <div className="text-sm text-gray-300">{data.description}</div>
-            </div>
-          ),
-        },
-        style: {
-          width: 400,
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-          color: 'white',
-          border: '2px solid #764ba2',
-          borderRadius: '12px',
-          padding: '20px',
-          fontSize: '18px',
-          fontWeight: 'bold',
-        },
-      });
-    }
-
-    // Feature Nodes
-    data.features.forEach((feature, index) => {
-      const id = `feature-${feature.id}`;
-      nodes.push({
-        id,
-        type: 'enhancedFeature',
-        position: { 
-          x: 100 + (index % 3) * 400, 
-          y: 400 + Math.floor(index / 3) * 350
-        },
-        data: {
-          ...feature,
-          isExpanded: expandedNodes[id] || false,
-          onExpand: (nodeId: string) => {
-            // This will be set up after nodes are initialized
-          },
-        },
-      });
-
-      edges.push({
-        id: `e-overview-${id}`,
-        source: 'overview',
-        target: id,
-        type: 'smoothstep',
-        animated: true,
-        style: { stroke: '#8b5cf6', strokeWidth: 2 },
-      });
-    });
-
-    // Competitor Nodes
-    data.competitors.forEach((competitor, index) => {
-      const id = `competitor-${competitor.id}`;
-      nodes.push({
-        id,
-        type: 'enhancedCompetitor',
-        position: { 
-          x: -300, 
-          y: 200 + (index * 250) 
-        },
-        data: {
-          ...competitor,
-          isExpanded: expandedNodes[id] || false,
-          onExpand: (nodeId: string) => {
-            // This will be set up after nodes are initialized
-          },
-        },
-      });
-
-      edges.push({
-        id: `e-overview-${id}`,
-        source: 'overview',
-        target: id,
-        type: 'smoothstep',
-        style: { stroke: '#f97316', strokeWidth: 2 },
-      });
-    });
-
-    // Persona Nodes
-    data.personas.forEach((persona, index) => {
-      const id = `persona-${persona.id}`;
-      nodes.push({
-        id,
-        type: 'enhancedPersona',
-        position: { 
-          x: 1100, 
-          y: 200 + (index * 280) 
-        },
-        data: {
-          ...persona,
-          isExpanded: expandedNodes[id] || false,
-          onExpand: (nodeId: string) => {
-            // This will be set up after nodes are initialized
-          },
+          onExpand: () => {}, // Placeholder - will be set in useEffect
         },
       });
 
@@ -455,9 +234,11 @@ export function EnhancedMindmapFlow({
     return { initialNodes: nodes, initialEdges: edges };
   }, [data, expandedNodes]);
 
+  // ✅ HOOKS MUST BE DECLARED AFTER useMemo BUT BEFORE THEY'RE USED
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
 
+  // ✅ Now handleNodeExpand can safely use setNodes
   const handleNodeExpand = useCallback((nodeId: string) => {
     setExpandedNodes(prev => ({
       ...prev,
@@ -481,7 +262,7 @@ export function EnhancedMindmapFlow({
     );
   }, [expandedNodes, setNodes]);
 
-  // Update node data with handleNodeExpand after nodes are initialized
+  // ✅ Wire up onExpand handlers after nodes are initialized
   useEffect(() => {
     setNodes(nds =>
       nds.map(node => {
@@ -668,4 +449,3 @@ export function EnhancedMindmapFlow({
     </div>
   );
 }
-
