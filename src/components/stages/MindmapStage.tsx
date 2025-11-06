@@ -1,7 +1,8 @@
 import React, { useMemo } from 'react';
 import { ArrowRight, Users, Zap, Database } from 'lucide-react';
 import { AppData } from '@/types';
-import MindmapFlow from '@/components/MindmapFlow';
+import { EnhancedMindmapFlow } from '@/components/EnhancedMindmapFlow';
+import { convertToEnhancedMindmap } from '@/lib/mindmap-converter';
 import { MindmapData } from '@/types/mindmap';
 
 interface MindmapStageProps {
@@ -83,7 +84,34 @@ export default function MindmapStage({ appData, onContinue }: MindmapStageProps)
 
         {/* React Flow Mindmap */}
         <div className="mb-8">
-          <MindmapFlow data={mindmapData} />
+          <EnhancedMindmapFlow data={convertToEnhancedMindmap({
+            projectName: mindmapData.projectName,
+            projectDescription: mindmapData.projectDescription,
+            description: mindmapData.projectDescription,
+            competitors: mindmapData.competitors.map(c => ({
+              name: c.name,
+              url: c.url,
+              strength: c.strength,
+              ourAdvantage: c.ourAdvantage,
+            })),
+            techStack: mindmapData.techStack,
+            features: mindmapData.features.map(f => ({
+              id: f.id,
+              title: f.title,
+              name: f.title,
+              description: f.description,
+              priority: f.priority,
+            })),
+            monetization: mindmapData.monetization,
+            userPersona: mindmapData.userPersona ? {
+              name: mindmapData.userPersona.name,
+              title: mindmapData.userPersona.name,
+              description: mindmapData.userPersona.description,
+              painPoint: mindmapData.userPersona.painPoint,
+              painPoints: [mindmapData.userPersona.painPoint],
+            } : undefined,
+            targetAudience: mindmapData.targetAudience,
+          })} />
         </div>
 
         {/* App Details */}

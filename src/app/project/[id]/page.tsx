@@ -4,7 +4,8 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
-import MindmapFlow from '@/components/MindmapFlow';
+import { EnhancedMindmapFlow } from '@/components/EnhancedMindmapFlow';
+import { convertToEnhancedMindmap } from '@/lib/mindmap-converter';
 import PRDViewer from '@/components/PRDViewer';
 import Header from '@/components/Header';
 import AppPreviewModal from '@/components/AppPreviewModal';
@@ -163,7 +164,7 @@ export default function ProjectDetailPage() {
       if (result.success) {
         console.log('💾 [Frontend] Saving PRD data...');
         setPrdData(result.data);
-
+        
         console.log('📤 [Frontend] Sending to save-prd API...');
         const saveResponse = await fetch('/api/save-prd', {
           method: 'POST',
@@ -353,7 +354,34 @@ export default function ProjectDetailPage() {
         {activeTab === 'mindmap' && (
           <div className="bg-gray-800/50 backdrop-blur-sm border border-purple-500/20 rounded-2xl shadow-xl overflow-hidden" style={{ height: '700px' }}>
             {mindmapData ? (
-              <MindmapFlow data={mindmapData} />
+              <EnhancedMindmapFlow data={convertToEnhancedMindmap({
+                projectName: mindmapData.projectName,
+                projectDescription: mindmapData.projectDescription,
+                description: mindmapData.projectDescription,
+                competitors: mindmapData.competitors.map(c => ({
+                  name: c.name,
+                  url: c.url,
+                  strength: c.strength,
+                  ourAdvantage: c.ourAdvantage,
+                })),
+                techStack: mindmapData.techStack,
+                features: mindmapData.features.map(f => ({
+                  id: f.id,
+                  title: f.title,
+                  name: f.title,
+                  description: f.description,
+                  priority: f.priority,
+                })),
+                monetization: mindmapData.monetization,
+                userPersona: mindmapData.userPersona ? {
+                  name: mindmapData.userPersona.name,
+                  title: mindmapData.userPersona.name,
+                  description: mindmapData.userPersona.description,
+                  painPoint: mindmapData.userPersona.painPoint,
+                  painPoints: [mindmapData.userPersona.painPoint],
+                } : undefined,
+                targetAudience: mindmapData.targetAudience,
+              })} />
             ) : (
               <div className="flex items-center justify-center h-full">
                 <div className="text-center">

@@ -4,7 +4,8 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
-import MindmapFlow from '@/components/MindmapFlow';
+import { EnhancedMindmapFlow } from '@/components/EnhancedMindmapFlow';
+import { convertToEnhancedMindmap } from '@/lib/mindmap-converter';
 import AIAssistantChatEnhanced from '@/components/AIAssistantChatEnhanced';
 import FloatingMoodBoard from '@/components/FloatingMoodBoard';
 import Header from '@/components/Header';
@@ -14,8 +15,8 @@ import Link from 'next/link';
 
 // Debug logging
 if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
-  console.log('🔍 DEBUG: MindmapFlow imported:', typeof MindmapFlow);
-  console.log('🔍 DEBUG: MindmapFlow component:', MindmapFlow);
+  console.log('🔍 DEBUG: EnhancedMindmapFlow imported:', typeof EnhancedMindmapFlow);
+  console.log('🔍 DEBUG: EnhancedMindmapFlow component:', EnhancedMindmapFlow);
 }
 
 export default function CreateProjectPage() {
@@ -35,7 +36,7 @@ export default function CreateProjectPage() {
   // Debug logging
   useEffect(() => {
     if (process.env.NODE_ENV === 'development' && mindmapData) {
-      console.log('🔍 DEBUG: Rendering MindmapFlow with data:', mindmapData);
+      console.log('🔍 DEBUG: Rendering EnhancedMindmapFlow with data:', mindmapData);
     }
   }, [mindmapData]);
 
@@ -305,7 +306,39 @@ export default function CreateProjectPage() {
                 </div>
               </div>
 
-              <MindmapFlow data={mindmapData} onSave={handleSave} />
+              {mindmapData && (
+                <EnhancedMindmapFlow 
+                  data={convertToEnhancedMindmap({
+                    projectName: mindmapData.projectName,
+                    projectDescription: mindmapData.projectDescription,
+                    description: mindmapData.projectDescription,
+                    competitors: mindmapData.competitors.map(c => ({
+                      name: c.name,
+                      url: c.url,
+                      strength: c.strength,
+                      ourAdvantage: c.ourAdvantage,
+                    })),
+                    techStack: mindmapData.techStack,
+                    features: mindmapData.features.map(f => ({
+                      id: f.id,
+                      title: f.title,
+                      name: f.title,
+                      description: f.description,
+                      priority: f.priority,
+                    })),
+                    monetization: mindmapData.monetization,
+                    userPersona: mindmapData.userPersona ? {
+                      name: mindmapData.userPersona.name,
+                      title: mindmapData.userPersona.name,
+                      description: mindmapData.userPersona.description,
+                      painPoint: mindmapData.userPersona.painPoint,
+                      painPoints: [mindmapData.userPersona.painPoint],
+                    } : undefined,
+                    targetAudience: mindmapData.targetAudience,
+                  })} 
+                  onSave={handleSave} 
+                />
+              )}
 
               <div className="mt-8 p-6 bg-gray-800/50 rounded-lg border border-purple-500/20">
                 <h3 className="text-xl font-semibold mb-4">🎯 Next Steps:</h3>
