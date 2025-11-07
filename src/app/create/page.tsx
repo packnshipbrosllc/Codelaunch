@@ -9,7 +9,7 @@ import { convertToEnhancedMindmap } from '@/lib/mindmap-converter';
 import AIAssistantChatEnhanced from '@/components/AIAssistantChatEnhanced';
 import FloatingMoodBoard from '@/components/FloatingMoodBoard';
 import Header from '@/components/Header';
-import { MindmapData, Competitor } from '@/types/mindmap';
+import { MindmapData, Competitor, Feature } from '@/types/mindmap';
 import { useMindmapLimit } from '@/hooks/useMindmapLimit';
 import Link from 'next/link';
 
@@ -319,7 +319,7 @@ export default function CreateProjectPage() {
                       ourAdvantage: c.ourAdvantage,
                     })),
                     techStack: mindmapData.techStack,
-                    features: mindmapData.features.map(f => ({
+                    features: mindmapData.features.map((f: Feature) => ({
                       id: f.id,
                       title: f.title,
                       name: f.title,

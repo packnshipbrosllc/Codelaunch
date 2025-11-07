@@ -10,7 +10,7 @@ import PRDViewer from '@/components/PRDViewer';
 import Header from '@/components/Header';
 import AppPreviewModal from '@/components/AppPreviewModal';
 import { Eye } from 'lucide-react';
-import { Competitor } from '@/types/mindmap';
+import { Competitor, Feature } from '@/types/mindmap';
 
 export default function ProjectDetailPage() {
   const params = useParams();
@@ -366,7 +366,7 @@ export default function ProjectDetailPage() {
                   ourAdvantage: c.ourAdvantage,
                 })),
                 techStack: mindmapData.techStack,
-                features: mindmapData.features.map(f => ({
+                features: mindmapData.features.map((f: Feature) => ({
                   id: f.id,
                   title: f.title,
                   name: f.title,
