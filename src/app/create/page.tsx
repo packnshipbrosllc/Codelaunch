@@ -434,13 +434,15 @@ export default function CreateProjectPage() {
               </div>
             </div>
 
-            {/* Enhanced AI Chat with Keyboard Shortcut */}
-            <AIAssistantChatEnhanced
-              mindmapData={mindmapData}
-              moodBoardImages={moodBoardImages.map((img) => img.url)}
-              isCollapsed={!showAIChat}
-              onToggleCollapse={() => setShowAIChat(!showAIChat)}
-            />
+            {/* Enhanced AI Chat with Keyboard Shortcut (hide in fullscreen) */}
+            {!isFullscreen && (
+              <AIAssistantChatEnhanced
+                mindmapData={mindmapData}
+                moodBoardImages={moodBoardImages.map((img) => img.url)}
+                isCollapsed={!showAIChat}
+                onToggleCollapse={() => setShowAIChat(!showAIChat)}
+              />
+            )}
           </div>
         )}
       </div>
