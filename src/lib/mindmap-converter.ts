@@ -38,6 +38,41 @@ interface OldMindmapData {
     name: string;
     description: string;
     priority?: string;
+    // PRD details (if provided by API)
+    userStories?: Array<{
+      persona?: string;
+      need?: string;
+      goal?: string;
+    }>;
+    acceptanceCriteria?: string[];
+    technicalImplementation?: {
+      frontend?: string[];
+      backend?: string[];
+      database?: string[];
+      steps?: string[];
+    };
+    databaseSchema?: Array<{
+      tableName: string;
+      columns: Array<{
+        name: string;
+        type: string;
+        constraints: string;
+      }>;
+    }>;
+    apiEndpoints?: Array<{
+      method: string;
+      path: string;
+      description: string;
+      auth?: boolean;
+    }>;
+    complexity?: string;
+    estimatedHours?: number;
+    scoring?: {
+      complexity?: number;
+      impact?: number;
+      effort?: number;
+      roi?: number;
+    };
   }>;
   monetization?: {
     model: string;
@@ -81,42 +116,67 @@ export function convertToEnhancedMindmap(oldData: OldMindmapData): EnhancedMindm
     const featureName = feature.title || feature.name;
     const featureDescription = feature.description || '';
     
-    // Generate user stories based on feature
-    const userStories: UserStory[] = [
-      {
-        id: `story-${idx}-1`,
-        persona: oldData.userPersona?.name || oldData.userPersona?.title || 'End User',
-        need: featureName.toLowerCase(),
-        goal: 'accomplish their task efficiently',
-      }
-    ];
+    // Use PRD details from API if available, otherwise generate them
+    const userStories: UserStory[] = feature.userStories && feature.userStories.length > 0
+      ? feature.userStories.map((story, storyIdx) => ({
+          id: `story-${idx}-${storyIdx}`,
+          persona: story.persona || oldData.userPersona?.name || oldData.userPersona?.title || 'End User',
+          need: story.need || featureName.toLowerCase(),
+          goal: story.goal || 'accomplish their task efficiently',
+        }))
+      : [
+          {
+            id: `story-${idx}-1`,
+            persona: oldData.userPersona?.name || oldData.userPersona?.title || 'End User',
+            need: featureName.toLowerCase(),
+            goal: 'accomplish their task efficiently',
+          }
+        ];
 
-    // Generate technical implementation
-    const techImpl: TechnicalImplementation = {
-      frontend: oldData.techStack.frontend ? [oldData.techStack.frontend] : ['React components', 'State management', 'API integration'],
-      backend: oldData.techStack.backend ? [oldData.techStack.backend] : ['REST API endpoints', 'Database queries', 'Business logic'],
-      database: oldData.techStack.database ? [oldData.techStack.database] : ['Schema design', 'Relationships', 'Indexes'],
-      steps: [
-        'Design database schema',
-        'Create API endpoints',
-        'Build frontend components',
-        'Add validation and error handling',
-        'Write tests',
-        'Deploy and monitor',
-      ],
-    };
+    // Use technical implementation from API if available
+    const techImpl: TechnicalImplementation = feature.technicalImplementation
+      ? {
+          frontend: feature.technicalImplementation.frontend || [],
+          backend: feature.technicalImplementation.backend || [],
+          database: feature.technicalImplementation.database || [],
+          steps: feature.technicalImplementation.steps || [],
+        }
+      : {
+          frontend: oldData.techStack.frontend ? [oldData.techStack.frontend] : ['React components', 'State management', 'API integration'],
+          backend: oldData.techStack.backend ? [oldData.techStack.backend] : ['REST API endpoints', 'Database queries', 'Business logic'],
+          database: oldData.techStack.database ? [oldData.techStack.database] : ['Schema design', 'Relationships', 'Indexes'],
+          steps: [
+            'Design database schema',
+            'Create API endpoints',
+            'Build frontend components',
+            'Add validation and error handling',
+            'Write tests',
+            'Deploy and monitor',
+          ],
+        };
 
-    // Calculate feature scoring
-    const complexity = feature.priority === 'high' ? 8 : feature.priority === 'medium' ? 5 : 3;
-    const impact = feature.priority === 'high' ? 9 : feature.priority === 'medium' ? 6 : 4;
-    const effort = complexity;
+    // Use scoring from API if available, otherwise calculate
+    const apiComplexity = feature.scoring?.complexity || (feature.priority === 'high' ? 8 : feature.priority === 'medium' ? 5 : 3);
+    const apiImpact = feature.scoring?.impact || (feature.priority === 'high' ? 9 : feature.priority === 'medium' ? 6 : 4);
+    const apiEffort = feature.scoring?.effort || apiComplexity;
     
-    const scoring: FeatureScore = {
-      complexity,
-      impact,
-      effort,
-      roi: impact / effort,
-    };
+    const scoring: FeatureScore = feature.scoring
+      ? {
+          complexity: feature.scoring.complexity || apiComplexity,
+          impact: feature.scoring.impact || apiImpact,
+          effort: feature.scoring.effort || apiEffort,
+          roi: feature.scoring.roi || (apiImpact / apiEffort),
+        }
+      : {
+          complexity: apiComplexity,
+          impact: apiImpact,
+          effort: apiEffort,
+          roi: apiImpact / apiEffort,
+        };
+
+    // Use complexity from API if available
+    const complexity = feature.complexity || (apiComplexity > 7 ? 'complex' : apiComplexity > 4 ? 'moderate' : 'simple');
+    const estimatedHours = feature.estimatedHours || (apiComplexity * 8);
 
     return {
       id: feature.id || `feat-${idx}`,
@@ -125,36 +185,42 @@ export function convertToEnhancedMindmap(oldData: OldMindmapData): EnhancedMindm
       description: featureDescription,
       overview: `${featureName}: ${featureDescription}`,
       userStories,
-      acceptanceCriteria: [
-        'Feature functions as expected',
-        'User interface is intuitive',
-        'Performance meets requirements',
-        'Error handling works correctly',
-        'Tests pass successfully',
-      ],
+      acceptanceCriteria: feature.acceptanceCriteria && feature.acceptanceCriteria.length > 0
+        ? feature.acceptanceCriteria
+        : [
+            'Feature functions as expected',
+            'User interface is intuitive',
+            'Performance meets requirements',
+            'Error handling works correctly',
+            'Tests pass successfully',
+          ],
       technicalImplementation: techImpl,
-      complexity: complexity > 7 ? 'complex' : complexity > 4 ? 'moderate' : 'simple',
-      estimatedHours: complexity * 8,
+      complexity: complexity as 'simple' | 'moderate' | 'complex',
+      estimatedHours,
       priority: (feature.priority as any) || 'medium',
       status: 'planned',
       scoring,
-      databaseSchema: [
-        {
-          tableName: `${featureName.toLowerCase().replace(/\s+/g, '_')}`,
-          columns: [
-            { name: 'id', type: 'UUID', constraints: 'PRIMARY KEY' },
-            { name: 'user_id', type: 'UUID', constraints: 'REFERENCES users(id)' },
-            { name: 'created_at', type: 'TIMESTAMP', constraints: 'DEFAULT NOW()' },
-            { name: 'updated_at', type: 'TIMESTAMP', constraints: 'DEFAULT NOW()' },
+      databaseSchema: feature.databaseSchema && feature.databaseSchema.length > 0
+        ? feature.databaseSchema
+        : [
+            {
+              tableName: `${featureName.toLowerCase().replace(/\s+/g, '_')}`,
+              columns: [
+                { name: 'id', type: 'UUID', constraints: 'PRIMARY KEY' },
+                { name: 'user_id', type: 'UUID', constraints: 'REFERENCES users(id)' },
+                { name: 'created_at', type: 'TIMESTAMP', constraints: 'DEFAULT NOW()' },
+                { name: 'updated_at', type: 'TIMESTAMP', constraints: 'DEFAULT NOW()' },
+              ],
+            },
           ],
-        },
-      ],
-      apiEndpoints: [
-        { method: 'GET', path: `/api/${featureName.toLowerCase().replace(/\s+/g, '-')}`, description: 'Fetch items', auth: true },
-        { method: 'POST', path: `/api/${featureName.toLowerCase().replace(/\s+/g, '-')}`, description: 'Create item', auth: true },
-        { method: 'PUT', path: `/api/${featureName.toLowerCase().replace(/\s+/g, '-')}/:id`, description: 'Update item', auth: true },
-        { method: 'DELETE', path: `/api/${featureName.toLowerCase().replace(/\s+/g, '-')}/:id`, description: 'Delete item', auth: true },
-      ],
+      apiEndpoints: feature.apiEndpoints && feature.apiEndpoints.length > 0
+        ? feature.apiEndpoints
+        : [
+            { method: 'GET', path: `/api/${featureName.toLowerCase().replace(/\s+/g, '-')}`, description: 'Fetch items', auth: true },
+            { method: 'POST', path: `/api/${featureName.toLowerCase().replace(/\s+/g, '-')}`, description: 'Create item', auth: true },
+            { method: 'PUT', path: `/api/${featureName.toLowerCase().replace(/\s+/g, '-')}/:id`, description: 'Update item', auth: true },
+            { method: 'DELETE', path: `/api/${featureName.toLowerCase().replace(/\s+/g, '-')}/:id`, description: 'Delete item', auth: true },
+          ],
       createdAt: now,
       updatedAt: now,
     };

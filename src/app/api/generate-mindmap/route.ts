@@ -117,7 +117,7 @@ export async function POST(req: NextRequest) {
       messages: [
         {
           role: 'system',
-          content: `You are an expert product strategist and technical architect. Generate a concise, structured mindmap for a SaaS application idea.
+          content: `You are an expert product strategist and technical architect. Generate a comprehensive, structured mindmap for a SaaS application idea with full PRD (Product Requirements Document) details.
 
 Return ONLY valid JSON with this exact structure (no markdown, no explanation):
 {
@@ -127,6 +127,7 @@ Return ONLY valid JSON with this exact structure (no markdown, no explanation):
   "competitors": [
     {
       "name": "string",
+      "url": "string (optional)",
       "strength": "string (1 sentence)",
       "ourAdvantage": "string (1 sentence)"
     }
@@ -141,10 +142,59 @@ Return ONLY valid JSON with this exact structure (no markdown, no explanation):
   },
   "features": [
     {
-      "id": "string",
+      "id": "string (unique, e.g., 'feature-1')",
       "title": "string (2-5 words)",
-      "description": "string (1 sentence)",
-      "priority": "high|medium|low"
+      "description": "string (2-3 sentences explaining the feature)",
+      "priority": "high|medium|low",
+      "userStories": [
+        {
+          "persona": "string (e.g., 'End User')",
+          "need": "string (what they need)",
+          "goal": "string (what they want to accomplish)"
+        }
+      ],
+      "acceptanceCriteria": [
+        "string (specific, testable criteria)",
+        "string (another criterion)"
+      ],
+      "technicalImplementation": {
+        "frontend": ["string (specific frontend tech/components)"],
+        "backend": ["string (specific backend endpoints/services)"],
+        "database": ["string (specific tables/schemas)"],
+        "steps": [
+          "string (step 1)",
+          "string (step 2)",
+          "string (step 3)"
+        ]
+      },
+      "databaseSchema": [
+        {
+          "tableName": "string (e.g., 'users')",
+          "columns": [
+            {
+              "name": "string",
+              "type": "string (e.g., 'UUID', 'VARCHAR', 'INTEGER')",
+              "constraints": "string (e.g., 'PRIMARY KEY', 'NOT NULL')"
+            }
+          ]
+        }
+      ],
+      "apiEndpoints": [
+        {
+          "method": "GET|POST|PUT|DELETE",
+          "path": "string (e.g., '/api/users')",
+          "description": "string (what it does)",
+          "auth": true|false
+        }
+      ],
+      "complexity": "simple|moderate|complex",
+      "estimatedHours": number (estimate in hours, 8-80),
+      "scoring": {
+        "complexity": number (1-10),
+        "impact": number (1-10),
+        "effort": number (1-10),
+        "roi": number (impact/effort, calculated)
+      }
     }
   ],
   "monetization": {
@@ -155,19 +205,22 @@ Return ONLY valid JSON with this exact structure (no markdown, no explanation):
   },
   "userPersona": {
     "name": "string (e.g., Solo Founders)",
-    "description": "string (1 sentence)",
-    "painPoint": "string (1 sentence)",
+    "description": "string (2-3 sentences)",
+    "painPoint": "string (1-2 sentences)",
     "goal": "string (1 sentence)"
   }
 }
 
 Rules:
-- Max 3 competitors
+- Max 3 competitors (include URLs if known)
 - Exactly 6 tech stack items
 - 5-8 core MVP features only
-- Keep all text concise
-- Prioritize high-value features
-- Be specific and actionable`
+- Each feature MUST include: userStories, acceptanceCriteria, technicalImplementation, databaseSchema, apiEndpoints, scoring
+- Calculate ROI as impact/effort for scoring
+- Be specific and actionable - no generic placeholders
+- Database schema should be realistic (include id, created_at, updated_at for each table)
+- API endpoints should cover CRUD operations for each feature
+- Technical implementation should list actual technologies/components needed`
         },
         {
           role: 'user',
@@ -175,7 +228,7 @@ Rules:
         }
       ],
       temperature: 0.7,
-      max_tokens: 1500,
+      max_tokens: 4000,
       response_format: { type: 'json_object' }
     });
 

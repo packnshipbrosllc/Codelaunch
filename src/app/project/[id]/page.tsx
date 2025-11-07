@@ -415,8 +415,22 @@ export default function ProjectDetailPage() {
             </button>
 
             {mindmapData ? (
-              <div className="w-full h-full" style={{ width: '100%', height: '100%' }}>
-                <EnhancedMindmapFlow data={convertToEnhancedMindmap({
+              <>
+                {/* Debug: Show raw data structure */}
+                {process.env.NODE_ENV === 'development' && (
+                  <div className="mb-4 p-4 bg-black/80 rounded-lg border border-purple-500/30">
+                    <details className="text-white text-xs">
+                      <summary className="cursor-pointer text-purple-400 font-semibold mb-2">
+                        🔍 Debug: Raw Mindmap Data (Click to expand)
+                      </summary>
+                      <pre className="overflow-auto max-h-96 mt-2 text-xs">
+                        {JSON.stringify(mindmapData, null, 2)}
+                      </pre>
+                    </details>
+                  </div>
+                )}
+                <div className="w-full h-full" style={{ width: '100%', height: '100%' }}>
+                  <EnhancedMindmapFlow data={convertToEnhancedMindmap({
                 projectName: mindmapData.projectName,
                 projectDescription: mindmapData.projectDescription,
                 description: mindmapData.projectDescription,
@@ -444,7 +458,8 @@ export default function ProjectDetailPage() {
                 } : undefined,
                 targetAudience: mindmapData.targetAudience,
               })} />
-              </div>
+                </div>
+              </>
             ) : (
               <div className="flex items-center justify-center h-full">
                 <div className="text-center">
