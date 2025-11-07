@@ -27,6 +27,7 @@ export default function ProjectDetailPage() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [showPRDViewer, setShowPRDViewer] = useState(false);
   const [showCodePreview, setShowCodePreview] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   // Get project ID from params
   const projectId = typeof params.id === 'string' ? params.id : params.id?.[0];
@@ -46,6 +47,27 @@ export default function ProjectDetailPage() {
       fetchProject();
     }
   }, [user, isLoaded, projectId, router]);
+
+  // Keyboard shortcuts for fullscreen
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      // Press 'F' for fullscreen (only when not typing in input)
+      if ((e.key === 'f' || e.key === 'F') && activeTab === 'mindmap') {
+        if (!e.target || (e.target as HTMLElement).tagName !== 'INPUT' && (e.target as HTMLElement).tagName !== 'TEXTAREA') {
+          e.preventDefault();
+          setIsFullscreen(!isFullscreen);
+        }
+      }
+      
+      // Press 'Escape' to exit fullscreen
+      if (e.key === 'Escape' && isFullscreen) {
+        setIsFullscreen(false);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [isFullscreen, activeTab]);
   useEffect(() => {
     if (projectId) {
       fetchPRD();
@@ -350,10 +372,48 @@ export default function ProjectDetailPage() {
       </div>
 
       {/* Content */}
-      <div className="container mx-auto px-4 py-8">
+      <div className={`${isFullscreen ? 'fixed inset-0 z-40 bg-gray-900' : 'container mx-auto px-4 py-8'}`}>
         {/* Mindmap Tab */}
         {activeTab === 'mindmap' && (
-          <div className="bg-gray-800/50 backdrop-blur-sm border border-purple-500/20 rounded-2xl shadow-xl overflow-hidden" style={{ height: '700px' }}>
+          <div 
+            className={`bg-gray-800/50 backdrop-blur-sm border border-purple-500/20 rounded-2xl shadow-xl overflow-hidden relative transition-all duration-300 ${
+              isFullscreen ? 'h-screen rounded-none border-0' : ''
+            }`} 
+            style={isFullscreen ? { height: '100vh' } : { height: '700px' }}
+          >
+            {/* Fullscreen Toggle Button */}
+            <button
+              onClick={() => setIsFullscreen(!isFullscreen)}
+              className="group absolute top-4 right-4 z-50 px-4 py-2.5 
+                         bg-gradient-to-r from-purple-600 to-pink-600 
+                         hover:from-purple-700 hover:to-pink-700
+                         text-white rounded-xl shadow-2xl 
+                         transition-all duration-300 
+                         flex items-center gap-2 font-semibold text-sm
+                         hover:scale-105 hover:shadow-purple-500/50"
+              title={isFullscreen ? "Exit Fullscreen (Esc)" : "Enter Fullscreen (F)"}
+            >
+              {isFullscreen ? (
+                <>
+                  <svg className="w-5 h-5 transition-transform group-hover:rotate-180" 
+                       fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} 
+                          d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                  <span>Exit Fullscreen</span>
+                </>
+              ) : (
+                <>
+                  <svg className="w-5 h-5 transition-transform group-hover:scale-110" 
+                       fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} 
+                          d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5" />
+                  </svg>
+                  <span>Fullscreen</span>
+                </>
+              )}
+            </button>
+
             {mindmapData ? (
               <div className="w-full h-full" style={{ width: '100%', height: '100%' }}>
                 <EnhancedMindmapFlow data={convertToEnhancedMindmap({

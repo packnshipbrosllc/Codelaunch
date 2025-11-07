@@ -32,6 +32,7 @@ export default function CreateProjectPage() {
   // Panel state
   const [showAIChat, setShowAIChat] = useState(true);
   const [moodBoardImages, setMoodBoardImages] = useState<any[]>([]);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   // Debug logging
   useEffect(() => {
@@ -39,6 +40,33 @@ export default function CreateProjectPage() {
       console.log('🔍 DEBUG: Rendering EnhancedMindmapFlow with data:', mindmapData);
     }
   }, [mindmapData]);
+
+  // Keyboard shortcuts for fullscreen
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      // Press 'F' for fullscreen (only when not typing in input)
+      if (mindmapData && (e.key === 'f' || e.key === 'F')) {
+        if (!e.target || (e.target as HTMLElement).tagName !== 'INPUT' && (e.target as HTMLElement).tagName !== 'TEXTAREA') {
+          e.preventDefault();
+          setIsFullscreen(!isFullscreen);
+          if (!isFullscreen) {
+            setShowAIChat(false);
+          } else {
+            setShowAIChat(true);
+          }
+        }
+      }
+      
+      // Press 'Escape' to exit fullscreen
+      if (e.key === 'Escape' && isFullscreen) {
+        setIsFullscreen(false);
+        setShowAIChat(true);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [isFullscreen, mindmapData]);
 
   // Redirect if not authenticated
   if (isLoaded && !user) {
@@ -268,14 +296,16 @@ export default function CreateProjectPage() {
           </div>
         ) : (
           /* Mindmap Display with Floating Panels */
-          <div className="relative">
-            {/* Floating Mood Board - Draggable! */}
-            <FloatingMoodBoard
-              onImagesChange={setMoodBoardImages}
-            />
+          <div className={`relative ${isFullscreen ? 'fixed inset-0 z-40 bg-gray-900' : ''}`}>
+            {/* Floating Mood Board - Draggable! (hide in fullscreen) */}
+            {!isFullscreen && (
+              <FloatingMoodBoard
+                onImagesChange={setMoodBoardImages}
+              />
+            )}
 
             {/* Main Content - Now uses full width! */}
-            <div className={`transition-all ${showAIChat ? 'mr-96 pr-4' : ''}`}>
+            <div className={`transition-all ${showAIChat && !isFullscreen ? 'mr-96 pr-4' : ''} ${isFullscreen ? 'h-screen' : ''}`}>
               <div className="mb-6 flex items-center justify-between">
                 <div>
                   <h2 className="text-3xl font-bold mb-2">{mindmapData.projectName}</h2>
@@ -307,7 +337,46 @@ export default function CreateProjectPage() {
               </div>
 
               {mindmapData && (
-                <div className="w-full" style={{ height: '600px', minHeight: '600px' }}>
+                <div className="w-full relative" style={isFullscreen ? { height: '100vh' } : { height: '600px', minHeight: '600px' }}>
+                  {/* Fullscreen Toggle Button */}
+                  <button
+                    onClick={() => {
+                      setIsFullscreen(!isFullscreen);
+                      if (!isFullscreen) {
+                        setShowAIChat(false);
+                      } else {
+                        setShowAIChat(true);
+                      }
+                    }}
+                    className="group absolute top-4 right-4 z-50 px-4 py-2.5 
+                               bg-gradient-to-r from-purple-600 to-pink-600 
+                               hover:from-purple-700 hover:to-pink-700
+                               text-white rounded-xl shadow-2xl 
+                               transition-all duration-300 
+                               flex items-center gap-2 font-semibold text-sm
+                               hover:scale-105 hover:shadow-purple-500/50"
+                    title={isFullscreen ? "Exit Fullscreen (Esc)" : "Enter Fullscreen (F)"}
+                  >
+                    {isFullscreen ? (
+                      <>
+                        <svg className="w-5 h-5 transition-transform group-hover:rotate-180" 
+                             fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} 
+                                d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                        <span>Exit Fullscreen</span>
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-5 h-5 transition-transform group-hover:scale-110" 
+                             fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} 
+                                d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5" />
+                        </svg>
+                        <span>Fullscreen</span>
+                      </>
+                    )}
+                  </button>
                   <EnhancedMindmapFlow 
                     data={convertToEnhancedMindmap({
                     projectName: mindmapData.projectName,
