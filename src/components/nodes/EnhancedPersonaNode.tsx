@@ -42,8 +42,10 @@ export function EnhancedPersonaNode({ data, id }: EnhancedPersonaNodeProps) {
   return (
     <div 
       className={`relative bg-gray-900 rounded-lg border-2 border-blue-500 bg-blue-500/10
-                  shadow-lg transition-all duration-300 ${isExpanded ? 'w-[500px]' : 'w-[300px]'}`}
+                  shadow-lg transition-all duration-300 ${isExpanded ? 'w-[500px]' : 'w-[300px]'} cursor-pointer`}
       style={{ minHeight: isExpanded ? '500px' : '250px' }}
+      onDoubleClick={toggleExpand}
+      title="Double-click to expand/collapse"
     >
       <Handle type="target" position={Position.Top} className="w-3 h-3 bg-blue-500" />
       <Handle type="source" position={Position.Bottom} className="w-3 h-3 bg-blue-500" />

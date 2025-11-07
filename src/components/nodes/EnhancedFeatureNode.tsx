@@ -71,8 +71,10 @@ export function EnhancedFeatureNode({ data, id }: EnhancedFeatureNodeProps) {
   return (
     <div 
       className={`relative bg-gray-900 rounded-lg border-2 ${getPriorityColor(data.priority)} 
-                  shadow-lg transition-all duration-300 ${isExpanded ? 'w-[700px]' : 'w-[350px]'}`}
+                  shadow-lg transition-all duration-300 ${isExpanded ? 'w-[700px]' : 'w-[350px]'} cursor-pointer`}
       style={{ minHeight: isExpanded ? '600px' : '250px' }}
+      onDoubleClick={toggleExpand}
+      title="Double-click to expand/collapse"
     >
       {/* Handles for connections */}
       <Handle type="target" position={Position.Top} className="w-3 h-3 bg-purple-500" />
