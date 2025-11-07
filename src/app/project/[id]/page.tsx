@@ -10,6 +10,7 @@ import PRDViewer from '@/components/PRDViewer';
 import Header from '@/components/Header';
 import AppPreviewModal from '@/components/AppPreviewModal';
 import { Eye } from 'lucide-react';
+import { Competitor } from '@/types/mindmap';
 
 export default function ProjectDetailPage() {
   const params = useParams();
@@ -358,7 +359,7 @@ export default function ProjectDetailPage() {
                 projectName: mindmapData.projectName,
                 projectDescription: mindmapData.projectDescription,
                 description: mindmapData.projectDescription,
-                competitors: mindmapData.competitors.map(c => ({
+                competitors: mindmapData.competitors.map((c: Competitor) => ({
                   name: c.name,
                   url: c.url,
                   strength: c.strength,
