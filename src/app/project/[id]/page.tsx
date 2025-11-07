@@ -355,7 +355,8 @@ export default function ProjectDetailPage() {
         {activeTab === 'mindmap' && (
           <div className="bg-gray-800/50 backdrop-blur-sm border border-purple-500/20 rounded-2xl shadow-xl overflow-hidden" style={{ height: '700px' }}>
             {mindmapData ? (
-              <EnhancedMindmapFlow data={convertToEnhancedMindmap({
+              <div className="w-full h-full" style={{ width: '100%', height: '100%' }}>
+                <EnhancedMindmapFlow data={convertToEnhancedMindmap({
                 projectName: mindmapData.projectName,
                 projectDescription: mindmapData.projectDescription,
                 description: mindmapData.projectDescription,
@@ -383,6 +384,7 @@ export default function ProjectDetailPage() {
                 } : undefined,
                 targetAudience: mindmapData.targetAudience,
               })} />
+              </div>
             ) : (
               <div className="flex items-center justify-center h-full">
                 <div className="text-center">

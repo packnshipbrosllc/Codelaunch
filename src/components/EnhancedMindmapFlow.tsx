@@ -316,7 +316,7 @@ export function EnhancedMindmapFlow({
   }, [data, nodes, edges]);
 
   return (
-    <div className="w-full h-full bg-gray-950 relative">
+    <div className="w-full h-full bg-gray-950 relative" style={{ width: '100%', height: '100%', minHeight: '600px' }}>
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -326,6 +326,7 @@ export function EnhancedMindmapFlow({
         nodeTypes={nodeTypes}
         fitView
         className="bg-gray-950"
+        style={{ width: '100%', height: '100%' }}
         minZoom={0.1}
         maxZoom={2}
       >
