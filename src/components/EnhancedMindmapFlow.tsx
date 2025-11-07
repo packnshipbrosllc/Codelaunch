@@ -359,24 +359,21 @@ export function EnhancedMindmapFlow({
             <div className="flex gap-2 bg-gray-900 border border-gray-700 rounded-lg p-2 mb-2">
               <button
                 onClick={() => onAddNode('feature')}
-                className="px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg 
-                         flex items-center gap-2 text-sm transition-colors"
+                className="px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg flex items-center gap-2 text-sm transition-colors"
               >
                 <Plus className="w-4 h-4" />
                 Add Feature
               </button>
               <button
                 onClick={() => onAddNode('competitor')}
-                className="px-3 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg 
-                         flex items-center gap-2 text-sm transition-colors"
+                className="px-3 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg flex items-center gap-2 text-sm transition-colors"
               >
                 <Plus className="w-4 h-4" />
                 Add Competitor
               </button>
               <button
                 onClick={() => onAddNode('persona')}
-                className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg 
-                         flex items-center gap-2 text-sm transition-colors"
+                className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center gap-2 text-sm transition-colors"
               >
                 <Plus className="w-4 h-4" />
                 Add Persona
@@ -387,16 +384,14 @@ export function EnhancedMindmapFlow({
           <div className="flex gap-2 bg-gray-900 border border-gray-700 rounded-lg p-2">
             <button
               onClick={handleSave}
-              className="px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg 
-                       flex items-center gap-2 text-sm transition-colors"
+              className="px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg flex items-center gap-2 text-sm transition-colors"
             >
               <Save className="w-4 h-4" />
               Save
             </button>
             <button
               onClick={handleExport}
-              className="px-3 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg 
-                       flex items-center gap-2 text-sm transition-colors"
+              className="px-3 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg flex items-center gap-2 text-sm transition-colors"
             >
               <Download className="w-4 h-4" />
               Export
