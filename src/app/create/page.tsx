@@ -307,8 +307,9 @@ export default function CreateProjectPage() {
               </div>
 
               {mindmapData && (
-                <EnhancedMindmapFlow 
-                  data={convertToEnhancedMindmap({
+                <div className="w-full" style={{ height: '600px', minHeight: '600px' }}>
+                  <EnhancedMindmapFlow 
+                    data={convertToEnhancedMindmap({
                     projectName: mindmapData.projectName,
                     projectDescription: mindmapData.projectDescription,
                     description: mindmapData.projectDescription,
@@ -336,8 +337,9 @@ export default function CreateProjectPage() {
                     } : undefined,
                     targetAudience: mindmapData.targetAudience,
                   })} 
-                  onSave={handleSave} 
-                />
+                    onSave={handleSave} 
+                  />
+                </div>
               )}
 
               <div className="mt-8 p-6 bg-gray-800/50 rounded-lg border border-purple-500/20">
