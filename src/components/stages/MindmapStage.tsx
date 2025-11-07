@@ -3,7 +3,7 @@ import { ArrowRight, Users, Zap, Database } from 'lucide-react';
 import { AppData } from '@/types';
 import { EnhancedMindmapFlow } from '@/components/EnhancedMindmapFlow';
 import { convertToEnhancedMindmap } from '@/lib/mindmap-converter';
-import { MindmapData } from '@/types/mindmap';
+import { MindmapData, Competitor } from '@/types/mindmap';
 
 interface MindmapStageProps {
   appData: AppData;
@@ -88,7 +88,7 @@ export default function MindmapStage({ appData, onContinue }: MindmapStageProps)
             projectName: mindmapData.projectName,
             projectDescription: mindmapData.projectDescription,
             description: mindmapData.projectDescription,
-            competitors: mindmapData.competitors.map(c => ({
+            competitors: mindmapData.competitors.map((c: Competitor) => ({
               name: c.name,
               url: c.url,
               strength: c.strength,
