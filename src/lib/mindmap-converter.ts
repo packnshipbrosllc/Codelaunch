@@ -214,12 +214,17 @@ export function convertToEnhancedMindmap(oldData: OldMindmapData): EnhancedMindm
             },
           ],
       apiEndpoints: feature.apiEndpoints && feature.apiEndpoints.length > 0
-        ? feature.apiEndpoints
+        ? feature.apiEndpoints.map(endpoint => ({
+            method: endpoint.method.toUpperCase() as 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH',
+            path: endpoint.path,
+            description: endpoint.description,
+            auth: endpoint.auth,
+          }))
         : [
-            { method: 'GET', path: `/api/${featureName.toLowerCase().replace(/\s+/g, '-')}`, description: 'Fetch items', auth: true },
-            { method: 'POST', path: `/api/${featureName.toLowerCase().replace(/\s+/g, '-')}`, description: 'Create item', auth: true },
-            { method: 'PUT', path: `/api/${featureName.toLowerCase().replace(/\s+/g, '-')}/:id`, description: 'Update item', auth: true },
-            { method: 'DELETE', path: `/api/${featureName.toLowerCase().replace(/\s+/g, '-')}/:id`, description: 'Delete item', auth: true },
+            { method: 'GET' as const, path: `/api/${featureName.toLowerCase().replace(/\s+/g, '-')}`, description: 'Fetch items', auth: true },
+            { method: 'POST' as const, path: `/api/${featureName.toLowerCase().replace(/\s+/g, '-')}`, description: 'Create item', auth: true },
+            { method: 'PUT' as const, path: `/api/${featureName.toLowerCase().replace(/\s+/g, '-')}/:id`, description: 'Update item', auth: true },
+            { method: 'DELETE' as const, path: `/api/${featureName.toLowerCase().replace(/\s+/g, '-')}/:id`, description: 'Delete item', auth: true },
           ],
       createdAt: now,
       updatedAt: now,
