@@ -6,7 +6,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
 import { EnhancedMindmapFlow } from '@/components/EnhancedMindmapFlow';
 import { convertToEnhancedMindmap } from '@/lib/mindmap-converter';
-import PRDViewer from '@/components/PRDViewer';
+import EnhancedPRDViewer from '@/components/EnhancedPRDViewer';
 import Header from '@/components/Header';
 import AppPreviewModal from '@/components/AppPreviewModal';
 import { Eye } from 'lucide-react';
@@ -315,8 +315,8 @@ export default function ProjectDetailPage() {
       <Header title="Project Details" showBackButton backUrl="/dashboard" />
       {/* PRD Viewer Modal */}
       {showPRDViewer && prdData && (
-        <PRDViewer
-          prdData={prdData}
+        <EnhancedPRDViewer
+          prd={prdData}
           onClose={() => setShowPRDViewer(false)}
         />
       )}
