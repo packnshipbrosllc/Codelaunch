@@ -124,12 +124,15 @@ Rules:
     }
 
     // Create project in database using existing schema
+    // Note: Using both name/project_name and description/idea for compatibility
     const { data: project, error: projectError } = await supabase
       .from('projects')
       .insert({
         user_id: userId,
         project_name: mindmapData.projectName,
+        name: mindmapData.projectName, // Also set name for compatibility
         idea: mindmapData.projectDescription,
+        description: mindmapData.projectDescription, // Also set description for compatibility
         mindmap_data: {
           projectName: mindmapData.projectName,
           projectDescription: mindmapData.projectDescription,
@@ -155,15 +158,22 @@ Rules:
       );
     }
 
-    console.log('Created project:', project.id);
+    console.log('✅ Created project:', project.id);
+    console.log('📊 Project data structure:', {
+      id: project.id,
+      project_name: project.project_name,
+      idea: project.idea,
+      has_mindmap_data: !!project.mindmap_data,
+      mindmap_data_keys: project.mindmap_data ? Object.keys(project.mindmap_data) : [],
+    });
 
     return NextResponse.json({
       success: true,
       projectId: project.id,
       project: {
         id: project.id,
-        name: mindmapData.projectName,
-        description: mindmapData.projectDescription,
+        name: project.project_name,
+        description: project.idea,
         techStack: mindmapData.techStack,
       },
     });
