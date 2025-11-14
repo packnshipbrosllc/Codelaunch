@@ -9,6 +9,7 @@ import { CreditCard } from 'lucide-react';
 import Header from '@/components/Header';
 import { MindmapLimitBanner } from '@/components/MindmapLimitBanner';
 import { SpaceBackground } from '@/components/ui/space-background';
+import { GooeyText } from '@/components/ui/gooey-text';
 
 interface Project {
   id: string;
@@ -147,12 +148,34 @@ export default function DashboardPage() {
         
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-4xl md:text-5xl font-bold text-white mb-2">
-            My Projects
-          </h1>
-          <p className="text-gray-400 text-lg">
-            Transform your ideas into production-ready applications
-          </p>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+            <div>
+              {/* Gooey Morphing Title */}
+              <GooeyText
+                texts={[
+                  "My Projects",
+                  "Build Apps",
+                  "Ship Fast",
+                  "Create Magic"
+                ]}
+                morphTime={1.2}
+                cooldownTime={2}
+                className="h-20 mb-2"
+                textClassName="text-4xl md:text-5xl font-bold bg-gradient-to-r from-white via-blue-100 to-white bg-clip-text text-transparent"
+              />
+              
+              <p className="text-gray-400 text-lg mt-4">
+                Transform your ideas into production-ready applications
+              </p>
+            </div>
+
+            <Link
+              href="/create"
+              className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium rounded-lg transition-all duration-200 shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40 whitespace-nowrap"
+            >
+              ➕ New Project
+            </Link>
+          </div>
         </div>
 
         {/* Stats Cards */}
