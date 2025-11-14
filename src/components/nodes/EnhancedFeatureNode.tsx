@@ -23,6 +23,11 @@ interface EnhancedFeatureNodeProps extends NodeProps {
     isExpanded?: boolean;
     onExpand?: (id: string) => void;
     onEdit?: (id: string) => void;
+    onViewPRD?: (featureId: string) => void;
+    onGeneratePRD?: (featureId: string) => void;
+    hasPRD?: boolean;
+    prd?: any;
+    status?: string;
   };
 }
 
@@ -142,8 +147,29 @@ export function EnhancedFeatureNode({ data, id }: EnhancedFeatureNodeProps) {
             </div>
           )}
 
-          <div className="mt-3 pt-3 border-t border-gray-700">
-            <p className="text-xs text-gray-400">Click to expand for full details</p>
+          {/* PRD Actions */}
+          <div className="mt-3 pt-3 border-t border-gray-700 flex gap-2">
+            {data.hasPRD ? (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  data.onViewPRD?.(id);
+                }}
+                className="flex-1 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded transition-colors"
+              >
+                📄 View PRD
+              </button>
+            ) : (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  data.onGeneratePRD?.(id);
+                }}
+                className="flex-1 px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white text-xs font-medium rounded transition-colors"
+              >
+                ✨ Generate PRD
+              </button>
+            )}
           </div>
         </div>
       )}

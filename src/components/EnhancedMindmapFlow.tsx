@@ -23,10 +23,12 @@ import { Plus, Save, Download } from 'lucide-react';
 import { EnhancedFeatureNode } from './nodes/EnhancedFeatureNode';
 import { EnhancedCompetitorNode } from './nodes/EnhancedCompetitorNode';
 import { EnhancedPersonaNode } from './nodes/EnhancedPersonaNode';
+import PRDModal from '@/components/features/PRDModal';
 import { 
   EnhancedMindmapData, 
   NodeExpansionState,
 } from '@/types/enhanced-mindmap';
+import { DetailedPRD } from '@/types/feature';
 
 // Custom node types
 const nodeTypes = {
@@ -49,6 +51,11 @@ export function EnhancedMindmapFlow({
   editable = true 
 }: EnhancedMindmapFlowProps) {
   const [expandedNodes, setExpandedNodes] = useState<NodeExpansionState>({});
+  
+  // PRD Modal state
+  const [prdModalOpen, setPRDModalOpen] = useState(false);
+  const [selectedFeatureId, setSelectedFeatureId] = useState<string | null>(null);
+  const [isGeneratingPRD, setIsGeneratingPRD] = useState(false);
 
   // Generate initial nodes and edges from data
   const { initialNodes, initialEdges } = useMemo(() => {
@@ -262,6 +269,100 @@ export function EnhancedMindmapFlow({
     );
   }, [expandedNodes, setNodes]);
 
+  // PRD Handlers
+  const handleGeneratePRD = useCallback(async (featureId: string) => {
+    try {
+      setIsGeneratingPRD(true);
+      
+      const featureNode = nodes.find(n => n.id === featureId);
+      if (!featureNode) return;
+
+      const response = await fetch('/api/features/generate-prd', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          featureId: featureId,
+          featureTitle: featureNode.data.title || featureNode.data.name || 'Feature',
+          featureDescription: featureNode.data.description || '',
+          priority: featureNode.data.priority || 'must-have',
+          complexity: featureNode.data.complexity || 'moderate',
+          appContext: `App Name: ${data.projectName}\nApp Description: ${data.description || data.overview?.elevatorPitch || ''}`,
+          allFeatures: nodes
+            .filter(n => n.id !== featureId && n.type === 'enhancedFeature')
+            .map(n => ({
+              title: n.data.title || n.data.name || 'Feature',
+              description: n.data.description || ''
+            }))
+        })
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        setNodes((nds) =>
+          nds.map((node) => {
+            if (node.id === featureId) {
+              return {
+                ...node,
+                data: {
+                  ...node.data,
+                  prd: result.prd,
+                  hasPRD: true,
+                  status: 'detailed',
+                },
+              };
+            }
+            return node;
+          })
+        );
+
+        setSelectedFeatureId(featureId);
+        setPRDModalOpen(true);
+      } else {
+        console.error('Failed to generate PRD:', result.error);
+      }
+    } catch (error) {
+      console.error('Error generating PRD:', error);
+    } finally {
+      setIsGeneratingPRD(false);
+    }
+  }, [nodes, setNodes, data]);
+
+  const handleViewPRD = useCallback((featureId: string) => {
+    setSelectedFeatureId(featureId);
+    setPRDModalOpen(true);
+  }, []);
+
+  const handleApprovePRD = useCallback(() => {
+    if (!selectedFeatureId) return;
+
+    setNodes((nds) =>
+      nds.map((node) => {
+        if (node.id === selectedFeatureId) {
+          return {
+            ...node,
+            data: {
+              ...node.data,
+              status: 'ready',
+            },
+          };
+        }
+        return node;
+      })
+    );
+
+    setPRDModalOpen(false);
+  }, [selectedFeatureId, setNodes]);
+
+  const handleRegeneratePRD = useCallback(async () => {
+    if (!selectedFeatureId) return;
+    
+    setPRDModalOpen(false);
+    await handleGeneratePRD(selectedFeatureId);
+  }, [selectedFeatureId, handleGeneratePRD]);
+
   // ✅ Wire up onExpand handlers after nodes are initialized
   useEffect(() => {
     setNodes(nds =>
@@ -272,13 +373,21 @@ export function EnhancedMindmapFlow({
             data: {
               ...node.data,
               onExpand: handleNodeExpand,
+              // Add PRD handlers for feature nodes
+              ...(node.type === 'enhancedFeature' && {
+                onViewPRD: handleViewPRD,
+                onGeneratePRD: handleGeneratePRD,
+              }),
             },
           };
         }
         return node;
       })
     );
-  }, [handleNodeExpand, setNodes]);
+  }, [handleNodeExpand, handleViewPRD, handleGeneratePRD, setNodes]);
+
+  // Get selected feature for modal
+  const selectedFeature = nodes.find(n => n.id === selectedFeatureId);
 
   const onConnect = useCallback(
     (params: Connection) => setEdges(eds => addEdge({
@@ -424,6 +533,29 @@ export function EnhancedMindmapFlow({
           </div>
         </Panel>
       </ReactFlow>
+
+      {/* PRD Modal */}
+      <PRDModal
+        isOpen={prdModalOpen}
+        onClose={() => setPRDModalOpen(false)}
+        featureTitle={selectedFeature?.data.title || selectedFeature?.data.name || 'Feature'}
+        featureId={selectedFeatureId || ''}
+        prd={selectedFeature?.data.prd as DetailedPRD || null}
+        onRegeneratePRD={handleRegeneratePRD}
+        onApprovePRD={handleApprovePRD}
+      />
+
+      {/* Loading overlay when generating PRD */}
+      {isGeneratingPRD && (
+        <div className="absolute inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-gray-800 p-6 rounded-lg border border-gray-700">
+            <div className="flex items-center gap-3">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+              <span className="text-white">Generating comprehensive PRD...</span>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Custom Scrollbar Styles */}
       <style jsx global>{`
