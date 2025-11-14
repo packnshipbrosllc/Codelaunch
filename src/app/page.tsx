@@ -129,8 +129,10 @@ export default function LandingPage() {
       {/* Hero Section with DisplayCards */}
       <HeroSection />
 
-      {/* How It Works Section */}
-      <section id="how-it-works" className="container mx-auto px-4 sm:px-6 lg:px-8 py-20">
+      {/* ALL SECTIONS BELOW HERO - Wrapped in z-10 container to appear above starfield */}
+      <div className="relative z-10 bg-gradient-to-b from-gray-950 via-purple-950/20 to-gray-950">
+        {/* How It Works Section */}
+        <section id="how-it-works" className="container mx-auto px-4 sm:px-6 lg:px-8 py-20">
         <div className="max-w-5xl mx-auto">
           <h2 className="text-4xl font-bold text-white text-center mb-12">
             From Idea to Live App in 3 Steps
@@ -643,56 +645,57 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="container mx-auto px-4 sm:px-6 lg:px-8 py-12 border-t border-purple-900/30">
-        <div className="max-w-5xl mx-auto">
-          <div className="grid md:grid-cols-4 gap-8 mb-8">
-            <div>
-              <div className="flex items-center gap-2 mb-4">
-                <span className="text-2xl">🚀</span>
-                <span className="text-xl font-bold text-white">
-                  Code<span className="text-purple-400">Launch</span>
-                </span>
+        {/* Footer */}
+        <footer className="container mx-auto px-4 sm:px-6 lg:px-8 py-12 border-t border-purple-900/30">
+          <div className="max-w-5xl mx-auto">
+            <div className="grid md:grid-cols-4 gap-8 mb-8">
+              <div>
+                <div className="flex items-center gap-2 mb-4">
+                  <span className="text-2xl">🚀</span>
+                  <span className="text-xl font-bold text-white">
+                    Code<span className="text-purple-400">Launch</span>
+                  </span>
+                </div>
+                <p className="text-gray-400 text-sm">
+                  Ship your SaaS faster with AI-powered code generation.
+                </p>
               </div>
-              <p className="text-gray-400 text-sm">
-                Ship your SaaS faster with AI-powered code generation.
-              </p>
+
+              <div>
+                <h4 className="text-white font-semibold mb-3">Product</h4>
+                <ul className="space-y-2 text-gray-400 text-sm">
+                  <li><Link href="#features" className="hover:text-purple-400 transition">Features</Link></li>
+                  <li><Link href="#pricing" className="hover:text-purple-400 transition">Pricing</Link></li>
+                  {isSignedIn && (
+                    <li><Link href="/dashboard" className="hover:text-purple-400 transition">Dashboard</Link></li>
+                  )}
+                </ul>
+              </div>
+
+              <div>
+                <h4 className="text-white font-semibold mb-3">Company</h4>
+                <ul className="space-y-2 text-gray-400 text-sm">
+                  <li><a href="#how-it-works" className="hover:text-purple-400 transition">How It Works</a></li>
+                  <li><a href="#contact" className="hover:text-purple-400 transition">Contact</a></li>
+                  <li><a href="mailto:support@codelaunch.ai" className="hover:text-purple-400 transition">support@codelaunch.ai</a></li>
+                </ul>
+              </div>
+
+              <div>
+                <h4 className="text-white font-semibold mb-3">Legal</h4>
+                <ul className="space-y-2 text-gray-400 text-sm">
+                  <li><a href="#" className="hover:text-purple-400 transition">Privacy</a></li>
+                  <li><a href="#" className="hover:text-purple-400 transition">Terms</a></li>
+                </ul>
+              </div>
             </div>
 
-            <div>
-              <h4 className="text-white font-semibold mb-3">Product</h4>
-              <ul className="space-y-2 text-gray-400 text-sm">
-                <li><Link href="#features" className="hover:text-purple-400 transition">Features</Link></li>
-                <li><Link href="#pricing" className="hover:text-purple-400 transition">Pricing</Link></li>
-                {isSignedIn && (
-                  <li><Link href="/dashboard" className="hover:text-purple-400 transition">Dashboard</Link></li>
-                )}
-              </ul>
-            </div>
-
-            <div>
-              <h4 className="text-white font-semibold mb-3">Company</h4>
-              <ul className="space-y-2 text-gray-400 text-sm">
-                <li><a href="#how-it-works" className="hover:text-purple-400 transition">How It Works</a></li>
-                <li><a href="#contact" className="hover:text-purple-400 transition">Contact</a></li>
-                <li><a href="mailto:support@codelaunch.ai" className="hover:text-purple-400 transition">support@codelaunch.ai</a></li>
-              </ul>
-            </div>
-
-            <div>
-              <h4 className="text-white font-semibold mb-3">Legal</h4>
-              <ul className="space-y-2 text-gray-400 text-sm">
-                <li><a href="#" className="hover:text-purple-400 transition">Privacy</a></li>
-                <li><a href="#" className="hover:text-purple-400 transition">Terms</a></li>
-              </ul>
+            <div className="pt-8 border-t border-purple-900/30 text-center text-gray-400 text-sm">
+              © 2025 CodeLaunch. All rights reserved.
             </div>
           </div>
-
-          <div className="pt-8 border-t border-purple-900/30 text-center text-gray-400 text-sm">
-            © 2025 CodeLaunch. All rights reserved.
-          </div>
-        </div>
-      </footer>
+        </footer>
+      </div>
     </div>
   );
 }
