@@ -20,6 +20,7 @@ import {
     Command,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { GooeyText } from '@/components/ui/gooey-text';
 import * as React from "react"
 
 interface UseAutoResizeTextareaProps {
@@ -165,28 +166,28 @@ export function AnimatedAIChat({
 
     const commandSuggestions: CommandSuggestion[] = [
         { 
-            icon: <ImageIcon className="w-4 h-4" />, 
-            label: "Clone UI", 
-            description: "Generate a UI from a screenshot", 
-            prefix: "/clone" 
-        },
-        { 
-            icon: <Figma className="w-4 h-4" />, 
-            label: "Import Figma", 
-            description: "Import a design from Figma", 
-            prefix: "/figma" 
+            icon: <Sparkles className="w-4 h-4" />, 
+            label: "E-commerce App", 
+            description: "Build an online store", 
+            prefix: "/ecommerce" 
         },
         { 
             icon: <MonitorIcon className="w-4 h-4" />, 
-            label: "Create Page", 
-            description: "Generate a new web page", 
-            prefix: "/page" 
+            label: "SaaS Dashboard", 
+            description: "Create a SaaS dashboard", 
+            prefix: "/saas" 
         },
         { 
-            icon: <Sparkles className="w-4 h-4" />, 
-            label: "Improve", 
-            description: "Improve existing UI design", 
-            prefix: "/improve" 
+            icon: <CircleUserRound className="w-4 h-4" />, 
+            label: "Social Platform", 
+            description: "Build a social network", 
+            prefix: "/social" 
+        },
+        { 
+            icon: <ImageIcon className="w-4 h-4" />, 
+            label: "Content Platform", 
+            description: "Create a blog or CMS", 
+            prefix: "/content" 
         },
     ];
 
@@ -319,18 +320,21 @@ export function AnimatedAIChat({
                             transition={{ delay: 0.2, duration: 0.5 }}
                             className="inline-block"
                         >
-                            <h1 className="text-3xl font-medium tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white/90 to-white/40 pb-1">
-                                {title}
-                            </h1>
-                            <motion.div 
-                                className="h-px bg-gradient-to-r from-transparent via-white/20 to-transparent"
-                                initial={{ width: 0, opacity: 0 }}
-                                animate={{ width: "100%", opacity: 1 }}
-                                transition={{ delay: 0.5, duration: 0.8 }}
+                            <GooeyText
+                                texts={[
+                                    title,
+                                    "Let's build something great",
+                                    "Transform your vision",
+                                    "Create your product"
+                                ]}
+                                morphTime={1.8}
+                                cooldownTime={3.5}
+                                className="h-28 mb-2"
+                                textClassName="text-5xl md:text-6xl lg:text-7xl font-bold bg-gradient-to-r from-white via-blue-100 to-white bg-clip-text text-transparent"
                             />
                         </motion.div>
                         <motion.p 
-                            className="text-sm text-white/40"
+                            className="text-base text-white/50 mt-6"
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             transition={{ delay: 0.3 }}
