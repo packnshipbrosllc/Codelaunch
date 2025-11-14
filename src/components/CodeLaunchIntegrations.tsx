@@ -40,7 +40,9 @@ export function CodeLaunchIntegrations() {
   const lovableRef = useRef<HTMLDivElement>(null!);
 
   return (
-    <section className="relative py-32 bg-[#0a0a0f] overflow-hidden">
+    <section className="relative py-32 bg-transparent overflow-visible">
+      {/* REMOVED: No gradient overlay that blocks content */}
+      
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-20 text-center">
         <h2 className="text-5xl sm:text-6xl font-black text-white mb-6">
           <span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
@@ -54,16 +56,16 @@ export function CodeLaunchIntegrations() {
 
       <div
         ref={containerRef}
-        className="relative flex h-[400px] w-full max-w-7xl mx-auto items-center justify-center overflow-hidden px-8"
+        className="relative flex h-[400px] w-full max-w-7xl mx-auto items-center justify-center overflow-visible px-8"
       >
         {/* Left Side */}
-        <div className="flex flex-col justify-center gap-16 absolute left-[15%]">
+        <div className="flex flex-col justify-center gap-16 absolute left-[15%] z-10">
           <div
             ref={githubRef}
             className="relative flex items-center justify-center w-24 h-24 rounded-2xl bg-gradient-to-br from-gray-800 to-gray-900 border-2 border-gray-700 shadow-2xl hover:scale-110 transition-all duration-300 cursor-pointer group"
           >
             <div className="text-white"><GitHubLogo /></div>
-            <div className="absolute left-28 opacity-0 group-hover:opacity-100 transition-opacity bg-gray-900/90 backdrop-blur-sm px-4 py-2 rounded-lg text-sm text-white whitespace-nowrap border border-gray-700">
+            <div className="absolute left-28 opacity-0 group-hover:opacity-100 transition-opacity bg-gray-900/90 backdrop-blur-sm px-4 py-2 rounded-lg text-sm text-white whitespace-nowrap border border-gray-700 z-50">
               GitHub
             </div>
           </div>
@@ -73,14 +75,14 @@ export function CodeLaunchIntegrations() {
             className="relative flex items-center justify-center w-24 h-24 rounded-2xl bg-gradient-to-br from-orange-900 to-amber-950 border-2 border-orange-700 shadow-2xl hover:scale-110 transition-all duration-300 cursor-pointer group"
           >
             <div className="text-orange-400"><ClaudeLogo /></div>
-            <div className="absolute left-28 opacity-0 group-hover:opacity-100 transition-opacity bg-gray-900/90 backdrop-blur-sm px-4 py-2 rounded-lg text-sm text-white whitespace-nowrap border border-gray-700">
+            <div className="absolute left-28 opacity-0 group-hover:opacity-100 transition-opacity bg-gray-900/90 backdrop-blur-sm px-4 py-2 rounded-lg text-sm text-white whitespace-nowrap border border-gray-700 z-50">
               Claude AI
             </div>
           </div>
         </div>
 
-        {/* Center */}
-        <div ref={codeLaunchRef} className="relative z-10 flex items-center justify-center">
+        {/* Center - Lower z-index so beams don't cover icons */}
+        <div ref={codeLaunchRef} className="relative z-5 flex items-center justify-center">
           <div className="relative">
             <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full blur-[60px] opacity-50 animate-pulse"></div>
             <div className="relative flex items-center justify-center w-40 h-40 rounded-full bg-gradient-to-br from-purple-600 via-purple-700 to-pink-600 border-4 border-purple-400 shadow-2xl">
@@ -94,14 +96,14 @@ export function CodeLaunchIntegrations() {
           </div>
         </div>
 
-        {/* Right Side */}
-        <div className="flex flex-col justify-center gap-16 absolute right-[15%]">
+        {/* Right Side - Higher z-index to show above beams */}
+        <div className="flex flex-col justify-center gap-16 absolute right-[15%] z-10">
           <div
             ref={cursorRef}
             className="relative flex items-center justify-center w-24 h-24 rounded-2xl bg-gradient-to-br from-blue-900 to-blue-950 border-2 border-blue-700 shadow-2xl hover:scale-110 transition-all duration-300 cursor-pointer group"
           >
             <div className="text-blue-400"><CursorLogo /></div>
-            <div className="absolute right-28 opacity-0 group-hover:opacity-100 transition-opacity bg-gray-900/90 backdrop-blur-sm px-4 py-2 rounded-lg text-sm text-white whitespace-nowrap border border-gray-700">
+            <div className="absolute right-28 opacity-0 group-hover:opacity-100 transition-opacity bg-gray-900/90 backdrop-blur-sm px-4 py-2 rounded-lg text-sm text-white whitespace-nowrap border border-gray-700 z-50">
               Cursor
             </div>
           </div>
@@ -111,13 +113,13 @@ export function CodeLaunchIntegrations() {
             className="relative flex items-center justify-center w-24 h-24 rounded-2xl bg-gradient-to-br from-pink-900 to-rose-950 border-2 border-pink-700 shadow-2xl hover:scale-110 transition-all duration-300 cursor-pointer group"
           >
             <div className="text-pink-400"><LovableLogo /></div>
-            <div className="absolute right-28 opacity-0 group-hover:opacity-100 transition-opacity bg-gray-900/90 backdrop-blur-sm px-4 py-2 rounded-lg text-sm text-white whitespace-nowrap border border-gray-700">
+            <div className="absolute right-28 opacity-0 group-hover:opacity-100 transition-opacity bg-gray-900/90 backdrop-blur-sm px-4 py-2 rounded-lg text-sm text-white whitespace-nowrap border border-gray-700 z-50">
               Lovable
             </div>
           </div>
         </div>
 
-        {/* Animated Beams */}
+        {/* Animated Beams - Lower z-index (default) */}
         <AnimatedBeam
           containerRef={containerRef}
           fromRef={githubRef}
