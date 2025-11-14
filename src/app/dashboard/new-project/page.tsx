@@ -23,24 +23,42 @@ export default function NewProjectPage() {
     setError(null);
     
     try {
-      const response = await fetch('/api/projects/create', {
+      // Use the existing generate-mindmap API that was working
+      const response = await fetch('/api/generate-mindmap', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ description: message })
+        body: JSON.stringify({ 
+          idea: message.trim()
+        })
       });
 
-      const data = await response.json();
-      
-      if (data.success && data.projectId) {
-        // Redirect to project page - adjust route based on your actual project page structure
-        router.push(`/project/${data.projectId}`);
-      } else {
-        setError(data.error || 'Failed to create project');
-        setIsCreating(false);
+      if (!response.ok) {
+        const errorData = await response.json();
+        
+        // Handle limit reached error
+        if (response.status === 403 && errorData.error === 'FREE_LIMIT_REACHED') {
+          setError(errorData.message || 'You\'ve reached your free mindmap limit. Please upgrade to Pro.');
+          setIsCreating(false);
+          return;
+        }
+        
+        throw new Error(errorData.error || `API returned ${response.status}`);
       }
-    } catch (error) {
+
+      const result = await response.json();
+      
+      if (result.success && result.data) {
+        // Redirect to create page with the generated mindmap data
+        // The create page will handle displaying and saving it
+        const encodedData = encodeURIComponent(JSON.stringify(result.data));
+        router.push(`/create?mindmap=${encodedData}`);
+        // Don't set isCreating to false - we're redirecting
+      } else {
+        throw new Error(result.error || 'Failed to generate mindmap');
+      }
+    } catch (error: any) {
       console.error('Failed to create project:', error);
-      setError('An error occurred. Please try again.');
+      setError(error.message || 'An error occurred. Please try again.');
       setIsCreating(false);
     }
   };
@@ -96,7 +114,7 @@ export default function NewProjectPage() {
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="mt-4 p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-center"
+                  className="mt-4 p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-center backdrop-blur-sm"
                 >
                   <p className="text-red-400">{error}</p>
                 </motion.div>
@@ -108,4 +126,3 @@ export default function NewProjectPage() {
     </SpaceBackground>
   );
 }
-

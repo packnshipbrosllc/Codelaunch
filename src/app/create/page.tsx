@@ -1,8 +1,8 @@
 // src/app/create/page.tsx
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
 import { EnhancedMindmapFlow } from '@/components/EnhancedMindmapFlow';
 import { convertToEnhancedMindmap } from '@/lib/mindmap-converter';
@@ -21,8 +21,9 @@ if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
   console.log('🔍 DEBUG: EnhancedMindmapFlow component:', EnhancedMindmapFlow);
 }
 
-export default function CreateProjectPage() {
+function CreateProjectPageContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, isLoaded } = useUser();
   const { canCreateMore, isSubscribed, remainingFreeMindmaps } = useMindmapLimit();
   
@@ -35,6 +36,22 @@ export default function CreateProjectPage() {
   const [showAIChat, setShowAIChat] = useState(true);
   const [moodBoardImages, setMoodBoardImages] = useState<any[]>([]);
   const [isFullscreen, setIsFullscreen] = useState(false);
+
+  // Check for mindmap data from query params (from new-project page)
+  useEffect(() => {
+    const mindmapParam = searchParams.get('mindmap');
+    if (mindmapParam && !mindmapData) {
+      try {
+        const decodedData = JSON.parse(decodeURIComponent(mindmapParam));
+        console.log('📥 Received mindmap data from new-project page:', decodedData);
+        setMindmapData(decodedData);
+        // Clear the query param to avoid re-processing
+        router.replace('/create', { scroll: false });
+      } catch (err) {
+        console.error('Failed to parse mindmap data from URL:', err);
+      }
+    }
+  }, [searchParams, mindmapData, router]);
 
   // Debug logging
   useEffect(() => {
@@ -381,6 +398,21 @@ export default function CreateProjectPage() {
         </div>
       )}
     </SpaceBackground>
+  );
+}
+
+export default function CreateProjectPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-black flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-purple-500 mx-auto mb-4"></div>
+          <p className="text-white">Loading...</p>
+        </div>
+      </div>
+    }>
+      <CreateProjectPageContent />
+    </Suspense>
   );
 }
 
