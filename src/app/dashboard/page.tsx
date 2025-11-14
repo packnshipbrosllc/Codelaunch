@@ -8,6 +8,7 @@ import Link from 'next/link';
 import { CreditCard } from 'lucide-react';
 import Header from '@/components/Header';
 import { MindmapLimitBanner } from '@/components/MindmapLimitBanner';
+import { SpaceBackground } from '@/components/ui/space-background';
 
 interface Project {
   id: string;
@@ -126,17 +127,19 @@ export default function DashboardPage() {
 
   if (!isLoaded || isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-purple-500 mx-auto mb-4"></div>
-          <p className="text-gray-300">Loading your projects...</p>
+      <SpaceBackground variant="subtle">
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-500 mx-auto mb-4"></div>
+            <p className="text-white">Loading your projects...</p>
+          </div>
         </div>
-      </div>
+      </SpaceBackground>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900">
+    <SpaceBackground variant="default">
       <Header title="My Projects" />
       <div className="container mx-auto px-4 py-8">
         {/* Mindmap Limit Banner */}
@@ -144,10 +147,12 @@ export default function DashboardPage() {
         
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-400 to-pink-500 bg-clip-text text-transparent mb-2">
-            📊 My Projects
+          <h1 className="text-4xl md:text-5xl font-bold text-white mb-2">
+            My Projects
           </h1>
-          <p className="text-gray-300">Manage and track all your CodeLaunch projects</p>
+          <p className="text-gray-400 text-lg">
+            Transform your ideas into production-ready applications
+          </p>
         </div>
 
         {/* Stats Cards */}
@@ -263,58 +268,138 @@ export default function DashboardPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredProjects.map((project) => (
-              <div
-                key={project.id}
-                className="bg-gray-800/50 backdrop-blur-sm border border-purple-500/20 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-105 overflow-hidden group"
-              >
-                {/* Project Header */}
-                <div className="p-6 bg-gradient-to-r from-purple-500 to-pink-500">
-                  <h3 className="text-xl font-bold text-white mb-2 line-clamp-1">
-                    {project.project_name}
-                  </h3>
-                  <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(project.status)}`}>
-                    {project.status}
-                  </span>
-                </div>
+            {filteredProjects.map((project) => {
+              // Calculate feature count from mindmap data
+              const featureCount = project.mindmap_data?.features?.length || 0;
+              const status = project.status as 'planned' | 'in-progress' | 'complete' | 'draft' | 'active' | 'completed';
+              
+              // Map status to display format
+              const displayStatus = status === 'active' ? 'in-progress' : 
+                                   status === 'completed' ? 'complete' : 
+                                   status === 'draft' ? 'planned' : status;
+              
+              return (
+                <ProjectCard
+                  key={project.id}
+                  id={project.id}
+                  title={project.project_name}
+                  description={project.idea}
+                  features={featureCount}
+                  status={displayStatus}
+                  created_at={project.created_at}
+                  last_accessed_at={project.last_accessed_at}
+                  onDuplicate={() => duplicateProject(project)}
+                  onDelete={() => deleteProject(project.id)}
+                />
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </SpaceBackground>
+  );
+}
 
-                {/* Project Body */}
-                <div className="p-6">
-                  <p className="text-gray-300 text-sm line-clamp-3 mb-4">
-                    {project.idea}
-                  </p>
+// Enhanced Project Card Component
+function ProjectCard({ 
+  id, 
+  title, 
+  description, 
+  features, 
+  status,
+  created_at,
+  last_accessed_at,
+  onDuplicate,
+  onDelete
+}: {
+  id: string;
+  title: string;
+  description: string;
+  features: number;
+  status: 'planned' | 'in-progress' | 'complete';
+  created_at: string;
+  last_accessed_at: string;
+  onDuplicate: () => void;
+  onDelete: () => void;
+}) {
+  const statusConfig = {
+    'planned': { color: 'text-gray-400', bg: 'bg-gray-800/50', label: 'Planned' },
+    'in-progress': { color: 'text-blue-400', bg: 'bg-blue-900/30', label: 'In Progress' },
+    'complete': { color: 'text-green-400', bg: 'bg-green-900/30', label: 'Complete' },
+  };
 
-                  <div className="text-xs text-gray-400 mb-4">
-                    <div>Created: {new Date(project.created_at).toLocaleDateString()}</div>
-                    <div>Last accessed: {new Date(project.last_accessed_at).toLocaleDateString()}</div>
-                  </div>
+  const config = statusConfig[status] || statusConfig.planned;
+  const progress = status === 'in-progress' ? Math.min(67, features * 5) : status === 'complete' ? 100 : 0;
 
-                  {/* Actions */}
-                  <div className="flex gap-2">
-                    <Link
-                      href={`/project/${project.id}`}
-                      className="flex-1 px-4 py-2 bg-purple-600 text-white text-center rounded-lg hover:bg-purple-700 transition-colors text-sm font-semibold"
-                    >
-                      Open
-                    </Link>
-                    <button
-                      onClick={() => duplicateProject(project)}
-                      className="px-4 py-2 bg-gray-700 text-gray-200 rounded-lg hover:bg-gray-600 transition-colors text-sm"
-                      title="Duplicate"
-                    >
-                      📋
-                    </button>
-                    <button
-                      onClick={() => deleteProject(project.id)}
-                      className="px-4 py-2 bg-red-600/20 text-red-400 rounded-lg hover:bg-red-600/30 transition-colors text-sm"
-                      title="Delete"
-                    >
-                      🗑️
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
+  return (
+    <div className="group relative">
+      {/* Card Glow on Hover */}
+      <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl opacity-0 group-hover:opacity-30 blur transition duration-500" />
+      
+      {/* Card Content */}
+      <div className="relative bg-gradient-to-br from-gray-900/90 to-gray-800/70 backdrop-blur-xl border border-gray-700/50 rounded-xl p-6 hover:border-blue-500/50 transition-all duration-300">
+        {/* Status Badge */}
+        <div className="flex items-center justify-between mb-4">
+          <span className={`px-3 py-1 rounded-full text-xs font-medium ${config.bg} ${config.color}`}>
+            {config.label}
+          </span>
+          <span className="text-gray-400 text-sm">{features} {features === 1 ? 'feature' : 'features'}</span>
+        </div>
+
+        {/* Title & Description */}
+        <h3 className="text-xl font-bold text-white mb-2 group-hover:text-blue-400 transition-colors line-clamp-1">
+          {title}
+        </h3>
+        <p className="text-gray-400 text-sm mb-4 line-clamp-3">
+          {description}
+        </p>
+
+        {/* Metadata */}
+        <div className="text-xs text-gray-500 mb-4 space-y-1">
+          <div>Created: {new Date(created_at).toLocaleDateString()}</div>
+          <div>Last accessed: {new Date(last_accessed_at).toLocaleDateString()}</div>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex gap-2">
+          <Link
+            href={`/project/${id}`}
+            className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
+          >
+            Open Project
+          </Link>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onDuplicate();
+            }}
+            className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white text-sm rounded-lg transition-colors"
+            title="Duplicate"
+          >
+            ⚙️
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete();
+            }}
+            className="px-4 py-2 bg-red-600/20 hover:bg-red-600/30 text-red-400 text-sm rounded-lg transition-colors"
+            title="Delete"
+          >
+            🗑️
+          </button>
+        </div>
+
+        {/* Progress Bar (for in-progress projects) */}
+        {status === 'in-progress' && (
+          <div className="mt-4">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-xs text-gray-400">Progress</span>
+              <span className="text-xs text-blue-400">{progress}%</span>
+            </div>
+            <div className="w-full bg-gray-700 rounded-full h-1.5">
+              <div className="bg-gradient-to-r from-blue-500 to-purple-500 h-1.5 rounded-full transition-all duration-500" style={{ width: `${progress}%` }} />
+            </div>
           </div>
         )}
       </div>
