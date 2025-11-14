@@ -34,7 +34,7 @@ export default function HeroSection() {
             </h1>
 
             <p className="text-lg sm:text-xl text-gray-400 mb-4 max-w-2xl mx-auto lg:mx-0">
-              AI-powered workflow: Mindmap → PRD → Full-stack code in 45 minutes
+              AI-powered workflow: Mindmap → PRD → Full-stack code in weeks
             </p>
 
             <p className="text-base sm:text-lg text-gray-500 mb-10 max-w-2xl mx-auto lg:mx-0">
@@ -44,7 +44,7 @@ export default function HeroSection() {
             {/* Stats */}
             <div className="flex flex-wrap gap-6 lg:gap-8 justify-center lg:justify-start mb-10">
               <div className="text-left">
-                <div className="text-3xl lg:text-4xl font-black text-purple-500 block">45min</div>
+                <div className="text-3xl lg:text-4xl font-black text-purple-500 block">Weeks</div>
                 <div className="text-sm text-gray-500">Idea to Code</div>
               </div>
               <div className="text-left">

@@ -4,49 +4,8 @@ export function DisplayCards() {
   return (
     <div className="relative py-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-          {/* Left Column - Text Content */}
-          <div className="text-left">
-            <h2 className="text-5xl sm:text-6xl font-black text-white mb-6 leading-tight">
-              <span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
-                From Idea to Launch in Weeks
-              </span>
-            </h2>
-            <p className="text-xl text-gray-400 mb-8 leading-relaxed">
-              Skip the 6-month development cycle. Our AI-powered workflow gets you from concept to production-ready code in 2-3 weeks, not months.
-            </p>
-            <div className="space-y-4">
-              <div className="flex items-start gap-4">
-                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-400 font-bold">
-                  1
-                </div>
-                <div>
-                  <h3 className="text-white font-bold mb-1">AI-Powered Mindmap</h3>
-                  <p className="text-gray-400 text-sm">Transform your idea into a detailed feature map with competitor analysis</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-4">
-                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-400 font-bold">
-                  2
-                </div>
-                <div>
-                  <h3 className="text-white font-bold mb-1">Technical PRD Generation</h3>
-                  <p className="text-gray-400 text-sm">Get a 10,000+ line PRD with database schemas, API specs, and user stories</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-4">
-                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-400 font-bold">
-                  3
-                </div>
-                <div>
-                  <h3 className="text-white font-bold mb-1">Production-Ready Code</h3>
-                  <p className="text-gray-400 text-sm">Export directly to Cursor, Lovable, or deploy yourself in 2-3 weeks</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Right Column - Display Cards */}
+        <div className="flex items-center justify-center">
+          {/* Display Cards */}
           <div className="relative flex items-center justify-center min-h-[500px]">
             <div className="relative w-full max-w-md">
               {/* Card 3 - Bottom (Most transparent) */}
