@@ -1,3 +1,4 @@
+// src/components/ui/space-background.tsx
 'use client';
 
 import { ShootingStars } from '@/components/ui/shooting-stars';
@@ -20,35 +21,45 @@ export function SpaceBackground({ children, variant = 'default' }: SpaceBackgrou
     intense: {
       minSpeed: 25,
       maxSpeed: 50,
-      minDelay: 600,
-      maxDelay: 2000,
+      minDelay: 400,
+      maxDelay: 1500,
       starColor: '#FFFFFF',
       trailColor: '#60A5FA',
     },
     subtle: {
       minSpeed: 15,
-      maxSpeed: 25,
-      minDelay: 2500,
+      maxSpeed: 30,
+      minDelay: 2000,
       maxDelay: 6000,
-      starColor: '#60A5FA',
-      trailColor: '#3B82F6',
+      starColor: '#9E00FF',
+      trailColor: '#2EB9DF',
     },
   };
 
   const config = variants[variant];
 
   return (
-    <div className="relative min-h-screen bg-gradient-to-b from-[#0a0a14] via-[#1a1a2e] to-[#0a0a14] overflow-hidden">
-      {/* Shooting Stars */}
-      <ShootingStars
-        {...config}
-        starWidth={variant === 'intense' ? 15 : 12}
-        starHeight={variant === 'intense' ? 2 : 1.5}
-        className="absolute inset-0 z-0"
-      />
+    <div className="relative min-h-screen overflow-hidden">
+      {/* Purple gradient base */}
+      <div className="absolute inset-0 bg-gradient-to-br from-purple-900 via-gray-900 to-black" />
 
-      {/* Static Stars */}
-      <div className="absolute inset-0 z-0">
+      {/* Shooting Stars Layer */}
+      <div className="absolute inset-0 pointer-events-none">
+        <ShootingStars
+          minSpeed={config.minSpeed}
+          maxSpeed={config.maxSpeed}
+          minDelay={config.minDelay}
+          maxDelay={config.maxDelay}
+          starColor={config.starColor}
+          trailColor={config.trailColor}
+          starWidth={12}
+          starHeight={1.5}
+          className="w-full h-full"
+        />
+      </div>
+
+      {/* Static stars background */}
+      <div className="absolute inset-0 pointer-events-none">
         <div 
           className="absolute inset-0 opacity-40"
           style={{
@@ -60,18 +71,15 @@ export function SpaceBackground({ children, variant = 'default' }: SpaceBackgrou
               radial-gradient(2px 2px at 90% 60%, white, transparent),
               radial-gradient(1px 1px at 33% 80%, white, transparent),
               radial-gradient(1px 1px at 15% 60%, white, transparent),
-              radial-gradient(2px 2px at 70% 40%, white, transparent),
-              radial-gradient(1px 1px at 45% 20%, white, transparent),
-              radial-gradient(2px 2px at 85% 80%, white, transparent)
+              radial-gradient(2px 2px at 70% 40%, white, transparent)
             `,
             backgroundSize: '200% 200%',
-            backgroundRepeat: 'repeat',
           }}
         />
       </div>
 
-      {/* Ambient Glow */}
-      <div className="absolute inset-0 z-0">
+      {/* Ambient glows */}
+      <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-purple-600/20 rounded-full blur-[120px] animate-pulse" />
         <div className="absolute bottom-20 right-1/4 w-[500px] h-[500px] bg-blue-600/20 rounded-full blur-[120px] animate-pulse" style={{ animationDelay: '2s' }} />
       </div>
@@ -83,4 +91,3 @@ export function SpaceBackground({ children, variant = 'default' }: SpaceBackgrou
     </div>
   );
 }
-

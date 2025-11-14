@@ -1,6 +1,17 @@
-'use client';
+// src/components/ui/shooting-stars.tsx
+"use client";
+import { cn } from "@/lib/utils";
+import React, { useEffect, useState, useRef } from "react";
 
-import { useEffect, useRef } from 'react';
+interface ShootingStar {
+  id: number;
+  x: number;
+  y: number;
+  angle: number;
+  scale: number;
+  speed: number;
+  distance: number;
+}
 
 interface ShootingStarsProps {
   minSpeed?: number;
@@ -14,119 +25,147 @@ interface ShootingStarsProps {
   className?: string;
 }
 
-export function ShootingStars({
-  minSpeed = 15,
-  maxSpeed = 35,
-  minDelay = 800,
-  maxDelay = 3000,
-  starColor = '#60A5FA',
-  trailColor = '#3B82F6',
-  starWidth = 12,
-  starHeight = 2,
-  className = '',
-}: ShootingStarsProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
+const getRandomStartPoint = () => {
+  if (typeof window === 'undefined') {
+    return { x: 0, y: 0, angle: 45 };
+  }
+  
+  const side = Math.floor(Math.random() * 4);
+  const offset = Math.random() * window.innerWidth;
+  
+  switch (side) {
+    case 0:
+      return { x: offset, y: 0, angle: 45 };
+    case 1:
+      return { x: window.innerWidth, y: offset, angle: 135 };
+    case 2:
+      return { x: offset, y: window.innerHeight, angle: 225 };
+    case 3:
+      return { x: 0, y: offset, angle: 315 };
+    default:
+      return { x: 0, y: 0, angle: 45 };
+  }
+};
+
+export const ShootingStars: React.FC<ShootingStarsProps> = ({
+  minSpeed = 10,
+  maxSpeed = 30,
+  minDelay = 1200,
+  maxDelay = 4200,
+  starColor = "#9E00FF",
+  trailColor = "#2EB9DF",
+  starWidth = 10,
+  starHeight = 1,
+  className,
+}) => {
+  const [star, setStar] = useState<ShootingStar | null>(null);
+  const svgRef = useRef<SVGSVGElement>(null);
+  const animationFrameRef = useRef<number | null>(null);
 
   useEffect(() => {
-    if (!containerRef.current) return;
-
-    const container = containerRef.current;
-    const stars: Array<{
-      element: HTMLDivElement;
-      animation: Animation;
-    }> = [];
-
     const createStar = () => {
-      const star = document.createElement('div');
-      star.style.position = 'absolute';
-      star.style.width = `${starWidth}px`;
-      star.style.height = `${starHeight}px`;
-      star.style.background = `linear-gradient(90deg, ${starColor} 0%, ${trailColor} 50%, transparent 100%)`;
-      star.style.borderRadius = '50%';
-      star.style.boxShadow = `0 0 ${starWidth * 2}px ${starColor}, 0 0 ${starWidth * 4}px ${starColor}`;
-      star.style.opacity = '0';
-      star.style.pointerEvents = 'none';
-      star.style.zIndex = '1';
-      
-      container.appendChild(star);
-
-      // Random starting position (top of screen, slight angle)
-      const startX = Math.random() * 100;
-      const startY = -2;
-      const angle = (Math.random() * 30 - 15) * (Math.PI / 180); // -15 to 15 degrees
-      const distance = 120; // Distance to travel
-      const endX = startX + Math.cos(angle) * distance;
-      const endY = startY + Math.sin(angle) * distance;
-      const speed = minSpeed + Math.random() * (maxSpeed - minSpeed);
-      const duration = 2000 / speed; // Duration based on speed
-
-      star.style.left = `${startX}%`;
-      star.style.top = `${startY}%`;
-
-      // Animate using Web Animations API
-      const keyframes = [
-        {
-          opacity: '0',
-          transform: `translate(0, 0) scale(0.5)`,
-        },
-        {
-          opacity: '1',
-          transform: `translate(0, 0) scale(1)`,
-          offset: 0.05,
-        },
-        {
-          opacity: '1',
-          transform: `translate(${endX - startX}%, ${endY - startY}%) scale(1)`,
-          offset: 0.95,
-        },
-        {
-          opacity: '0',
-          transform: `translate(${endX - startX}%, ${endY - startY}%) scale(0.5)`,
-        },
-      ];
-
-      const animation = star.animate(keyframes, {
-        duration: duration * 1000,
-        easing: 'linear',
-        fill: 'forwards',
-      });
-
-      stars.push({ element: star, animation });
-
-      animation.onfinish = () => {
-        if (star.parentNode) {
-          star.parentNode.removeChild(star);
-        }
-        const index = stars.findIndex(s => s.element === star);
-        if (index > -1) {
-          stars.splice(index, 1);
-        }
-        // Create a new star after a delay
-        const delay = minDelay + Math.random() * (maxDelay - minDelay);
-        setTimeout(() => createStar(), delay);
+      const { x, y, angle } = getRandomStartPoint();
+      const newStar: ShootingStar = {
+        id: Date.now(),
+        x,
+        y,
+        angle,
+        scale: 1,
+        speed: Math.random() * (maxSpeed - minSpeed) + minSpeed,
+        distance: 0,
       };
+      setStar(newStar);
+
+      const randomDelay = Math.random() * (maxDelay - minDelay) + minDelay;
+      setTimeout(createStar, randomDelay);
     };
 
-    // Create initial stars with staggered delays
-    const numStars = 3;
-    for (let i = 0; i < numStars; i++) {
-      const delay = (minDelay + Math.random() * (maxDelay - minDelay)) * (i / numStars);
-      setTimeout(() => createStar(), delay);
+    createStar();
+
+    return () => {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+    };
+  }, [minSpeed, maxSpeed, minDelay, maxDelay]);
+
+  useEffect(() => {
+    const moveStar = () => {
+      if (star) {
+        setStar((prevStar) => {
+          if (!prevStar) return null;
+          const newX =
+            prevStar.x +
+            prevStar.speed * Math.cos((prevStar.angle * Math.PI) / 180);
+          const newY =
+            prevStar.y +
+            prevStar.speed * Math.sin((prevStar.angle * Math.PI) / 180);
+          const newDistance = prevStar.distance + prevStar.speed;
+          const newScale = 1 + newDistance / 100;
+          
+          if (typeof window !== 'undefined') {
+            if (
+              newX < -20 ||
+              newX > window.innerWidth + 20 ||
+              newY < -20 ||
+              newY > window.innerHeight + 20
+            ) {
+              return null;
+            }
+          }
+          
+          return {
+            ...prevStar,
+            x: newX,
+            y: newY,
+            distance: newDistance,
+            scale: newScale,
+          };
+        });
+      }
+      
+      animationFrameRef.current = requestAnimationFrame(moveStar);
+    };
+
+    if (star) {
+      animationFrameRef.current = requestAnimationFrame(moveStar);
     }
 
     return () => {
-      stars.forEach(star => {
-        try {
-          star.animation.cancel();
-        } catch (e) {
-          // Ignore errors
-        }
-        if (star.element.parentNode) {
-          star.element.parentNode.removeChild(star.element);
-        }
-      });
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
     };
-  }, [minSpeed, maxSpeed, minDelay, maxDelay, starColor, trailColor, starWidth, starHeight]);
+  }, [star]);
 
-  return <div ref={containerRef} className={className} style={{ pointerEvents: 'none' }} />;
-}
+  return (
+    <svg
+      ref={svgRef}
+      className={cn("w-full h-full absolute inset-0 pointer-events-none", className)}
+      style={{ zIndex: 0 }}
+    >
+      {star && (
+        <rect
+          key={star.id}
+          x={star.x}
+          y={star.y}
+          width={starWidth * star.scale}
+          height={starHeight}
+          fill="url(#gradient)"
+          transform={`rotate(${star.angle}, ${
+            star.x + (starWidth * star.scale) / 2
+          }, ${star.y + starHeight / 2})`}
+        />
+      )}
+      <defs>
+        <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style={{ stopColor: trailColor, stopOpacity: 0 }} />
+          <stop
+            offset="100%"
+            style={{ stopColor: starColor, stopOpacity: 1 }}
+          />
+        </linearGradient>
+      </defs>
+    </svg>
+  );
+};
