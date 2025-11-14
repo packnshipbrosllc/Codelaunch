@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { SignInButton, SignUpButton, UserButton, useUser } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
 import HeroSection from '@/components/sections/HeroSection';
+import { CodeLaunchIntegrations } from '@/components/CodeLaunchIntegrations';
 
 export default function LandingPage() {
   const { isSignedIn } = useUser();
@@ -288,6 +289,9 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+
+      {/* Integrations Section */}
+      <CodeLaunchIntegrations />
 
       {/* ROI Section with Code Ownership */}
       <section className="container mx-auto px-4 sm:px-6 lg:px-8 py-20">
