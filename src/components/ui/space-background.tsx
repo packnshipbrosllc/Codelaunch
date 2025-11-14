@@ -10,25 +10,25 @@ interface SpaceBackgroundProps {
 export function SpaceBackground({ children, variant = 'default' }: SpaceBackgroundProps) {
   const variants = {
     default: {
-      minSpeed: 15,
-      maxSpeed: 35,
-      minDelay: 800,
-      maxDelay: 3000,
-      starColor: '#60A5FA',
-      trailColor: '#3B82F6',
+      minSpeed: 20,
+      maxSpeed: 40,
+      minDelay: 1200,
+      maxDelay: 4200,
+      starColor: '#9E00FF',
+      trailColor: '#2EB9DF',
     },
     intense: {
-      minSpeed: 20,
-      maxSpeed: 45,
-      minDelay: 400,
-      maxDelay: 1500,
-      starColor: '#A78BFA',
-      trailColor: '#8B5CF6',
+      minSpeed: 25,
+      maxSpeed: 50,
+      minDelay: 600,
+      maxDelay: 2000,
+      starColor: '#FFFFFF',
+      trailColor: '#60A5FA',
     },
     subtle: {
-      minSpeed: 10,
-      maxSpeed: 20,
-      minDelay: 2000,
+      minSpeed: 15,
+      maxSpeed: 25,
+      minDelay: 2500,
       maxDelay: 6000,
       starColor: '#60A5FA',
       trailColor: '#3B82F6',
@@ -42,33 +42,38 @@ export function SpaceBackground({ children, variant = 'default' }: SpaceBackgrou
       {/* Shooting Stars */}
       <ShootingStars
         {...config}
-        starWidth={12}
-        starHeight={2}
+        starWidth={variant === 'intense' ? 15 : 12}
+        starHeight={variant === 'intense' ? 2 : 1.5}
         className="absolute inset-0 z-0"
       />
 
       {/* Static Stars */}
       <div className="absolute inset-0 z-0">
         <div 
-          className="absolute inset-0 opacity-30"
+          className="absolute inset-0 opacity-40"
           style={{
-            backgroundImage: `radial-gradient(2px 2px at 20% 30%, white, transparent),
-                             radial-gradient(2px 2px at 60% 70%, white, transparent),
-                             radial-gradient(1px 1px at 50% 50%, white, transparent),
-                             radial-gradient(1px 1px at 80% 10%, white, transparent),
-                             radial-gradient(2px 2px at 90% 60%, white, transparent),
-                             radial-gradient(1px 1px at 33% 80%, white, transparent),
-                             radial-gradient(1px 1px at 65% 20%, white, transparent)`,
+            backgroundImage: `
+              radial-gradient(2px 2px at 20% 30%, white, transparent),
+              radial-gradient(2px 2px at 60% 70%, white, transparent),
+              radial-gradient(1px 1px at 50% 50%, white, transparent),
+              radial-gradient(1px 1px at 80% 10%, white, transparent),
+              radial-gradient(2px 2px at 90% 60%, white, transparent),
+              radial-gradient(1px 1px at 33% 80%, white, transparent),
+              radial-gradient(1px 1px at 15% 60%, white, transparent),
+              radial-gradient(2px 2px at 70% 40%, white, transparent),
+              radial-gradient(1px 1px at 45% 20%, white, transparent),
+              radial-gradient(2px 2px at 85% 80%, white, transparent)
+            `,
             backgroundSize: '200% 200%',
-            backgroundPosition: '0% 0%, 40% 40%, 50% 50%, 80% 10%, 90% 60%, 33% 80%, 65% 20%',
+            backgroundRepeat: 'repeat',
           }}
         />
       </div>
 
       {/* Ambient Glow */}
       <div className="absolute inset-0 z-0">
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-blue-600/5 rounded-full blur-[120px] animate-pulse" />
-        <div className="absolute bottom-20 right-1/4 w-96 h-96 bg-purple-600/5 rounded-full blur-[120px] animate-pulse" style={{ animationDelay: '1s' }} />
+        <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-purple-600/20 rounded-full blur-[120px] animate-pulse" />
+        <div className="absolute bottom-20 right-1/4 w-[500px] h-[500px] bg-blue-600/20 rounded-full blur-[120px] animate-pulse" style={{ animationDelay: '2s' }} />
       </div>
 
       {/* Content */}

@@ -41,44 +41,47 @@ export function ShootingStars({
       star.style.position = 'absolute';
       star.style.width = `${starWidth}px`;
       star.style.height = `${starHeight}px`;
-      star.style.background = `linear-gradient(90deg, ${starColor}, transparent)`;
+      star.style.background = `linear-gradient(90deg, ${starColor} 0%, ${trailColor} 50%, transparent 100%)`;
       star.style.borderRadius = '50%';
       star.style.boxShadow = `0 0 ${starWidth * 2}px ${starColor}, 0 0 ${starWidth * 4}px ${starColor}`;
       star.style.opacity = '0';
       star.style.pointerEvents = 'none';
+      star.style.zIndex = '1';
       
       container.appendChild(star);
 
-      // Random starting position (top of screen)
+      // Random starting position (top of screen, slight angle)
       const startX = Math.random() * 100;
-      const startY = -5;
-      const endX = startX + (Math.random() * 40 - 20); // Slight angle variation
-      const endY = 105;
+      const startY = -2;
+      const angle = (Math.random() * 30 - 15) * (Math.PI / 180); // -15 to 15 degrees
+      const distance = 120; // Distance to travel
+      const endX = startX + Math.cos(angle) * distance;
+      const endY = startY + Math.sin(angle) * distance;
       const speed = minSpeed + Math.random() * (maxSpeed - minSpeed);
       const duration = 2000 / speed; // Duration based on speed
 
       star.style.left = `${startX}%`;
       star.style.top = `${startY}%`;
 
-      // Animate using CSS keyframes
+      // Animate using Web Animations API
       const keyframes = [
         {
           opacity: '0',
-          transform: `translate(0, 0)`,
+          transform: `translate(0, 0) scale(0.5)`,
         },
         {
           opacity: '1',
-          transform: `translate(0, 0)`,
-          offset: 0.1,
+          transform: `translate(0, 0) scale(1)`,
+          offset: 0.05,
         },
         {
           opacity: '1',
-          transform: `translate(${endX - startX}%, ${endY - startY}%)`,
-          offset: 0.9,
+          transform: `translate(${endX - startX}%, ${endY - startY}%) scale(1)`,
+          offset: 0.95,
         },
         {
           opacity: '0',
-          transform: `translate(${endX - startX}%, ${endY - startY}%)`,
+          transform: `translate(${endX - startX}%, ${endY - startY}%) scale(0.5)`,
         },
       ];
 
@@ -125,6 +128,5 @@ export function ShootingStars({
     };
   }, [minSpeed, maxSpeed, minDelay, maxDelay, starColor, trailColor, starWidth, starHeight]);
 
-  return <div ref={containerRef} className={className} />;
+  return <div ref={containerRef} className={className} style={{ pointerEvents: 'none' }} />;
 }
-
