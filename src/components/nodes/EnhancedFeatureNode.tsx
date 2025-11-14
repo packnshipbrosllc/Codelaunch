@@ -319,6 +319,43 @@ export function EnhancedFeatureNode({ data, id }: EnhancedFeatureNodeProps) {
               </p>
             </div>
           )}
+
+          {/* PRD Actions - Expanded View */}
+          <div className="mt-4 pt-4 border-t border-gray-700 flex gap-2">
+            {data.hasPRD ? (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  data.onViewPRD?.(id);
+                }}
+                className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded transition-colors"
+              >
+                📄 View PRD
+              </button>
+            ) : (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  data.onGeneratePRD?.(id);
+                }}
+                className="flex-1 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded transition-colors"
+              >
+                ✨ Generate PRD
+              </button>
+            )}
+            {data.hasPRD && data.status === 'detailed' && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  // Approve action would be handled by the modal
+                  data.onViewPRD?.(id);
+                }}
+                className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded transition-colors"
+              >
+                ✅ Approve
+              </button>
+            )}
+          </div>
         </div>
       )}
     </div>
