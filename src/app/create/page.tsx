@@ -11,6 +11,8 @@ import FloatingMoodBoard from '@/components/FloatingMoodBoard';
 import Header from '@/components/Header';
 import { MindmapData, Competitor, Feature } from '@/types/mindmap';
 import { useMindmapLimit } from '@/hooks/useMindmapLimit';
+import { SpaceBackground } from '@/components/ui/space-background';
+import { AnimatedAIChat } from '@/components/ui/animated-ai-chat';
 import Link from 'next/link';
 
 // Debug logging
@@ -181,121 +183,52 @@ export default function CreateProjectPage() {
     "An e-commerce platform for digital art with creator profiles, NFT integration, and royalty tracking"
   ];
 
+  const handleChatSubmit = async (message: string) => {
+    setIdea(message);
+    await handleGenerate();
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-black text-white">
-      <Header title="Create New Project" showBackButton backUrl="/dashboard" />
-      <div className="container mx-auto px-4 py-8">
-        {/* Header moved to shared Header component */}
-
-        {!mindmapData ? (
-          <div className="max-w-4xl mx-auto">
-            {/* Input Section */}
-            <div className="bg-gray-800/50 rounded-2xl border border-purple-500/20 p-8 backdrop-blur-sm">
-              <label className="block mb-4">
-                <span className="text-lg font-semibold mb-2 block">
-                  Describe Your App Idea 💡
-                </span>
-                <textarea
-                  value={idea}
-                  onChange={(e) => {
-                    setIdea(e.target.value);
-                    setError('');
-                  }}
-                  placeholder="Example: A SaaS platform that helps freelancers manage their invoices, track time, and accept payments from clients. It should have a beautiful dashboard, automated reminders, and integrate with Stripe for payments..."
-                  className="w-full h-40 px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
-                  disabled={isGenerating}
-                />
-              </label>
-
-              {error && (
-                <div className="mb-4 p-4 bg-red-500/10 border border-red-500/50 rounded-lg">
-                  <p className="text-red-400 mb-3">{error}</p>
-                  {error.includes('limit') && (
-                    <Link href="/#pricing">
-                      <button className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white px-6 py-2 rounded-lg font-medium transition">
-                        Upgrade to Pro →
-                      </button>
-                    </Link>
-                  )}
-                </div>
-              )}
-
-              {/* Show remaining mindmaps for free users */}
-              {!isSubscribed && remainingFreeMindmaps !== null && remainingFreeMindmaps < 3 && (
-                <div className="mb-4 p-4 bg-purple-500/10 border border-purple-500/50 rounded-lg">
-                  <p className="text-purple-300 text-sm">
-                    ⚠️ You have {remainingFreeMindmaps} free mindmap{remainingFreeMindmaps !== 1 ? 's' : ''} remaining. 
-                    {remainingFreeMindmaps === 0 && ' Upgrade to Pro for unlimited mindmaps.'}
-                  </p>
-                </div>
-              )}
-
-              <div className="flex gap-4">
-                <button
-                  onClick={handleGenerate}
-                  disabled={isGenerating || !idea.trim() || !canCreateMore}
-                  className="flex-1 px-8 py-4 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 disabled:from-gray-600 disabled:to-gray-600 disabled:cursor-not-allowed rounded-lg font-semibold text-lg transition-all shadow-lg hover:shadow-purple-500/50 flex items-center justify-center gap-2"
-                >
-                  {isGenerating ? (
-                    <>
-                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      Generating...
-                    </>
-                  ) : (
-                    <>
-                      ✨ Generate Mindmap
-                    </>
-                  )}
-                </button>
-              </div>
-
-              {/* Example Ideas */}
-              <div className="mt-8 pt-8 border-t border-gray-700">
-                <h3 className="text-sm font-semibold text-gray-400 mb-3">
-                  Need inspiration? Try these examples:
-                </h3>
-                <div className="space-y-2">
-                  {exampleIdeas.map((example, i) => (
-                    <button
-                      key={i}
-                      onClick={() => setIdea(example)}
-                      disabled={isGenerating}
-                      className="w-full text-left px-4 py-3 bg-gray-900/50 hover:bg-gray-900 border border-gray-700 hover:border-purple-500/50 rounded-lg text-sm text-gray-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {example}
+    <SpaceBackground variant="default">
+      {!mindmapData ? (
+        <div className="container mx-auto px-4 py-16 min-h-screen flex items-center justify-center">
+          <div className="w-full max-w-4xl">
+            {error && (
+              <div className="mb-6 p-4 bg-red-500/10 border border-red-500/50 rounded-lg backdrop-blur-sm">
+                <p className="text-red-400 mb-3">{error}</p>
+                {error.includes('limit') && (
+                  <Link href="/#pricing">
+                    <button className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white px-6 py-2 rounded-lg font-medium transition">
+                      Upgrade to Pro →
                     </button>
-                  ))}
-                </div>
+                  </Link>
+                )}
               </div>
-            </div>
+            )}
 
-            {/* Features Info */}
-            <div className="mt-8 grid md:grid-cols-3 gap-4">
-              <div className="bg-gray-800/30 rounded-lg p-6 border border-gray-700">
-                <div className="text-3xl mb-3">🧠</div>
-                <h3 className="font-semibold mb-2">AI-Powered Analysis</h3>
-                <p className="text-sm text-gray-400">
-                  Advanced AI analyzes your idea and generates a structured mindmap
+            {/* Show remaining mindmaps for free users */}
+            {!isSubscribed && remainingFreeMindmaps !== null && remainingFreeMindmaps < 3 && (
+              <div className="mb-6 p-4 bg-purple-500/10 border border-purple-500/50 rounded-lg backdrop-blur-sm">
+                <p className="text-purple-300 text-sm">
+                  ⚠️ You have {remainingFreeMindmaps} free mindmap{remainingFreeMindmaps !== 1 ? 's' : ''} remaining. 
+                  {remainingFreeMindmaps === 0 && ' Upgrade to Pro for unlimited mindmaps.'}
                 </p>
               </div>
-              <div className="bg-gray-800/30 rounded-lg p-6 border border-gray-700">
-                <div className="text-3xl mb-3">🏆</div>
-                <h3 className="font-semibold mb-2">Competitor Research</h3>
-                <p className="text-sm text-gray-400">
-                  Identifies top 3 competitors and your unique advantages
-                </p>
-              </div>
-              <div className="bg-gray-800/30 rounded-lg p-6 border border-gray-700">
-                <div className="text-3xl mb-3">⚙️</div>
-                <h3 className="font-semibold mb-2">Tech Stack Suggestions</h3>
-                <p className="text-sm text-gray-400">
-                  Recommends the best technologies for your specific use case
-                </p>
-              </div>
-            </div>
+            )}
+
+            <AnimatedAIChat 
+              onSubmit={handleChatSubmit}
+              placeholder="Describe your app idea... Example: A SaaS platform that helps freelancers manage their invoices, track time, and accept payments from clients..."
+              title="What do you want to build?"
+              subtitle="Describe your app idea and we'll create a feature roadmap"
+            />
           </div>
-        ) : (
-          /* Mindmap Display with Floating Panels */
+        </div>
+      ) : (
+        <div className="min-h-screen">
+          <Header title="Create New Project" showBackButton backUrl="/dashboard" />
+          <div className="container mx-auto px-4 py-8">
+            {/* Mindmap Display with Floating Panels */}
           <div className={`relative ${isFullscreen ? 'fixed inset-0 z-40 bg-gray-900' : ''}`}>
             {/* Floating Mood Board - Draggable! (hide in fullscreen) */}
             {!isFullscreen && (
@@ -444,9 +377,10 @@ export default function CreateProjectPage() {
               />
             )}
           </div>
-        )}
-      </div>
-    </div>
+          </div>
+        </div>
+      )}
+    </SpaceBackground>
   );
 }
 
