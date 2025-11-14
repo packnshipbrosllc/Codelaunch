@@ -1,104 +1,138 @@
 'use client';
 
-import { cn } from "@/lib/utils";
-
-interface DisplayCardProps {
-  className?: string;
-  icon?: string;
-  title?: string;
-  description?: string;
-  meta?: string;
-  iconClassName?: string;
-  titleClassName?: string;
-}
-
-function DisplayCard({
-  className,
-  icon = "✨",
-  title = "Feature",
-  description = "Description here",
-  meta = "Details",
-  iconClassName = "",
-  titleClassName = "text-purple-400",
-}: DisplayCardProps) {
+export function DisplayCards() {
   return (
-    <div
-      className={cn(
-        "relative flex h-36 w-[22rem] -skew-y-[8deg] select-none flex-col justify-between rounded-xl border-2 bg-gray-900/70 backdrop-blur-sm px-4 py-3 transition-all duration-700",
-        "after:absolute after:-right-1 after:top-[-5%] after:h-[110%] after:w-[20rem] after:bg-gradient-to-l after:from-[#0a0a0f] after:to-transparent after:content-['']",
-        "hover:border-purple-500/50 hover:bg-purple-900/20",
-        "[&>*]:relative [&>*]:z-10 [&>*]:flex [&>*]:items-center [&>*]:gap-2",
-        className
-      )}
-    >
-      <div>
-        <span className={cn(
-          "inline-flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-purple-600 to-pink-600 text-base",
-          iconClassName
-        )}>
-          {icon}
-        </span>
-        <p className={cn("text-lg font-semibold", titleClassName)}>{title}</p>
+    <div className="relative py-20">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+          {/* Left Column - Text Content */}
+          <div className="text-left">
+            <h2 className="text-5xl sm:text-6xl font-black text-white mb-6 leading-tight">
+              <span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+                From Idea to Launch in Weeks
+              </span>
+            </h2>
+            <p className="text-xl text-gray-400 mb-8 leading-relaxed">
+              Skip the 6-month development cycle. Our AI-powered workflow gets you from concept to production-ready code in 2-3 weeks, not months.
+            </p>
+            <div className="space-y-4">
+              <div className="flex items-start gap-4">
+                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-400 font-bold">
+                  1
+                </div>
+                <div>
+                  <h3 className="text-white font-bold mb-1">AI-Powered Mindmap</h3>
+                  <p className="text-gray-400 text-sm">Transform your idea into a detailed feature map with competitor analysis</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-4">
+                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-400 font-bold">
+                  2
+                </div>
+                <div>
+                  <h3 className="text-white font-bold mb-1">Technical PRD Generation</h3>
+                  <p className="text-gray-400 text-sm">Get a 10,000+ line PRD with database schemas, API specs, and user stories</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-4">
+                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-400 font-bold">
+                  3
+                </div>
+                <div>
+                  <h3 className="text-white font-bold mb-1">Production-Ready Code</h3>
+                  <p className="text-gray-400 text-sm">Export directly to Cursor, Lovable, or deploy yourself in 2-3 weeks</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Right Column - Display Cards */}
+          <div className="relative flex items-center justify-center min-h-[500px]">
+            <div className="relative w-full max-w-md">
+              {/* Card 3 - Bottom (Most transparent) */}
+              <div
+                className="absolute top-[160px] left-[128px] w-80 h-36 transform skew-y-[-8deg] 
+                         bg-gray-900/40 backdrop-blur-sm
+                         border-2 border-gray-700/40 rounded-xl p-4
+                         transition-all duration-700 ease-out
+                         hover:translate-y-[-40px] hover:bg-gray-900/90 hover:backdrop-blur-xl hover:border-purple-500/50 hover:shadow-2xl hover:shadow-purple-500/20
+                         cursor-pointer group z-10"
+              >
+                <div className="relative z-10">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center text-lg">
+                      ⚡
+                    </div>
+                    <h3 className="text-lg font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+                      Full-Stack Code
+                    </h3>
+                  </div>
+                  <p className="text-sm text-gray-300 leading-tight mb-2">
+                    Production-ready code you can deploy or feed into Claude/Cursor
+                  </p>
+                  <p className="text-xs text-gray-500">Step 3 • 1-2 weeks</p>
+                </div>
+                {/* Shadow overlay on right */}
+                <div className="absolute right-[-4px] top-[-5%] h-[110%] w-64 bg-gradient-to-l from-[#0a0a0f] to-transparent pointer-events-none" />
+              </div>
+
+              {/* Card 2 - Middle (Semi-transparent) */}
+              <div
+                className="absolute top-[80px] left-[64px] w-80 h-36 transform skew-y-[-8deg]
+                         bg-gray-900/60 backdrop-blur-md
+                         border-2 border-gray-700/60 rounded-xl p-4
+                         transition-all duration-700 ease-out
+                         hover:translate-y-[-40px] hover:bg-gray-900/95 hover:backdrop-blur-xl hover:border-purple-500/50 hover:shadow-2xl hover:shadow-purple-500/20
+                         cursor-pointer group z-20"
+              >
+                <div className="relative z-10">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center text-lg">
+                      📋
+                    </div>
+                    <h3 className="text-lg font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+                      PRD Generation
+                    </h3>
+                  </div>
+                  <p className="text-sm text-gray-300 leading-tight mb-2">
+                    10,000+ line PRDs with database schemas, API specs & user stories
+                  </p>
+                  <p className="text-xs text-gray-500">Step 2 • 3-5 days</p>
+                </div>
+                {/* Shadow overlay on right */}
+                <div className="absolute right-[-4px] top-[-5%] h-[110%] w-64 bg-gradient-to-l from-[#0a0a0f] to-transparent pointer-events-none" />
+              </div>
+
+              {/* Card 1 - Top (Fully visible) */}
+              <div
+                className="relative top-0 left-0 w-80 h-36 transform skew-y-[-8deg]
+                         bg-gray-900/90 backdrop-blur-xl
+                         border-2 border-gray-700 rounded-xl p-4
+                         transition-all duration-700 ease-out
+                         hover:translate-y-[-40px] hover:border-purple-500/50 hover:shadow-2xl hover:shadow-purple-500/20
+                         cursor-pointer group z-30"
+              >
+                <div className="relative z-10">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center text-lg">
+                      🧠
+                    </div>
+                    <h3 className="text-lg font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+                      AI Mindmap
+                    </h3>
+                  </div>
+                  <p className="text-sm text-gray-300 leading-tight mb-2">
+                    Transform ideas into detailed mindmaps with features, competitors & personas
+                  </p>
+                  <p className="text-xs text-gray-500">Step 1 • 1-2 days</p>
+                </div>
+                {/* Shadow overlay on right */}
+                <div className="absolute right-[-4px] top-[-5%] h-[110%] w-64 bg-gradient-to-l from-[#0a0a0f] to-transparent pointer-events-none" />
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
-      <p className="text-base text-gray-200 line-clamp-2">{description}</p>
-      <p className="text-sm text-gray-500">{meta}</p>
     </div>
   );
 }
-
-interface DisplayCardsProps {
-  cards?: DisplayCardProps[];
-}
-
-export default function DisplayCards({ cards }: DisplayCardsProps) {
-  const defaultCards: (DisplayCardProps & { className: string })[] = [
-    {
-      icon: "🧠",
-      title: "AI Mindmap",
-      description: "Transform ideas into detailed mindmaps with features, competitors & personas",
-      meta: "Step 1 • 5 minutes",
-      titleClassName: "bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent",
-      className: cn(
-        "[grid-area:stack] z-30",
-        "before:absolute before:inset-0 before:bg-gray-950/50 before:rounded-xl before:transition-opacity before:duration-700",
-        "grayscale-[100%] hover:grayscale-0 hover:before:opacity-0",
-        "hover:-translate-y-10"
-      ),
-    },
-    {
-      icon: "📋",
-      title: "PRD Generation",
-      description: "10,000+ line PRDs with database schemas, API specs & user stories",
-      meta: "Step 2 • 15 minutes",
-      titleClassName: "bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent",
-      className: cn(
-        "[grid-area:stack] translate-x-16 translate-y-10 z-20",
-        "before:absolute before:inset-0 before:bg-gray-950/50 before:rounded-xl before:transition-opacity before:duration-700",
-        "grayscale-[100%] hover:grayscale-0 hover:before:opacity-0",
-        "hover:-translate-y-1"
-      ),
-    },
-    {
-      icon: "⚡",
-      title: "Full-Stack Code",
-      description: "Production-ready code you can deploy or feed into Claude/Cursor",
-      meta: "Step 3 • 25 minutes",
-      titleClassName: "bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent",
-      className: cn(
-        "[grid-area:stack] translate-x-32 translate-y-20 z-10",
-        "hover:translate-y-10"
-      ),
-    },
-  ];
-
-  const displayCards = cards || defaultCards;
-
-  return (
-    <div className="grid [grid-template-areas:'stack'] place-items-center min-h-[500px] opacity-100 animate-in fade-in-0 duration-700">
-      {displayCards.map((cardProps, index) => (
-        <DisplayCard key={index} {...cardProps} />
-      ))}
-    </div>
-  );
-}
-
