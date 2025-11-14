@@ -33,7 +33,7 @@ export function ShootingStars({
     const container = containerRef.current;
     const stars: Array<{
       element: HTMLDivElement;
-      animationId: number;
+      animation: Animation;
     }> = [];
 
     const createStar = () => {
@@ -88,7 +88,7 @@ export function ShootingStars({
         fill: 'forwards',
       });
 
-      stars.push({ element: star, animationId: animation.id });
+      stars.push({ element: star, animation });
 
       animation.onfinish = () => {
         if (star.parentNode) {
@@ -114,7 +114,7 @@ export function ShootingStars({
     return () => {
       stars.forEach(star => {
         try {
-          star.element.getAnimations().forEach(anim => anim.cancel());
+          star.animation.cancel();
         } catch (e) {
           // Ignore errors
         }

@@ -343,7 +343,7 @@ export function EnhancedFeatureNode({ data, id }: EnhancedFeatureNodeProps) {
                 ✨ Generate PRD
               </button>
             )}
-            {data.hasPRD && data.status === 'detailed' && (
+            {data.hasPRD && (data as any).status === 'detailed' && (
               <button
                 onClick={(e) => {
                   e.stopPropagation();

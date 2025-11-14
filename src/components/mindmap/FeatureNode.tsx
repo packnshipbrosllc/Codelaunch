@@ -1,18 +1,35 @@
-// components/mindmap/FeatureNode.tsx
+// src/components/mindmap/FeatureNode.tsx
 'use client';
 
 import { memo } from 'react';
 import { Handle, Position, NodeProps } from 'reactflow';
 import { FeatureNode as FeatureNodeType, STATUS_CONFIG, PRIORITY_CONFIG, COMPLEXITY_CONFIG } from '@/types/feature';
 
-interface FeatureNodeData extends FeatureNodeType['data'] {
+// Fix: Define the interface properly without extending indexed type
+interface FeatureNodeData {
+  title: string;
+  description: string;
+  priority: FeatureNodeType['data']['priority'];
+  complexity: FeatureNodeType['data']['complexity'];
+  estimatedTime: string;
+  dependencies: string[];
+  prd: FeatureNodeType['data']['prd'];
+  hasPRD: boolean;
+  generatedCode?: FeatureNodeType['data']['generatedCode'];
   onViewPRD?: (featureId: string) => void;
   onGeneratePRD?: (featureId: string) => void;
 }
 
-function FeatureNode({ data, id }: NodeProps<FeatureNodeData>) {
-  const status = (data as any).status || 'planned';
-  const statusConfig = STATUS_CONFIG[status as keyof typeof STATUS_CONFIG];
+// Add status to node props
+interface CustomNodeProps extends NodeProps<FeatureNodeData> {
+  data: FeatureNodeData & {
+    status?: FeatureNodeType['status'];
+  };
+}
+
+function FeatureNode({ data, id }: CustomNodeProps) {
+  const status = data.status || 'planned';
+  const statusConfig = STATUS_CONFIG[status];
   const priorityConfig = PRIORITY_CONFIG[data.priority];
   const complexityConfig = COMPLEXITY_CONFIG[data.complexity];
 
@@ -129,4 +146,3 @@ function FeatureNode({ data, id }: NodeProps<FeatureNodeData>) {
 }
 
 export default memo(FeatureNode);
-
