@@ -1,6 +1,6 @@
 'use client';
 
-import DisplayCards from '@/components/DisplayCards';
+import { DisplayCards } from '@/components/DisplayCards';
 import Starfield from '@/components/Starfield';
 import Link from 'next/link';
 import { useUser, SignUpButton } from '@clerk/nextjs';
