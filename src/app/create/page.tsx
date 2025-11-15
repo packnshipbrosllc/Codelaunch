@@ -37,13 +37,21 @@ function CreateProjectPageContent() {
   const [moodBoardImages, setMoodBoardImages] = useState<any[]>([]);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
+  // Debug logging at component render
+  console.log('🔍 CREATE PAGE RENDER - mindmapData exists:', !!mindmapData);
+  console.log('🔍 CREATE PAGE RENDER - searchParams:', searchParams.toString());
+
   // Check for mindmap data from query params (from new-project page)
   useEffect(() => {
     const mindmapParam = searchParams.get('mindmap');
     if (mindmapParam) {
       try {
         const decodedData = JSON.parse(decodeURIComponent(mindmapParam));
-        console.log('📥 Received mindmap data from new-project page:', decodedData);
+        console.log('📥 Received mindmap data:', decodedData);
+        console.log('📥 Has nodes:', decodedData?.nodes?.length);
+        console.log('📥 Has edges:', decodedData?.edges?.length);
+        console.log('📥 Has projectName:', decodedData?.projectName);
+        console.log('📥 Has features:', decodedData?.features?.length);
         setMindmapData(decodedData);
         // Keep URL parameter - don't clear it
       } catch (err) {
@@ -203,6 +211,18 @@ function CreateProjectPageContent() {
     setIdea(message);
     await handleGenerate();
   };
+
+  // Debug logging before render decision
+  console.log('🎯 Rendering decision - mindmapData:', mindmapData ? 'EXISTS' : 'NULL');
+  if (mindmapData) {
+    console.log('🎯 mindmapData structure:', {
+      projectName: mindmapData.projectName,
+      hasFeatures: !!mindmapData.features,
+      featuresCount: mindmapData.features?.length,
+      hasCompetitors: !!mindmapData.competitors,
+      hasTechStack: !!mindmapData.techStack,
+    });
+  }
 
   return (
     <SpaceBackground variant="default">
