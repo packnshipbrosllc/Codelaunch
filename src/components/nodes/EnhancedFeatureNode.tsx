@@ -28,6 +28,7 @@ interface EnhancedFeatureNodeProps extends NodeProps {
     hasPRD?: boolean;
     prd?: any;
     status?: string;
+    isSubscribed?: boolean;
   };
 }
 
@@ -99,6 +100,7 @@ export function EnhancedFeatureNode({ data, id }: EnhancedFeatureNodeProps) {
   const status = (data as any).status || 'planned';
   const requirementsProgress = (data as any).requirementsProgress || 0;
   const handleClick = (data as any).onClick;
+  const isSubscribed = data.isSubscribed ?? true; // Default to true if not provided
   
   return (
     <div 
@@ -118,6 +120,13 @@ export function EnhancedFeatureNode({ data, id }: EnhancedFeatureNodeProps) {
       <div className={`absolute -top-2 -right-2 w-8 h-8 rounded-full bg-black border-2 ${getStatusColor(status)} flex items-center justify-center text-sm z-10`}>
         {getStatusIcon(status)}
       </div>
+      
+      {/* Pro Badge for free users */}
+      {!isSubscribed && (
+        <div className="absolute -top-2 -left-2 bg-gradient-to-r from-yellow-500 to-orange-500 text-white text-[10px] px-2 py-0.5 rounded-full font-bold shadow-lg z-10">
+          PRO
+        </div>
+      )}
       {/* Handles for connections */}
       <Handle type="target" position={Position.Top} className="w-3 h-3 bg-purple-500" />
       <Handle type="source" position={Position.Bottom} className="w-3 h-3 bg-purple-500" />
@@ -373,11 +382,24 @@ export function EnhancedFeatureNode({ data, id }: EnhancedFeatureNodeProps) {
               <button
                 onClick={(e) => {
                   e.stopPropagation();
+                  console.log('🔘 Generate PRD clicked for node:', id);
+                  if (!isSubscribed) {
+                    if (window.confirm('PRD Generation is a Pro feature. Upgrade to Pro to generate detailed PRDs for your features.\n\nWould you like to see pricing?')) {
+                      window.location.href = '/#pricing';
+                    }
+                    return;
+                  }
                   data.onGeneratePRD?.(id);
                 }}
-                className="flex-1 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded transition-colors"
+                className={`flex-1 px-4 py-2 text-white text-sm font-medium rounded transition-colors flex items-center justify-center gap-1 ${
+                  isSubscribed 
+                    ? 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500' 
+                    : 'bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-500 hover:to-gray-600'
+                }`}
               >
-                ✨ Generate PRD
+                {!isSubscribed && <span>🔒</span>}
+                <span>📄 Generate PRD</span>
+                {!isSubscribed && <span className="text-[10px] opacity-75">(Pro)</span>}
               </button>
             )}
             {data.hasPRD && (data as any).status === 'detailed' && (

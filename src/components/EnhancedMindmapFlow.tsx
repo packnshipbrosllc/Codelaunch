@@ -24,6 +24,7 @@ import { EnhancedFeatureNode } from './nodes/EnhancedFeatureNode';
 import { EnhancedCompetitorNode } from './nodes/EnhancedCompetitorNode';
 import { EnhancedPersonaNode } from './nodes/EnhancedPersonaNode';
 import PRDModal from '@/components/features/PRDModal';
+import { useMindmapLimit } from '@/hooks/useMindmapLimit';
 import { 
   EnhancedMindmapData, 
   NodeExpansionState,
@@ -55,6 +56,7 @@ export function EnhancedMindmapFlow({
   editable = true 
 }: EnhancedMindmapFlowProps) {
   const [expandedNodes, setExpandedNodes] = useState<NodeExpansionState>({});
+  const { isSubscribed } = useMindmapLimit();
   
   // PRD Modal state
   const [prdModalOpen, setPRDModalOpen] = useState(false);
@@ -332,6 +334,17 @@ export function EnhancedMindmapFlow({
 
   // PRD Handlers - Use ref to read nodes without causing re-renders
   const handleGeneratePRD = useCallback(async (featureId: string) => {
+    console.log('🚀 handleGeneratePRD called for node:', featureId);
+    
+    // Check subscription status
+    if (!isSubscribed) {
+      console.log('🔒 PRD generation requires Pro subscription');
+      if (window.confirm('PRD Generation is a Pro feature. Upgrade to Pro to generate detailed PRDs for your features.\n\nWould you like to see pricing?')) {
+        window.location.href = '/#pricing';
+      }
+      return;
+    }
+    
     try {
       setIsGeneratingPRD(true);
       
@@ -340,9 +353,12 @@ export function EnhancedMindmapFlow({
       const featureNode = currentNodes.find(n => n.id === featureId);
 
       if (!featureNode) {
+        console.error('❌ Node not found:', featureId);
         setIsGeneratingPRD(false);
         return;
       }
+
+      console.log('📝 Generating PRD for feature:', featureNode.data.title || featureNode.data.name);
 
       // Get all features for context from ref
       const allFeatures = currentNodes
@@ -369,6 +385,7 @@ export function EnhancedMindmapFlow({
       });
 
       const result = await response.json();
+      console.log('✅ PRD generated:', result);
 
       if (result.success) {
         setNodes((nds) =>
@@ -390,15 +407,18 @@ export function EnhancedMindmapFlow({
 
         setSelectedFeatureId(featureId);
         setPRDModalOpen(true);
+        alert('PRD generated successfully! You can now view it by clicking the feature.');
       } else {
-        console.error('Failed to generate PRD:', result.error);
+        console.error('❌ Failed to generate PRD:', result.error);
+        alert('Failed to generate PRD: ' + (result.error || 'Unknown error'));
       }
-    } catch (error) {
-      console.error('Error generating PRD:', error);
+    } catch (error: any) {
+      console.error('❌ Error generating PRD:', error);
+      alert('Failed to generate PRD: ' + error.message);
     } finally {
       setIsGeneratingPRD(false);
     }
-  }, [setNodes, data]); // ✅ REMOVED nodes dependency - use functional setState instead
+  }, [setNodes, data, isSubscribed]); // Added isSubscribed dependency
 
   const handleViewPRD = useCallback((featureId: string) => {
     setSelectedFeatureId(featureId);
@@ -450,10 +470,11 @@ export function EnhancedMindmapFlow({
                 isExpanded: expandedNodes[node.id] || false,
                 onExpand: handleNodeExpand,
                 // Add PRD handlers for feature nodes
-                ...(node.type === 'enhancedFeature' && {
-                  onViewPRD: handleViewPRD,
-                  onGeneratePRD: handleGeneratePRD,
-                }),
+              ...(node.type === 'enhancedFeature' && {
+                onViewPRD: handleViewPRD,
+                onGeneratePRD: handleGeneratePRD,
+                isSubscribed, // Pass subscription status to node
+              }),
               },
             };
           }
@@ -549,20 +570,24 @@ export function EnhancedMindmapFlow({
         nodeTypes={nodeTypes}
         fitView
         className="bg-transparent"
-        style={{ width: '100%', height: '100%', background: 'transparent' }}
+        style={{ 
+          width: '100%', 
+          height: '100%', 
+          background: 'transparent' // Make background transparent to show space background
+        }}
         minZoom={0.1}
         maxZoom={2}
       >
         <Background 
-          color="rgba(255, 255, 255, 0.05)" 
+          color="rgba(255, 255, 255, 0.03)" 
           gap={20} 
           size={1}
           variant={BackgroundVariant.Dots}
-          style={{ backgroundColor: 'transparent' }}
+          style={{ opacity: 0.5, backgroundColor: 'transparent' }}
         />
         
         <Controls 
-          className="bg-gray-800 border border-gray-700 rounded-lg"
+          className="bg-gray-800/80 backdrop-blur-xl border border-white/10 rounded-lg"
           showInteractive={editable}
         />
         
