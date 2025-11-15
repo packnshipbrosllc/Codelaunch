@@ -20,7 +20,6 @@ import {
     Command,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { GooeyText } from '@/components/ui/gooey-text';
 import * as React from "react"
 
 interface UseAutoResizeTextareaProps {
@@ -320,17 +319,14 @@ export function AnimatedAIChat({
                             transition={{ delay: 0.2, duration: 0.5 }}
                             className="inline-block"
                         >
-                            <GooeyText
-                                texts={[
-                                    title,
-                                    "Let's build something great",
-                                    "Transform your vision",
-                                    "Create your product"
-                                ]}
-                                morphTime={1.8}
-                                cooldownTime={3.5}
-                                className="h-28 mb-2"
-                                textClassName="text-5xl md:text-6xl lg:text-7xl font-bold bg-gradient-to-r from-white via-blue-100 to-white bg-clip-text text-transparent"
+                            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold bg-gradient-to-r from-white via-blue-100 to-white bg-clip-text text-transparent pb-2">
+                                {title}
+                            </h1>
+                            <motion.div 
+                                className="h-px bg-gradient-to-r from-transparent via-white/20 to-transparent mt-2"
+                                initial={{ width: 0, opacity: 0 }}
+                                animate={{ width: "100%", opacity: 1 }}
+                                transition={{ delay: 0.5, duration: 0.8 }}
                             />
                         </motion.div>
                         <motion.p 
