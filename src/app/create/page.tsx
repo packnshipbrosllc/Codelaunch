@@ -9,7 +9,9 @@ import { convertToEnhancedMindmap } from '@/lib/mindmap-converter';
 import AIAssistantChatEnhanced from '@/components/AIAssistantChatEnhanced';
 import FloatingMoodBoard from '@/components/FloatingMoodBoard';
 import Header from '@/components/Header';
+import FeatureBuilderPanel from '@/components/FeatureBuilderPanel';
 import { MindmapData, Competitor, Feature } from '@/types/mindmap';
+import { EnhancedFeature } from '@/types/enhanced-mindmap';
 import { useMindmapLimit } from '@/hooks/useMindmapLimit';
 import { SpaceBackground } from '@/components/ui/space-background';
 import Link from 'next/link';
@@ -35,6 +37,9 @@ function CreateProjectPageContent() {
   const [showAIChat, setShowAIChat] = useState(true);
   const [moodBoardImages, setMoodBoardImages] = useState<any[]>([]);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  
+  // Feature Builder state
+  const [selectedFeature, setSelectedFeature] = useState<EnhancedFeature | null>(null);
   
   // Ref to track if we've already processed the URL param (prevent infinite loop)
   const hasProcessedUrlParam = useRef(false);
@@ -395,7 +400,8 @@ function CreateProjectPageContent() {
                   <EnhancedMindmapFlow 
                     key={`mindmap-${mindmapData?.projectName || 'mindmap'}-${mindmapData?.features?.length || 0}`}
                     data={enhancedMindmapData} 
-                    onSave={handleSave} 
+                    onSave={handleSave}
+                    onNodeClick={(feature) => setSelectedFeature(feature)}
                   />
                 )}
               </div>
@@ -419,6 +425,31 @@ function CreateProjectPageContent() {
             )}
           </div>
         </SpaceBackground>
+      )}
+      
+      {/* Feature Builder Panel */}
+      {selectedFeature && mindmapData && enhancedMindmapData && (
+        <FeatureBuilderPanel
+          feature={selectedFeature}
+          projectContext={{
+            projectName: mindmapData.projectName,
+            projectDescription: mindmapData.projectDescription || '',
+            techStack: mindmapData.techStack,
+            allFeatures: enhancedMindmapData.features,
+          }}
+          onClose={() => setSelectedFeature(null)}
+          onSavePRD={async (featureId: string, prd: any) => {
+            // Update the feature with PRD data
+            console.log('PRD saved for feature:', featureId, prd);
+            setSelectedFeature(null);
+            // TODO: Update mindmapData with PRD
+          }}
+          onGenerateCode={async (featureId: string) => {
+            // Generate code for the feature
+            console.log('Generating code for feature:', featureId);
+            // TODO: Call code generation API
+          }}
+        />
       )}
     </>
   );

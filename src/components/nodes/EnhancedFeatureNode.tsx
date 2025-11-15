@@ -75,6 +75,31 @@ export function EnhancedFeatureNode({ data, id }: EnhancedFeatureNodeProps) {
 
   const borderColor = getPriorityColor(data.priority);
   
+  // Get status color
+  const getStatusColor = (status?: string) => {
+    switch(status) {
+      case 'planned': return 'border-gray-500';
+      case 'requirements-done': return 'border-blue-500';
+      case 'prd-done': return 'border-purple-500';
+      case 'code-generated': return 'border-green-500';
+      default: return 'border-gray-500';
+    }
+  };
+  
+  const getStatusIcon = (status?: string) => {
+    switch(status) {
+      case 'planned': return '📋';
+      case 'requirements-done': return '✏️';
+      case 'prd-done': return '📄';
+      case 'code-generated': return '✅';
+      default: return '📋';
+    }
+  };
+  
+  const status = (data as any).status || 'planned';
+  const requirementsProgress = (data as any).requirementsProgress || 0;
+  const handleClick = (data as any).onClick;
+  
   return (
     <div 
       className={`relative rounded-2xl transition-all duration-300 ${isExpanded ? 'w-[700px]' : 'w-[350px]'} cursor-pointer`}
@@ -86,8 +111,13 @@ export function EnhancedFeatureNode({ data, id }: EnhancedFeatureNodeProps) {
         boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5)',
       }}
       onDoubleClick={toggleExpand}
-      title="Double-click to expand/collapse"
+      onClick={handleClick}
+      title="Click to open Feature Builder | Double-click to expand/collapse"
     >
+      {/* Status Badge */}
+      <div className={`absolute -top-2 -right-2 w-8 h-8 rounded-full bg-black border-2 ${getStatusColor(status)} flex items-center justify-center text-sm z-10`}>
+        {getStatusIcon(status)}
+      </div>
       {/* Handles for connections */}
       <Handle type="target" position={Position.Top} className="w-3 h-3 bg-purple-500" />
       <Handle type="source" position={Position.Bottom} className="w-3 h-3 bg-purple-500" />
@@ -365,6 +395,20 @@ export function EnhancedFeatureNode({ data, id }: EnhancedFeatureNodeProps) {
           </div>
         </div>
       )}
+      
+      {/* Progress Bar */}
+      <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-700/50 bg-black/20">
+        <div className="w-full h-1.5 bg-gray-700 rounded-full overflow-hidden">
+          <div 
+            className="h-full bg-gradient-to-r from-blue-500 to-purple-500 rounded-full transition-all duration-300"
+            style={{ width: `${requirementsProgress}%` }}
+          />
+        </div>
+        <div className="flex items-center justify-between mt-2">
+          <span className="text-xs text-gray-400">Progress</span>
+          <span className="text-xs text-purple-400 font-semibold">{Math.round(requirementsProgress)}%</span>
+        </div>
+      </div>
     </div>
   );
 }

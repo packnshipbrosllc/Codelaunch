@@ -37,10 +37,13 @@ const nodeTypes = {
   enhancedPersona: EnhancedPersonaNode,
 };
 
+type FeatureStatus = 'planned' | 'requirements-done' | 'prd-done' | 'code-generated';
+
 interface EnhancedMindmapFlowProps {
   data: EnhancedMindmapData;
   onSave?: (nodes: Node[], edges: Edge[]) => void;
   onAddNode?: (type: string, parentId?: string) => void;
+  onNodeClick?: (feature: any) => void;
   editable?: boolean;
 }
 
@@ -48,6 +51,7 @@ export function EnhancedMindmapFlow({
   data, 
   onSave, 
   onAddNode,
+  onNodeClick,
   editable = true 
 }: EnhancedMindmapFlowProps) {
   const [expandedNodes, setExpandedNodes] = useState<NodeExpansionState>({});
@@ -121,6 +125,23 @@ export function EnhancedMindmapFlow({
     // Feature Nodes
     data.features.forEach((feature, index) => {
       const id = `feature-${feature.id}`;
+      
+      // Determine feature status
+      const hasUserStories = feature.userStories && feature.userStories.length > 0;
+      const hasAcceptanceCriteria = feature.acceptanceCriteria && feature.acceptanceCriteria.length > 0;
+      const hasPRD = (feature as any).hasPRD || (feature as any).prd;
+      const hasCode = (feature as any).hasCode || (feature as any).generatedCode;
+      
+      let status: FeatureStatus = 'planned';
+      if (hasCode) status = 'code-generated';
+      else if (hasPRD) status = 'prd-done';
+      else if (hasUserStories && hasAcceptanceCriteria) status = 'requirements-done';
+      
+      // Calculate progress
+      let requirementsProgress = 0;
+      if (hasUserStories) requirementsProgress += 50;
+      if (hasAcceptanceCriteria) requirementsProgress += 50;
+      
       nodes.push({
         id,
         type: 'enhancedFeature',
@@ -132,6 +153,11 @@ export function EnhancedMindmapFlow({
           ...feature,
           isExpanded: false, // Will be set from expandedNodes state in useEffect
           onExpand: () => {}, // Placeholder - will be set in useEffect
+          status,
+          requirementsProgress,
+          hasPRD,
+          hasCode,
+          onClick: onNodeClick ? () => onNodeClick(feature) : undefined,
         },
       });
 
