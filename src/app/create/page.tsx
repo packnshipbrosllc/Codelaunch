@@ -215,6 +215,63 @@ function CreateProjectPageContent() {
     }
   };
 
+  const handleGeneratePRD = async (nodeId: string, featureData: any) => {
+    console.log('🚀 handleGeneratePRD called:', nodeId);
+    
+    if (!isSubscribed) {
+      const upgrade = window.confirm(
+        '🔒 PRD Generation is a Pro Feature\n\n' +
+        'Generate comprehensive PRDs with:\n' +
+        '• Technical specifications\n' +
+        '• API documentation\n' +
+        '• Data schemas\n' +
+        '• Edge cases\n' +
+        '• User stories\n\n' +
+        'Upgrade to Pro?'
+      );
+      if (upgrade) window.location.href = '/#pricing';
+      return;
+    }
+
+    if (!mindmapData) {
+      alert('No mindmap data available');
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/generate-prd', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          feature: featureData,
+          projectContext: {
+            projectName: mindmapData.projectName,
+            projectDescription: mindmapData.projectDescription,
+            techStack: mindmapData.techStack,
+            allFeatures: mindmapData.features,
+          }
+        })
+      });
+
+      const result = await response.json();
+      
+      if (result.success) {
+        alert('✅ PRD Generated!');
+        // Update mindmap data with new PRD
+        setMindmapData({
+          ...mindmapData,
+          features: mindmapData.features.map(f =>
+            f.id === nodeId ? { ...f, prd: result.prd, hasPRD: true } : f
+          )
+        } as any);
+      } else {
+        throw new Error(result.error);
+      }
+    } catch (error: any) {
+      alert('Failed: ' + error.message);
+    }
+  };
+
   const exampleIdeas = [
     "A SaaS platform where therapists can manage appointments, client notes, and secure messaging",
     "An AI-powered chatbot for customer support with conversation history and analytics dashboard",
@@ -402,6 +459,8 @@ function CreateProjectPageContent() {
                     data={enhancedMindmapData} 
                     onSave={handleSave}
                     onNodeClick={(feature) => setSelectedFeature(feature)}
+                    onGeneratePRD={handleGeneratePRD}
+                    isSubscribed={isSubscribed}
                   />
                 )}
               </div>

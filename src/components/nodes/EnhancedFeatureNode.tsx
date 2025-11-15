@@ -382,13 +382,7 @@ export function EnhancedFeatureNode({ data, id }: EnhancedFeatureNodeProps) {
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  console.log('🔘 Generate PRD clicked for node:', id);
-                  if (!isSubscribed) {
-                    if (window.confirm('PRD Generation is a Pro feature. Upgrade to Pro to generate detailed PRDs for your features.\n\nWould you like to see pricing?')) {
-                      window.location.href = '/#pricing';
-                    }
-                    return;
-                  }
+                  console.log('Generate PRD clicked');
                   data.onGeneratePRD?.(id);
                 }}
                 className={`flex-1 px-4 py-2 text-white text-sm font-medium rounded transition-colors flex items-center justify-center gap-1 ${

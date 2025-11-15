@@ -45,6 +45,8 @@ interface EnhancedMindmapFlowProps {
   onSave?: (nodes: Node[], edges: Edge[]) => void;
   onAddNode?: (type: string, parentId?: string) => void;
   onNodeClick?: (feature: any) => void;
+  onGeneratePRD?: (nodeId: string, featureData: any) => void;
+  isSubscribed?: boolean;
   editable?: boolean;
 }
 
@@ -53,10 +55,13 @@ export function EnhancedMindmapFlow({
   onSave, 
   onAddNode,
   onNodeClick,
+  onGeneratePRD,
+  isSubscribed: propIsSubscribed = false,
   editable = true 
 }: EnhancedMindmapFlowProps) {
   const [expandedNodes, setExpandedNodes] = useState<NodeExpansionState>({});
-  const { isSubscribed } = useMindmapLimit();
+  const { isSubscribed: hookIsSubscribed } = useMindmapLimit();
+  const isSubscribed = propIsSubscribed || hookIsSubscribed;
   
   // PRD Modal state
   const [prdModalOpen, setPRDModalOpen] = useState(false);
@@ -332,13 +337,34 @@ export function EnhancedMindmapFlow({
     });
   }, [setNodes]);
 
-  // PRD Handlers - Use ref to read nodes without causing re-renders
+  // PRD Handlers - Use external handler if provided, otherwise use internal
   const handleGeneratePRD = useCallback(async (featureId: string) => {
-    console.log('🚀 handleGeneratePRD called for node:', featureId);
+    console.log('Generate PRD clicked');
     
-    // Check subscription status
+    // Get current node data from ref
+    const currentNodes = nodesRef.current;
+    const featureNode = currentNodes.find(n => n.id === featureId);
+    
+    if (!featureNode) {
+      console.error('❌ Node not found:', featureId);
+      return;
+    }
+
+    const featureData = {
+      id: featureId,
+      title: featureNode.data.title || featureNode.data.name || 'Feature',
+      description: featureNode.data.description || '',
+      priority: featureNode.data.priority || 'must-have',
+    };
+
+    // Use external handler if provided (from parent component)
+    if (onGeneratePRD) {
+      onGeneratePRD(featureId, featureData);
+      return;
+    }
+
+    // Otherwise use internal handler
     if (!isSubscribed) {
-      console.log('🔒 PRD generation requires Pro subscription');
       if (window.confirm('PRD Generation is a Pro feature. Upgrade to Pro to generate detailed PRDs for your features.\n\nWould you like to see pricing?')) {
         window.location.href = '/#pricing';
       }
@@ -348,19 +374,6 @@ export function EnhancedMindmapFlow({
     try {
       setIsGeneratingPRD(true);
       
-      // Get current node data from ref (doesn't cause re-renders)
-      const currentNodes = nodesRef.current;
-      const featureNode = currentNodes.find(n => n.id === featureId);
-
-      if (!featureNode) {
-        console.error('❌ Node not found:', featureId);
-        setIsGeneratingPRD(false);
-        return;
-      }
-
-      console.log('📝 Generating PRD for feature:', featureNode.data.title || featureNode.data.name);
-
-      // Get all features for context from ref
       const allFeatures = currentNodes
         .filter(n => n.id !== featureId && n.type === 'enhancedFeature')
         .map(n => ({
@@ -375,9 +388,9 @@ export function EnhancedMindmapFlow({
         },
         body: JSON.stringify({
           featureId: featureId,
-          featureTitle: featureNode.data.title || featureNode.data.name || 'Feature',
-          featureDescription: featureNode.data.description || '',
-          priority: featureNode.data.priority || 'must-have',
+          featureTitle: featureData.title,
+          featureDescription: featureData.description,
+          priority: featureData.priority,
           complexity: featureNode.data.complexity || 'moderate',
           appContext: `App Name: ${data.projectName}\nApp Description: ${data.description || data.overview?.elevatorPitch || ''}`,
           allFeatures: allFeatures
@@ -385,7 +398,6 @@ export function EnhancedMindmapFlow({
       });
 
       const result = await response.json();
-      console.log('✅ PRD generated:', result);
 
       if (result.success) {
         setNodes((nds) =>
@@ -418,7 +430,7 @@ export function EnhancedMindmapFlow({
     } finally {
       setIsGeneratingPRD(false);
     }
-  }, [setNodes, data, isSubscribed]); // Added isSubscribed dependency
+  }, [setNodes, data, isSubscribed, onGeneratePRD]);
 
   const handleViewPRD = useCallback((featureId: string) => {
     setSelectedFeatureId(featureId);

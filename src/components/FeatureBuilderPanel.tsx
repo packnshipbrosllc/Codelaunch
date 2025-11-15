@@ -262,94 +262,164 @@ As a user, I want to see my progress over time so that I stay motivated."
 
 function TechnicalSpecsStep({ feature, projectContext, formData, setFormData }: { feature: EnhancedFeature; projectContext: any; formData: FormData; setFormData: (data: FormData) => void }) {
   return (
-    <div>
-      <h3 className="text-3xl font-bold text-white mb-4">⚙️ Technical Specifications</h3>
-      <p className="text-gray-400 mb-6">
-        Define the technical implementation details: APIs, data models, and UI components needed.
-      </p>
+    <div className="space-y-8">
+      <div>
+        <h3 className="text-3xl font-bold text-white mb-2">⚙️ Technical Specifications</h3>
+        <p className="text-gray-400 mb-6">
+          Define the technical architecture for this feature
+        </p>
+      </div>
 
-      <div className="space-y-6">
-        <div>
-          <label className="block text-white font-semibold mb-2">API Endpoints</label>
-          <p className="text-sm text-gray-400 mb-3">Define REST API endpoints for this feature</p>
-          <div className="space-y-3">
-            {formData.apiEndpoints.map((endpoint, idx) => (
-              <div key={idx} className="flex gap-2">
-                <select
-                  value={endpoint.method}
-                  onChange={(e) => {
-                    const newEndpoints = [...formData.apiEndpoints];
-                    newEndpoints[idx].method = e.target.value;
-                    setFormData({...formData, apiEndpoints: newEndpoints});
-                  }}
-                  className="px-3 py-2 bg-gray-800/50 border border-gray-700 rounded-lg text-white"
-                >
-                  <option>GET</option>
-                  <option>POST</option>
-                  <option>PUT</option>
-                  <option>DELETE</option>
-                  <option>PATCH</option>
-                </select>
-                <input
-                  type="text"
-                  value={endpoint.path}
-                  onChange={(e) => {
-                    const newEndpoints = [...formData.apiEndpoints];
-                    newEndpoints[idx].path = e.target.value;
-                    setFormData({...formData, apiEndpoints: newEndpoints});
-                  }}
-                  placeholder="/api/endpoint"
-                  className="flex-1 px-3 py-2 bg-gray-800/50 border border-gray-700 rounded-lg text-white"
-                />
-                <input
-                  type="text"
-                  value={endpoint.description}
-                  onChange={(e) => {
-                    const newEndpoints = [...formData.apiEndpoints];
-                    newEndpoints[idx].description = e.target.value;
-                    setFormData({...formData, apiEndpoints: newEndpoints});
-                  }}
-                  placeholder="Description"
-                  className="flex-1 px-3 py-2 bg-gray-800/50 border border-gray-700 rounded-lg text-white"
-                />
-                <button
-                  onClick={() => {
-                    setFormData({...formData, apiEndpoints: formData.apiEndpoints.filter((_, i) => i !== idx)});
-                  }}
-                  className="px-3 py-2 bg-red-600/20 hover:bg-red-600/30 text-red-400 rounded-lg"
-                >
-                  ×
-                </button>
+      {/* API Endpoints Section with Guidance */}
+      <div className="bg-gradient-to-r from-blue-900/20 to-purple-900/20 border border-blue-500/30 rounded-xl p-6">
+        <h4 className="text-xl font-bold text-white mb-3 flex items-center gap-2">
+          <span>🔌</span>
+          <span>API Endpoints</span>
+        </h4>
+        
+        {/* Helpful Guidance Box */}
+        <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4 mb-4">
+          <h5 className="font-semibold text-blue-300 mb-2 flex items-center gap-2">
+            <span>💡</span>
+            <span>What are API Endpoints?</span>
+          </h5>
+          <p className="text-sm text-gray-300 mb-3">
+            API endpoints are the URLs your frontend uses to communicate with your backend. 
+            Think of them as doorways to different functions of your app.
+          </p>
+          
+          <div className="space-y-2 text-sm">
+            <div className="flex items-start gap-2">
+              <span className="text-green-400 mt-1">✓</span>
+              <div>
+                <span className="text-white font-medium">GET</span>
+                <span className="text-gray-400"> - Retrieve data (e.g., </span>
+                <code className="text-blue-300 bg-black/30 px-1 rounded">GET /api/users/:id</code>
+                <span className="text-gray-400"> to get user info)</span>
               </div>
-            ))}
-            <button
-              onClick={() => {
-                setFormData({
-                  ...formData,
-                  apiEndpoints: [...formData.apiEndpoints, { method: 'GET', path: '', description: '' }]
-                });
-              }}
-              className="w-full px-4 py-2 bg-gray-800/50 hover:bg-gray-800 border border-gray-700 rounded-lg text-gray-300"
-            >
-              + Add Endpoint
-            </button>
+            </div>
+            
+            <div className="flex items-start gap-2">
+              <span className="text-green-400 mt-1">✓</span>
+              <div>
+                <span className="text-white font-medium">POST</span>
+                <span className="text-gray-400"> - Create new data (e.g., </span>
+                <code className="text-blue-300 bg-black/30 px-1 rounded">POST /api/workouts</code>
+                <span className="text-gray-400"> to create workout)</span>
+              </div>
+            </div>
+            
+            <div className="flex items-start gap-2">
+              <span className="text-green-400 mt-1">✓</span>
+              <div>
+                <span className="text-white font-medium">PUT/PATCH</span>
+                <span className="text-gray-400"> - Update existing data (e.g., </span>
+                <code className="text-blue-300 bg-black/30 px-1 rounded">PATCH /api/users/:id</code>
+                <span className="text-gray-400">)</span>
+              </div>
+            </div>
+            
+            <div className="flex items-start gap-2">
+              <span className="text-green-400 mt-1">✓</span>
+              <div>
+                <span className="text-white font-medium">DELETE</span>
+                <span className="text-gray-400"> - Remove data (e.g., </span>
+                <code className="text-blue-300 bg-black/30 px-1 rounded">DELETE /api/workouts/:id</code>
+                <span className="text-gray-400">)</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-4 pt-4 border-t border-blue-500/20">
+            <p className="text-xs text-gray-400">
+              <span className="font-semibold text-blue-300">Example for "{feature.title}":</span>
+              <br/>
+              If your feature tracks user workouts, you might need:
+              <br/>
+              • <code className="bg-black/30 px-1">POST /api/workouts</code> - Create new workout
+              <br/>
+              • <code className="bg-black/30 px-1">GET /api/workouts/:id</code> - Get specific workout
+              <br/>
+              • <code className="bg-black/30 px-1">GET /api/workouts/user/:userId</code> - Get all user's workouts
+            </p>
           </div>
         </div>
 
+        {/* API Endpoints Input */}
         <div>
-          <label className="block text-white font-semibold mb-2">UI Components</label>
+          <label className="block text-white font-semibold mb-2">Define Your API Endpoints</label>
+          <p className="text-sm text-gray-400 mb-3">
+            List the API endpoints this feature needs. Be specific about the HTTP method and path.
+          </p>
           <textarea
-            value={formData.uiComponents.join('\n')}
-            onChange={(e) => setFormData({...formData, uiComponents: e.target.value.split('\n').filter(c => c.trim())})}
-            placeholder="List UI components needed:
-- UserDashboard
-- MacroInputForm
-- ProgressChart
-- HistoryView"
-            className="w-full h-32 bg-gray-800/50 border border-gray-700 rounded-xl p-4 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500"
+            value={typeof formData.apiEndpoints === 'string' ? formData.apiEndpoints : JSON.stringify(formData.apiEndpoints, null, 2)}
+            onChange={(e) => setFormData({...formData, apiEndpoints: e.target.value})}
+            placeholder="Example:
+POST /api/meals - Create a new meal entry
+GET /api/meals/:id - Get specific meal details
+GET /api/meals/user/:userId - Get all meals for a user
+PATCH /api/meals/:id - Update meal information
+DELETE /api/meals/:id - Delete a meal"
+            className="w-full h-48 bg-gray-800/50 border border-gray-700 rounded-xl p-4 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"
           />
         </div>
       </div>
+
+      {/* Data Models Section */}
+      <div>
+        <h4 className="text-xl font-bold text-white mb-3 flex items-center gap-2">
+          <span>🗄️</span>
+          <span>Data Models</span>
+        </h4>
+        <p className="text-sm text-gray-400 mb-3">
+          Define the structure of data this feature will store in the database
+        </p>
+        <textarea
+          value={typeof formData.dataModels === 'string' ? formData.dataModels : JSON.stringify(formData.dataModels, null, 2)}
+          onChange={(e) => setFormData({...formData, dataModels: e.target.value})}
+          placeholder="Example:
+Meal {
+  id: string (UUID)
+  userId: string (foreign key)
+  name: string
+  calories: number
+  protein: number (grams)
+  carbs: number (grams)
+  fat: number (grams)
+  timestamp: date
+  mealType: enum (breakfast, lunch, dinner, snack)
+}"
+          className="w-full h-48 bg-gray-800/50 border border-gray-700 rounded-xl p-4 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 font-mono text-sm"
+        />
+      </div>
+
+      {/* UI Components Section */}
+      <div>
+        <h4 className="text-xl font-bold text-white mb-3 flex items-center gap-2">
+          <span>🎨</span>
+          <span>UI Components</span>
+        </h4>
+        <p className="text-sm text-gray-400 mb-3">
+          List the user interface components needed for this feature
+        </p>
+        <textarea
+          value={Array.isArray(formData.uiComponents) ? formData.uiComponents.join('\n') : formData.uiComponents}
+          onChange={(e) => setFormData({...formData, uiComponents: e.target.value.split('\n').filter(c => c.trim())})}
+          placeholder="Example:
+- MealForm (form to add/edit meals)
+- MealCard (displays individual meal with macros)
+- DailyMacrosSummary (shows daily totals with progress bars)
+- MealHistory (list of past meals with filters)
+- MacroChart (visual chart of macro distribution)"
+          className="w-full h-40 bg-gray-800/50 border border-gray-700 rounded-xl p-4 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-pink-500"
+        />
+      </div>
+
+      {/* AI Enhancement Button */}
+      <button className="w-full px-6 py-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white rounded-xl font-semibold transition-all flex items-center justify-center gap-2">
+        <span>✨</span>
+        <span>AI-Enhance Technical Specs</span>
+      </button>
     </div>
   );
 }
