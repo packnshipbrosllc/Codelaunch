@@ -1,7 +1,7 @@
 // src/app/create/page.tsx
 'use client';
 
-import { useState, useEffect, useRef, Suspense } from 'react';
+import { useState, useEffect, useRef, useMemo, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
 import { EnhancedMindmapFlow } from '@/components/EnhancedMindmapFlow';
@@ -221,6 +221,40 @@ function CreateProjectPageContent() {
     await handleGenerate();
   };
 
+  // Memoize the converted mindmap data to prevent infinite re-renders
+  const enhancedMindmapData = useMemo(() => {
+    if (!mindmapData) return null;
+    
+    return convertToEnhancedMindmap({
+      projectName: mindmapData.projectName,
+      projectDescription: mindmapData.projectDescription,
+      description: mindmapData.projectDescription,
+      competitors: mindmapData.competitors.map((c: Competitor) => ({
+        name: c.name,
+        url: c.url,
+        strength: c.strength,
+        ourAdvantage: c.ourAdvantage,
+      })),
+      techStack: mindmapData.techStack,
+      features: mindmapData.features.map((f: Feature) => ({
+        id: f.id,
+        title: f.title,
+        name: f.title,
+        description: f.description,
+        priority: f.priority,
+      })),
+      monetization: mindmapData.monetization,
+      userPersona: mindmapData.userPersona ? {
+        name: mindmapData.userPersona.name,
+        title: mindmapData.userPersona.name,
+        description: mindmapData.userPersona.description,
+        painPoint: mindmapData.userPersona.painPoint,
+        painPoints: [mindmapData.userPersona.painPoint],
+      } : undefined,
+      targetAudience: mindmapData.targetAudience,
+    });
+  }, [mindmapData]);
+
   // Debug logging before render decision
   console.log('🎯 Rendering decision - mindmapData:', mindmapData ? 'EXISTS' : 'NULL');
   if (mindmapData) {
@@ -390,37 +424,12 @@ function CreateProjectPageContent() {
                       </>
                     )}
                   </button>
-                  <EnhancedMindmapFlow 
-                    data={convertToEnhancedMindmap({
-                    projectName: mindmapData.projectName,
-                    projectDescription: mindmapData.projectDescription,
-                    description: mindmapData.projectDescription,
-                    competitors: mindmapData.competitors.map((c: Competitor) => ({
-                      name: c.name,
-                      url: c.url,
-                      strength: c.strength,
-                      ourAdvantage: c.ourAdvantage,
-                    })),
-                    techStack: mindmapData.techStack,
-                    features: mindmapData.features.map((f: Feature) => ({
-                      id: f.id,
-                      title: f.title,
-                      name: f.title,
-                      description: f.description,
-                      priority: f.priority,
-                    })),
-                    monetization: mindmapData.monetization,
-                    userPersona: mindmapData.userPersona ? {
-                      name: mindmapData.userPersona.name,
-                      title: mindmapData.userPersona.name,
-                      description: mindmapData.userPersona.description,
-                      painPoint: mindmapData.userPersona.painPoint,
-                      painPoints: [mindmapData.userPersona.painPoint],
-                    } : undefined,
-                    targetAudience: mindmapData.targetAudience,
-                  })} 
-                    onSave={handleSave} 
-                  />
+                  {enhancedMindmapData && (
+                    <EnhancedMindmapFlow 
+                      data={enhancedMindmapData} 
+                      onSave={handleSave} 
+                    />
+                  )}
                 </div>
               )}
 
