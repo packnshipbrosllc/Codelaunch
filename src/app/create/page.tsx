@@ -40,18 +40,17 @@ function CreateProjectPageContent() {
   // Check for mindmap data from query params (from new-project page)
   useEffect(() => {
     const mindmapParam = searchParams.get('mindmap');
-    if (mindmapParam && !mindmapData) {
+    if (mindmapParam) {
       try {
         const decodedData = JSON.parse(decodeURIComponent(mindmapParam));
         console.log('📥 Received mindmap data from new-project page:', decodedData);
         setMindmapData(decodedData);
-        // Clear the query param to avoid re-processing
-        router.replace('/create', { scroll: false });
+        // Keep URL parameter - don't clear it
       } catch (err) {
         console.error('Failed to parse mindmap data from URL:', err);
       }
     }
-  }, [searchParams, mindmapData, router]);
+  }, [searchParams]);
 
   // Debug logging
   useEffect(() => {
