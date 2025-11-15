@@ -339,20 +339,48 @@ function CreateProjectPageContent() {
           </div>
         </div>
       ) : (
-        <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-          <div className="text-center">
-            <h1 className="text-4xl font-bold text-white mb-4">✅ Mindmap Generated!</h1>
-            <p className="text-gray-400 mb-4">Project: {mindmapData.projectName}</p>
-            <p className="text-gray-400 mb-4">Features: {mindmapData.features?.length || 0}</p>
-            <pre className="text-left text-xs text-gray-500 bg-gray-800 p-4 rounded max-w-2xl mx-auto overflow-auto max-h-96">
-              {JSON.stringify(mindmapData, null, 2)}
-            </pre>
-            <button 
-              onClick={() => setMindmapData(null)}
-              className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
-            >
-              Start Over
-            </button>
+        <div className="min-h-screen">
+          <Header title="Create New Project" showBackButton backUrl="/dashboard" />
+          <div className="container mx-auto px-4 py-8">
+            <div className="mb-6 flex items-center justify-between">
+              <div>
+                <h2 className="text-3xl font-bold mb-2">{mindmapData.projectName}</h2>
+                <p className="text-gray-400">{mindmapData.projectDescription}</p>
+              </div>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    setMindmapData(null);
+                    setIdea('');
+                  }}
+                  className="px-6 py-3 bg-gray-700 hover:bg-gray-600 rounded-lg font-semibold transition-all"
+                >
+                  ← Start Over
+                </button>
+                <button
+                  onClick={handleSave}
+                  className="px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 rounded-lg font-semibold transition-all shadow-lg"
+                >
+                  💾 Save Project
+                </button>
+                <button
+                  onClick={() => router.push('/dashboard')}
+                  className="px-6 py-3 bg-gray-700 hover:bg-gray-600 rounded-lg font-semibold transition-all"
+                >
+                  Dashboard →
+                </button>
+              </div>
+            </div>
+
+            {enhancedMindmapData && (
+              <div className="w-full relative" style={{ height: '600px', minHeight: '600px' }}>
+                <EnhancedMindmapFlow 
+                  key={mindmapData.projectName} // Force remount on new project to prevent infinite loop
+                  data={enhancedMindmapData} 
+                  onSave={handleSave} 
+                />
+              </div>
+            )}
           </div>
         </div>
       )}
