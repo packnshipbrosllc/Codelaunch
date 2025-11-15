@@ -3,7 +3,7 @@
 
 'use client';
 
-import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import ReactFlow, {
   Node,
   Edge,
@@ -245,11 +245,30 @@ export function EnhancedMindmapFlow({
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
 
-  // ✅ Sync nodes/edges when data changes (prevents stale data)
+  // ✅ Use refs to track state and prevent infinite loops
+  const isInitializedRef = useRef(false);
+  const dataRef = useRef(data);
+  const nodesRef = useRef(nodes);
+
+  // ✅ Keep nodesRef in sync with nodes state
   useEffect(() => {
-    setNodes(initialNodes);
-    setEdges(initialEdges);
-  }, [initialNodes, initialEdges, setNodes, setEdges]);
+    nodesRef.current = nodes;
+  }, [nodes]);
+
+  // ✅ Sync nodes/edges ONLY when data actually changes (not when arrays are recreated)
+  useEffect(() => {
+    // Only update if data reference changed (new data passed in)
+    if (dataRef.current !== data) {
+      dataRef.current = data;
+      setNodes(initialNodes);
+      setEdges(initialEdges);
+      isInitializedRef.current = true;
+    } else if (!isInitializedRef.current) {
+      // First mount - initialize
+      isInitializedRef.current = true;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data]); // Only depend on data - initialNodes/initialEdges are derived from data
 
   // ✅ Now handleNodeExpand can safely use setNodes
   const handleNodeExpand = useCallback((nodeId: string) => {
@@ -279,13 +298,27 @@ export function EnhancedMindmapFlow({
     });
   }, [setNodes]);
 
-  // PRD Handlers
+  // PRD Handlers - Use ref to read nodes without causing re-renders
   const handleGeneratePRD = useCallback(async (featureId: string) => {
     try {
       setIsGeneratingPRD(true);
       
-      const featureNode = nodes.find(n => n.id === featureId);
-      if (!featureNode) return;
+      // Get current node data from ref (doesn't cause re-renders)
+      const currentNodes = nodesRef.current;
+      const featureNode = currentNodes.find(n => n.id === featureId);
+
+      if (!featureNode) {
+        setIsGeneratingPRD(false);
+        return;
+      }
+
+      // Get all features for context from ref
+      const allFeatures = currentNodes
+        .filter(n => n.id !== featureId && n.type === 'enhancedFeature')
+        .map(n => ({
+          title: n.data.title || n.data.name || 'Feature',
+          description: n.data.description || ''
+        }));
 
       const response = await fetch('/api/features/generate-prd', {
         method: 'POST',
@@ -299,12 +332,7 @@ export function EnhancedMindmapFlow({
           priority: featureNode.data.priority || 'must-have',
           complexity: featureNode.data.complexity || 'moderate',
           appContext: `App Name: ${data.projectName}\nApp Description: ${data.description || data.overview?.elevatorPitch || ''}`,
-          allFeatures: nodes
-            .filter(n => n.id !== featureId && n.type === 'enhancedFeature')
-            .map(n => ({
-              title: n.data.title || n.data.name || 'Feature',
-              description: n.data.description || ''
-            }))
+          allFeatures: allFeatures
         })
       });
 
@@ -338,7 +366,7 @@ export function EnhancedMindmapFlow({
     } finally {
       setIsGeneratingPRD(false);
     }
-  }, [nodes, setNodes, data]);
+  }, [setNodes, data]); // ✅ REMOVED nodes dependency - use functional setState instead
 
   const handleViewPRD = useCallback((featureId: string) => {
     setSelectedFeatureId(featureId);
@@ -373,28 +401,61 @@ export function EnhancedMindmapFlow({
     await handleGeneratePRD(selectedFeatureId);
   }, [selectedFeatureId, handleGeneratePRD]);
 
-  // ✅ Wire up onExpand handlers and sync expanded state after nodes are initialized
+  // ✅ Wire up onExpand handlers ONCE on mount, then only update expanded state
+  const handlersSetupRef = useRef(false);
+  const previousExpandedNodesRef = useRef<NodeExpansionState>({});
+  
   useEffect(() => {
-    setNodes(nds =>
-      nds.map(node => {
-        if (node.type === 'enhancedFeature' || node.type === 'enhancedCompetitor' || node.type === 'enhancedPersona') {
-          return {
-            ...node,
-            data: {
-              ...node.data,
-              isExpanded: expandedNodes[node.id] || false, // Sync expanded state
-              onExpand: handleNodeExpand,
-              // Add PRD handlers for feature nodes
-              ...(node.type === 'enhancedFeature' && {
-                onViewPRD: handleViewPRD,
-                onGeneratePRD: handleGeneratePRD,
-              }),
-            },
-          };
-        }
-        return node;
-      })
-    );
+    // First time: set up all handlers
+    if (!handlersSetupRef.current) {
+      setNodes(nds =>
+        nds.map(node => {
+          if (node.type === 'enhancedFeature' || node.type === 'enhancedCompetitor' || node.type === 'enhancedPersona') {
+            return {
+              ...node,
+              data: {
+                ...node.data,
+                isExpanded: expandedNodes[node.id] || false,
+                onExpand: handleNodeExpand,
+                // Add PRD handlers for feature nodes
+                ...(node.type === 'enhancedFeature' && {
+                  onViewPRD: handleViewPRD,
+                  onGeneratePRD: handleGeneratePRD,
+                }),
+              },
+            };
+          }
+          return node;
+        })
+      );
+      handlersSetupRef.current = true;
+      previousExpandedNodesRef.current = expandedNodes;
+    } else {
+      // Subsequent times: only update expanded state if it changed
+      const expandedChanged = Object.keys(expandedNodes).some(
+        key => expandedNodes[key] !== previousExpandedNodesRef.current[key]
+      ) || Object.keys(previousExpandedNodesRef.current).some(
+        key => !(key in expandedNodes)
+      );
+      
+      if (expandedChanged) {
+        setNodes(nds =>
+          nds.map(node => {
+            if (node.type === 'enhancedFeature' || node.type === 'enhancedCompetitor' || node.type === 'enhancedPersona') {
+              return {
+                ...node,
+                data: {
+                  ...node.data,
+                  isExpanded: expandedNodes[node.id] || false,
+                },
+              };
+            }
+            return node;
+          })
+        );
+        previousExpandedNodesRef.current = expandedNodes;
+      }
+    }
   }, [expandedNodes, handleNodeExpand, handleViewPRD, handleGeneratePRD, setNodes]);
 
   // Get selected feature for modal
