@@ -57,7 +57,7 @@ export function EnhancedMindmapFlow({
   const [selectedFeatureId, setSelectedFeatureId] = useState<string | null>(null);
   const [isGeneratingPRD, setIsGeneratingPRD] = useState(false);
 
-  // Generate initial nodes and edges from data
+  // Generate initial nodes and edges from data - MEMOIZED WITHOUT expandedNodes to prevent infinite loop
   const { initialNodes, initialEdges } = useMemo(() => {
     const nodes: Node[] = [];
     const edges: Edge[] = [];
@@ -126,7 +126,7 @@ export function EnhancedMindmapFlow({
         },
         data: {
           ...feature,
-          isExpanded: expandedNodes[id] || false,
+          isExpanded: false, // Will be set from expandedNodes state in useEffect
           onExpand: () => {}, // Placeholder - will be set in useEffect
         },
       });
@@ -153,7 +153,7 @@ export function EnhancedMindmapFlow({
         },
         data: {
           ...competitor,
-          isExpanded: expandedNodes[id] || false,
+          isExpanded: false, // Will be set from expandedNodes state in useEffect
           onExpand: () => {}, // Placeholder - will be set in useEffect
         },
       });
@@ -179,7 +179,7 @@ export function EnhancedMindmapFlow({
         },
         data: {
           ...persona,
-          isExpanded: expandedNodes[id] || false,
+          isExpanded: false, // Will be set from expandedNodes state in useEffect
           onExpand: () => {}, // Placeholder - will be set in useEffect
         },
       });
@@ -239,35 +239,45 @@ export function EnhancedMindmapFlow({
     });
 
     return { initialNodes: nodes, initialEdges: edges };
-  }, [data, expandedNodes]);
+  }, [data]); // ✅ REMOVED expandedNodes dependency - this was causing infinite loop
 
   // ✅ HOOKS MUST BE DECLARED AFTER useMemo BUT BEFORE THEY'RE USED
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
 
+  // ✅ Sync nodes/edges when data changes (prevents stale data)
+  useEffect(() => {
+    setNodes(initialNodes);
+    setEdges(initialEdges);
+  }, [initialNodes, initialEdges, setNodes, setEdges]);
+
   // ✅ Now handleNodeExpand can safely use setNodes
   const handleNodeExpand = useCallback((nodeId: string) => {
-    setExpandedNodes(prev => ({
-      ...prev,
-      [nodeId]: !prev[nodeId],
-    }));
-    
-    // Update the node data
-    setNodes(nds => 
-      nds.map(node => {
-        if (node.id === nodeId) {
-          return {
-            ...node,
-            data: {
-              ...node.data,
-              isExpanded: !expandedNodes[nodeId],
-            },
-          };
-        }
-        return node;
-      })
-    );
-  }, [expandedNodes, setNodes]);
+    setExpandedNodes(prev => {
+      const newState = {
+        ...prev,
+        [nodeId]: !prev[nodeId],
+      };
+      
+      // Update the node data immediately
+      setNodes(nds => 
+        nds.map(node => {
+          if (node.id === nodeId) {
+            return {
+              ...node,
+              data: {
+                ...node.data,
+                isExpanded: newState[nodeId],
+              },
+            };
+          }
+          return node;
+        })
+      );
+      
+      return newState;
+    });
+  }, [setNodes]);
 
   // PRD Handlers
   const handleGeneratePRD = useCallback(async (featureId: string) => {
@@ -363,7 +373,7 @@ export function EnhancedMindmapFlow({
     await handleGeneratePRD(selectedFeatureId);
   }, [selectedFeatureId, handleGeneratePRD]);
 
-  // ✅ Wire up onExpand handlers after nodes are initialized
+  // ✅ Wire up onExpand handlers and sync expanded state after nodes are initialized
   useEffect(() => {
     setNodes(nds =>
       nds.map(node => {
@@ -372,6 +382,7 @@ export function EnhancedMindmapFlow({
             ...node,
             data: {
               ...node.data,
+              isExpanded: expandedNodes[node.id] || false, // Sync expanded state
               onExpand: handleNodeExpand,
               // Add PRD handlers for feature nodes
               ...(node.type === 'enhancedFeature' && {
@@ -384,7 +395,7 @@ export function EnhancedMindmapFlow({
         return node;
       })
     );
-  }, [handleNodeExpand, handleViewPRD, handleGeneratePRD, setNodes]);
+  }, [expandedNodes, handleNodeExpand, handleViewPRD, handleGeneratePRD, setNodes]);
 
   // Get selected feature for modal
   const selectedFeature = nodes.find(n => n.id === selectedFeatureId);

@@ -340,59 +340,75 @@ function CreateProjectPageContent() {
           </div>
         </div>
       ) : (
-        <div className="min-h-screen bg-gray-900 p-8">
-          <h1 className="text-white text-2xl mb-4">Mindmap Generated: {mindmapData.projectName}</h1>
-          
-          {/* Test 1: Just show data - does this work? */}
-          <div className="mb-8 p-4 bg-gray-800 rounded">
-            <h2 className="text-white mb-2">Test 1: Basic Data Display</h2>
-            <p className="text-gray-400">Features: {mindmapData.features?.length}</p>
-            <p className="text-gray-400">Competitors: {mindmapData.competitors?.length}</p>
-            <p className="text-gray-400">Has Tech Stack: {mindmapData.techStack ? 'Yes' : 'No'}</p>
-            <p className="text-gray-400">Enhanced Data Ready: {enhancedMindmapData ? 'Yes' : 'No'}</p>
-          </div>
-
-          {/* Test 2: Try rendering Header component only */}
-          <div className="mb-8 p-4 bg-gray-800 rounded">
-            <h2 className="text-white mb-2">Test 2: Header Component</h2>
-            <Header title="Create New Project" showBackButton backUrl="/dashboard" />
-          </div>
-
-          {/* Test 3: Show memoized data structure */}
-          <div className="mb-8 p-4 bg-gray-800 rounded">
-            <h2 className="text-white mb-2">Test 3: Memoized Data Check</h2>
-            {enhancedMindmapData ? (
-              <div className="text-gray-400 text-sm">
-                <p>✅ Enhanced data exists</p>
-                <p>Project: {enhancedMindmapData.projectName}</p>
-                <p>Features count: {enhancedMindmapData.features?.length || 0}</p>
+        <div className="min-h-screen bg-gray-950 relative" style={{ height: isFullscreen ? '100vh' : 'auto' }}>
+          {/* Header */}
+          <div className="absolute top-0 left-0 right-0 z-50 bg-gray-950/95 backdrop-blur-sm border-b border-gray-800 px-6 py-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-2xl font-bold text-white">{mindmapData.projectName}</h1>
+                <p className="text-sm text-gray-400 mt-1">Interactive Mindmap</p>
               </div>
-            ) : (
-              <p className="text-red-400">❌ Enhanced data is null</p>
-            )}
+              <div className="flex items-center gap-3">
+                {!isFullscreen && (
+                  <>
+                    <button
+                      onClick={() => setIsFullscreen(true)}
+                      className="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white rounded-lg font-medium transition text-sm"
+                    >
+                      Fullscreen (F)
+                    </button>
+                    <Link href="/dashboard">
+                      <button className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-medium transition text-sm">
+                        Dashboard
+                      </button>
+                    </Link>
+                  </>
+                )}
+                {isFullscreen && (
+                  <button
+                    onClick={() => setIsFullscreen(false)}
+                    className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-medium transition text-sm"
+                  >
+                    Exit Fullscreen (Esc)
+                  </button>
+                )}
+              </div>
+            </div>
           </div>
 
-          {/* Test 4: Try rendering EnhancedMindmapFlow (THIS IS LIKELY THE PROBLEM) */}
-          <div className="mb-8 p-4 bg-gray-800 rounded">
-            <h2 className="text-white mb-2">Test 4: EnhancedMindmapFlow Component</h2>
-            <p className="text-gray-400 text-sm mb-2">If infinite loop happens here, this component is the problem:</p>
-            {enhancedMindmapData && (
-              <div className="w-full relative" style={{ height: '400px', minHeight: '400px', border: '2px solid red' }}>
-                <EnhancedMindmapFlow 
-                  key={mindmapData.projectName} // Force remount on new project to prevent infinite loop
-                  data={enhancedMindmapData} 
-                  onSave={handleSave} 
-                />
-              </div>
-            )}
-          </div>
-          
-          <button 
-            onClick={() => setMindmapData(null)}
-            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+          {/* Render the full mindmap */}
+          <div 
+            className="w-full" 
+            style={{ 
+              height: isFullscreen ? '100vh' : 'calc(100vh - 200px)',
+              paddingTop: isFullscreen ? '0' : '80px'
+            }}
           >
-            Start Over
-          </button>
+            {enhancedMindmapData && (
+              <EnhancedMindmapFlow 
+                key={`mindmap-${mindmapData.projectName}-${mindmapData.features?.length || 0}`}
+                data={enhancedMindmapData} 
+                onSave={handleSave} 
+              />
+            )}
+          </div>
+
+          {/* Floating panels (hidden in fullscreen) */}
+          {!isFullscreen && (
+            <>
+              {showAIChat && (
+                <div className="fixed bottom-4 right-4 z-40">
+                  <AIAssistantChatEnhanced 
+                    mindmapData={mindmapData}
+                    moodBoardImages={moodBoardImages}
+                    isCollapsed={!showAIChat}
+                    onToggleCollapse={() => setShowAIChat(!showAIChat)}
+                  />
+                </div>
+              )}
+              <FloatingMoodBoard />
+            </>
+          )}
         </div>
       )}
     </SpaceBackground>
