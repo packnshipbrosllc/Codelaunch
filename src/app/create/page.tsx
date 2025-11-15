@@ -339,133 +339,20 @@ function CreateProjectPageContent() {
           </div>
         </div>
       ) : (
-        <div className="min-h-screen">
-          <Header title="Create New Project" showBackButton backUrl="/dashboard" />
-          <div className="container mx-auto px-4 py-8">
-            {/* Mindmap Display with Floating Panels */}
-          <div className={`relative ${isFullscreen ? 'fixed inset-0 z-40 bg-gray-900' : ''}`}>
-            {/* Floating Mood Board - Draggable! (hide in fullscreen) */}
-            {!isFullscreen && (
-              <FloatingMoodBoard
-                onImagesChange={setMoodBoardImages}
-              />
-            )}
-
-            {/* Main Content - Now uses full width! */}
-            <div className={`transition-all ${showAIChat && !isFullscreen ? 'mr-96 pr-4' : ''} ${isFullscreen ? 'h-screen' : ''}`}>
-              <div className="mb-6 flex items-center justify-between">
-                <div>
-                  <h2 className="text-3xl font-bold mb-2">{mindmapData.projectName}</h2>
-                  <p className="text-gray-400">{mindmapData.projectDescription}</p>
-                </div>
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => {
-                      setMindmapData(null);
-                      setIdea('');
-                    }}
-                    className="px-6 py-3 bg-gray-700 hover:bg-gray-600 rounded-lg font-semibold transition-all"
-                  >
-                    ← Start Over
-                  </button>
-                  <button
-                    onClick={handleSave}
-                    className="px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 rounded-lg font-semibold transition-all shadow-lg"
-                  >
-                    💾 Save Project
-                  </button>
-                  <button
-                    onClick={() => router.push('/dashboard')}
-                    className="px-6 py-3 bg-gray-700 hover:bg-gray-600 rounded-lg font-semibold transition-all"
-                  >
-                    Dashboard →
-                  </button>
-                </div>
-              </div>
-
-              {mindmapData && (
-                <div className="w-full relative" style={isFullscreen ? { height: '100vh' } : { height: '600px', minHeight: '600px' }}>
-                  {/* Fullscreen Toggle Button */}
-                  <button
-                    onClick={() => {
-                      setIsFullscreen(!isFullscreen);
-                      if (!isFullscreen) {
-                        setShowAIChat(false);
-                      } else {
-                        setShowAIChat(true);
-                      }
-                    }}
-                    className="group absolute top-4 right-4 z-50 px-4 py-2.5 
-                               bg-gradient-to-r from-purple-600 to-pink-600 
-                               hover:from-purple-700 hover:to-pink-700
-                               text-white rounded-xl shadow-2xl 
-                               transition-all duration-300 
-                               flex items-center gap-2 font-semibold text-sm
-                               hover:scale-105 hover:shadow-purple-500/50"
-                    title={isFullscreen ? "Exit Fullscreen (Esc)" : "Enter Fullscreen (F)"}
-                  >
-                    {isFullscreen ? (
-                      <>
-                        <svg className="w-5 h-5 transition-transform group-hover:rotate-180" 
-                             fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} 
-                                d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                        <span>Exit Fullscreen</span>
-                      </>
-                    ) : (
-                      <>
-                        <svg className="w-5 h-5 transition-transform group-hover:scale-110" 
-                             fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} 
-                                d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5" />
-                        </svg>
-                        <span>Fullscreen</span>
-                      </>
-                    )}
-                  </button>
-                  {enhancedMindmapData && (
-                    <EnhancedMindmapFlow 
-                      data={enhancedMindmapData} 
-                      onSave={handleSave} 
-                    />
-                  )}
-                </div>
-              )}
-
-              <div className="mt-8 p-6 bg-gray-800/50 rounded-lg border border-purple-500/20">
-                <h3 className="text-xl font-semibold mb-4">🎯 Next Steps:</h3>
-                <ul className="space-y-2 text-gray-300">
-                  <li className="flex items-start gap-2">
-                    <span className="text-green-400">✓</span>
-                    <span>Save this mindmap to your dashboard</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-yellow-400">→</span>
-                    <span>Use AI Assistant (Cmd/Ctrl+K) to refine your project</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-yellow-400">→</span>
-                    <span>Drag the mood board widget to add design inspiration</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-yellow-400">→</span>
-                    <span>Generate a detailed PRD and production-ready code</span>
-                  </li>
-                </ul>
-              </div>
-            </div>
-
-            {/* Enhanced AI Chat with Keyboard Shortcut (hide in fullscreen) */}
-            {!isFullscreen && (
-              <AIAssistantChatEnhanced
-                mindmapData={mindmapData}
-                moodBoardImages={moodBoardImages.map((img) => img.url)}
-                isCollapsed={!showAIChat}
-                onToggleCollapse={() => setShowAIChat(!showAIChat)}
-              />
-            )}
-          </div>
+        <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+          <div className="text-center">
+            <h1 className="text-4xl font-bold text-white mb-4">✅ Mindmap Generated!</h1>
+            <p className="text-gray-400 mb-4">Project: {mindmapData.projectName}</p>
+            <p className="text-gray-400 mb-4">Features: {mindmapData.features?.length || 0}</p>
+            <pre className="text-left text-xs text-gray-500 bg-gray-800 p-4 rounded max-w-2xl mx-auto overflow-auto max-h-96">
+              {JSON.stringify(mindmapData, null, 2)}
+            </pre>
+            <button 
+              onClick={() => setMindmapData(null)}
+              className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+            >
+              Start Over
+            </button>
           </div>
         </div>
       )}
