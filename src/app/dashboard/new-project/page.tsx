@@ -1,20 +1,20 @@
-// src/app/dashboard/new-project/page.tsx
 'use client';
 
 import { SpaceBackground } from '@/components/ui/space-background';
-import { AnimatedAIChat } from '@/components/ui/animated-ai-chat';
-import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useRouter } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 
 export default function NewProjectPage() {
   const router = useRouter();
+  const [message, setMessage] = useState('');
   const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleProjectSubmit = async (message: string) => {
-    if (!message || message.trim().length === 0) {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!message.trim()) {
       setError('Please describe your app idea');
       return;
     }
@@ -23,13 +23,10 @@ export default function NewProjectPage() {
     setError(null);
     
     try {
-      // Use the existing generate-mindmap API that was working
       const response = await fetch('/api/generate-mindmap', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          idea: message.trim()
-        })
+        body: JSON.stringify({ idea: message.trim() })
       });
 
       if (!response.ok) {
@@ -48,11 +45,8 @@ export default function NewProjectPage() {
       const result = await response.json();
       
       if (result.success && result.data) {
-        // Redirect to create page with the generated mindmap data
-        // The create page will handle displaying and saving it
         const encodedData = encodeURIComponent(JSON.stringify(result.data));
         router.push(`/create?mindmap=${encodedData}`);
-        // Don't set isCreating to false - we're redirecting
       } else {
         throw new Error(result.error || 'Failed to generate mindmap');
       }
@@ -66,62 +60,87 @@ export default function NewProjectPage() {
   return (
     <SpaceBackground variant="default">
       <div className="container mx-auto px-4 py-16 min-h-screen flex items-center justify-center">
-        <AnimatePresence mode="wait">
-          {isCreating ? (
-            <motion.div 
-              key="loading"
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9 }}
-              className="text-center"
-            >
-              <div className="relative">
-                <div className="w-24 h-24 mx-auto mb-6">
-                  <Loader2 className="w-24 h-24 text-white animate-spin" />
-                </div>
-                <motion.div
-                  className="absolute inset-0 w-24 h-24 mx-auto rounded-full bg-blue-500/20 blur-xl"
-                  animate={{
-                    scale: [1, 1.2, 1],
-                    opacity: [0.5, 0.8, 0.5],
-                  }}
-                  transition={{
-                    duration: 2,
-                    repeat: Infinity,
-                    ease: "easeInOut",
-                  }}
-                />
+        {isCreating ? (
+          <div className="text-center">
+            <div className="relative">
+              <div className="w-24 h-24 mx-auto mb-6">
+                <Loader2 className="w-24 h-24 text-white animate-spin" />
               </div>
-              <h2 className="text-2xl font-bold text-white mb-2">Creating your project...</h2>
-              <p className="text-white/60">Generating feature roadmap with AI</p>
-            </motion.div>
-          ) : (
-            <motion.div
-              key="chat"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="w-full"
-            >
-              <AnimatedAIChat 
-                onSubmit={handleProjectSubmit}
-                placeholder="Example: A fitness tracking app with workout plans, progress tracking, and social features..."
-                title="What do you want to build?"
-                subtitle="Describe your app idea in detail and we'll create a comprehensive feature roadmap"
-              />
-              
+              <div className="absolute inset-0 w-24 h-24 mx-auto rounded-full bg-blue-500/20 blur-xl animate-pulse" />
+            </div>
+            <h2 className="text-2xl font-bold text-white mb-2">Creating your project...</h2>
+            <p className="text-white/60">Generating feature roadmap with AI</p>
+          </div>
+        ) : (
+          <div className="w-full max-w-2xl">
+            <div className="text-center mb-8">
+              <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-4 bg-gradient-to-r from-white via-blue-100 to-white bg-clip-text text-transparent">
+                What do you want to build?
+              </h1>
+              <p className="text-white/60 text-lg">
+                Describe your app idea and we'll create a comprehensive feature roadmap
+              </p>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="relative backdrop-blur-xl bg-white/[0.02] rounded-2xl border border-white/[0.05] shadow-2xl overflow-hidden">
+                <textarea
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  placeholder="Example: A fitness tracking app with workout plans, progress tracking, and social features..."
+                  className="w-full h-40 px-6 py-5 bg-transparent text-white placeholder-white/30 resize-none focus:outline-none text-base"
+                  disabled={isCreating}
+                />
+                
+                <div className="px-6 py-4 border-t border-white/[0.05] flex items-center justify-between">
+                  <p className="text-xs text-white/40">
+                    Be as detailed as possible for better results
+                  </p>
+                  <button
+                    type="submit"
+                    disabled={isCreating || !message.trim()}
+                    className="px-6 py-2.5 bg-white hover:bg-gray-100 disabled:bg-white/20 text-black disabled:text-white/40 font-medium rounded-lg transition-all disabled:cursor-not-allowed flex items-center gap-2"
+                  >
+                    <span>{isCreating ? 'Creating...' : 'Generate Mindmap'}</span>
+                    {!isCreating && (
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                      </svg>
+                    )}
+                  </button>
+                </div>
+              </div>
+
               {error && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="mt-4 p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-center backdrop-blur-sm"
-                >
-                  <p className="text-red-400">{error}</p>
-                </motion.div>
+                <div className="p-4 bg-red-500/10 backdrop-blur-xl border border-red-500/20 rounded-xl">
+                  <p className="text-red-400 text-center">{error}</p>
+                </div>
               )}
-            </motion.div>
-          )}
-        </AnimatePresence>
+            </form>
+
+            {/* Quick Example Prompts */}
+            <div className="mt-8">
+              <p className="text-white/40 text-sm text-center mb-3">Need inspiration? Try these:</p>
+              <div className="flex flex-wrap gap-2 justify-center">
+                {[
+                  "E-commerce store with inventory management",
+                  "Social fitness app with challenges",
+                  "Recipe sharing platform with meal planning",
+                  "Project management tool with time tracking"
+                ].map((example, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => setMessage(example)}
+                    className="px-3 py-1.5 bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.05] rounded-lg text-xs text-white/60 hover:text-white/90 transition-all"
+                  >
+                    {example}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </SpaceBackground>
   );
