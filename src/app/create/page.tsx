@@ -109,10 +109,11 @@ function CreateProjectPageContent() {
     return null;
   }
 
-  const handleGenerate = async () => {
-    if (!idea.trim()) {
-      setError('Please provide an app idea');
-      return;
+  const handleGenerate = async (message?: string) => {
+    const ideaToUse = message?.trim() || idea.trim();
+    
+    if (!ideaToUse) {
+      return; // Silently return - form validation will handle empty inputs
     }
 
     // Frontend check (API will also enforce, but this prevents unnecessary API calls)
@@ -123,12 +124,13 @@ function CreateProjectPageContent() {
 
     setIsGenerating(true);
     setError('');
+    setIdea(ideaToUse); // Update state for consistency
 
     try {
       const response = await fetch('/api/generate-mindmap', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ idea: idea.trim() }),
+        body: JSON.stringify({ idea: ideaToUse }),
       });
 
       const result = await response.json();
@@ -217,8 +219,7 @@ function CreateProjectPageContent() {
   ];
 
   const handleChatSubmit = async (message: string) => {
-    setIdea(message);
-    await handleGenerate();
+    await handleGenerate(message); // Pass message directly to avoid state timing issues
   };
 
   // Memoize the converted mindmap data to prevent infinite re-renders
@@ -310,8 +311,8 @@ function CreateProjectPageContent() {
                 const formData = new FormData(e.currentTarget);
                 const message = formData.get('ideaInput') as string;
                 if (message?.trim()) {
-                  console.log('📝 Calling handleChatSubmit with:', message);
-                  handleChatSubmit(message.trim());
+                  console.log('📝 Calling handleGenerate with:', message);
+                  handleGenerate(message.trim());
                 }
               }} className="space-y-4">
                 <div className="relative backdrop-blur-2xl bg-white/[0.02] rounded-2xl border border-white/[0.05] shadow-2xl">
