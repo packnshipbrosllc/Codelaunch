@@ -14,6 +14,7 @@ export default function NewProjectPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    console.log('🎯 handleSubmit CALLED with message:', message);
     console.log('🚀 Submit clicked, message:', message);
     
     if (!message.trim()) {
