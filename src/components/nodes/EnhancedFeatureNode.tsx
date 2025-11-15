@@ -33,10 +33,10 @@ interface EnhancedFeatureNodeProps extends NodeProps {
 
 const getPriorityColor = (priority?: string) => {
   switch (priority) {
-    case 'high': return 'border-red-500 bg-red-500/10';
-    case 'medium': return 'border-yellow-500 bg-yellow-500/10';
-    case 'low': return 'border-green-500 bg-green-500/10';
-    default: return 'border-purple-500 bg-purple-500/10';
+    case 'high': return '#ef4444'; // Red
+    case 'medium': return '#f59e0b'; // Orange  
+    case 'low': return '#10b981'; // Green
+    default: return '#6366f1'; // Indigo
   }
 };
 
@@ -73,11 +73,18 @@ export function EnhancedFeatureNode({ data, id }: EnhancedFeatureNodeProps) {
   const complexityInfo = getComplexityLabel(data.complexity);
   const roi = data.scoring?.roi || 0;
 
+  const borderColor = getPriorityColor(data.priority);
+  
   return (
     <div 
-      className={`relative bg-gray-900 rounded-lg border-2 ${getPriorityColor(data.priority)} 
-                  shadow-lg transition-all duration-300 ${isExpanded ? 'w-[700px]' : 'w-[350px]'} cursor-pointer`}
-      style={{ minHeight: isExpanded ? '600px' : '250px' }}
+      className={`relative rounded-2xl transition-all duration-300 ${isExpanded ? 'w-[700px]' : 'w-[350px]'} cursor-pointer`}
+      style={{ 
+        minHeight: isExpanded ? '600px' : '250px',
+        background: 'rgba(0, 0, 0, 0.4)',
+        backdropFilter: 'blur(20px)',
+        border: `2px solid ${borderColor}`,
+        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5)',
+      }}
       onDoubleClick={toggleExpand}
       title="Double-click to expand/collapse"
     >

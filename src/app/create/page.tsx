@@ -269,10 +269,11 @@ function CreateProjectPageContent() {
   }
 
   return (
-    <SpaceBackground variant="default">
+    <>
       {!mindmapData ? (
-        <div className="container mx-auto px-4 py-16 min-h-screen flex items-center justify-center">
-          <div className="w-full max-w-4xl">
+        <SpaceBackground variant="default">
+          <div className="container mx-auto px-4 py-16 min-h-screen flex items-center justify-center">
+            <div className="w-full max-w-4xl">
             {error && (
               <div className="mb-6 p-4 bg-red-500/10 border border-red-500/50 rounded-lg backdrop-blur-sm">
                 <p className="text-red-400 mb-3">{error}</p>
@@ -337,81 +338,89 @@ function CreateProjectPageContent() {
                 </div>
               </form>
             </div>
+            </div>
           </div>
-        </div>
+        </SpaceBackground>
       ) : (
-        <div className="min-h-screen bg-gray-950 relative" style={{ height: isFullscreen ? '100vh' : 'auto' }}>
-          {/* Header */}
-          <div className="absolute top-0 left-0 right-0 z-50 bg-gray-950/95 backdrop-blur-sm border-b border-gray-800 px-6 py-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-2xl font-bold text-white">{mindmapData.projectName}</h1>
-                <p className="text-sm text-gray-400 mt-1">Interactive Mindmap</p>
-              </div>
-              <div className="flex items-center gap-3">
-                {!isFullscreen && (
-                  <>
-                    <button
-                      onClick={() => setIsFullscreen(true)}
-                      className="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white rounded-lg font-medium transition text-sm"
-                    >
-                      Fullscreen (F)
-                    </button>
+        <SpaceBackground variant="default">
+          <div className="min-h-screen relative" style={{ height: isFullscreen ? '100vh' : 'auto' }}>
+            {/* Header */}
+            <div className="absolute top-0 left-0 right-0 z-50 bg-gray-950/80 backdrop-blur-xl border-b border-white/10 px-6 py-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h1 className="text-2xl font-bold text-white">{mindmapData?.projectName || 'Mindmap'}</h1>
+                  <p className="text-sm text-gray-300 mt-1">Interactive Mindmap</p>
+                </div>
+                <div className="flex items-center gap-3">
+                  {!isFullscreen && (
                     <Link href="/dashboard">
-                      <button className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-medium transition text-sm">
+                      <button className="px-4 py-2 bg-white/5 hover:bg-white/10 backdrop-blur-xl border border-white/10 text-white rounded-xl font-medium transition text-sm">
                         Dashboard
                       </button>
                     </Link>
-                  </>
-                )}
-                {isFullscreen && (
-                  <button
-                    onClick={() => setIsFullscreen(false)}
-                    className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-medium transition text-sm"
-                  >
-                    Exit Fullscreen (Esc)
-                  </button>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Save Button + Fullscreen Toggle - Fixed Position Top Right */}
+            <div className="fixed top-24 right-8 z-50 flex gap-3">
+              <button
+                onClick={handleSave}
+                className="px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white rounded-xl font-semibold shadow-2xl backdrop-blur-xl border border-green-400/30 transition-all hover:scale-105 flex items-center gap-2"
+              >
+                <span>💾</span>
+                <span>Save Mindmap</span>
+              </button>
+              
+              <button
+                onClick={() => setIsFullscreen(!isFullscreen)}
+                className="px-6 py-3 bg-white/5 hover:bg-white/10 backdrop-blur-xl border border-white/10 text-white rounded-xl font-semibold shadow-2xl transition-all hover:scale-105 flex items-center gap-2"
+              >
+                <span>{isFullscreen ? '⬅️' : '⛶'}</span>
+                <span>{isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}</span>
+              </button>
+            </div>
+
+            {/* Mindmap Display */}
+            <div className={`relative ${isFullscreen ? 'fixed inset-0 z-40' : ''}`}>
+              <div 
+                className="w-full" 
+                style={{ 
+                  height: isFullscreen ? '100vh' : 'calc(100vh - 200px)',
+                  paddingTop: isFullscreen ? '0' : '80px'
+                }}
+              >
+                {enhancedMindmapData && (
+                  <EnhancedMindmapFlow 
+                    key={`mindmap-${mindmapData?.projectName || 'mindmap'}-${mindmapData?.features?.length || 0}`}
+                    data={enhancedMindmapData} 
+                    onSave={handleSave} 
+                  />
                 )}
               </div>
             </div>
-          </div>
 
-          {/* Render the full mindmap */}
-          <div 
-            className="w-full" 
-            style={{ 
-              height: isFullscreen ? '100vh' : 'calc(100vh - 200px)',
-              paddingTop: isFullscreen ? '0' : '80px'
-            }}
-          >
-            {enhancedMindmapData && (
-              <EnhancedMindmapFlow 
-                key={`mindmap-${mindmapData.projectName}-${mindmapData.features?.length || 0}`}
-                data={enhancedMindmapData} 
-                onSave={handleSave} 
-              />
+            {/* Floating panels (hidden in fullscreen) */}
+            {!isFullscreen && (
+              <>
+                {showAIChat && (
+                  <div className="fixed bottom-4 right-4 z-40">
+                    <AIAssistantChatEnhanced 
+                      mindmapData={mindmapData!}
+                      moodBoardImages={moodBoardImages}
+                      isCollapsed={!showAIChat}
+                      onToggleCollapse={() => setShowAIChat(!showAIChat)}
+                    />
+                  </div>
+                )}
+                <FloatingMoodBoard />
+              </>
             )}
           </div>
-
-          {/* Floating panels (hidden in fullscreen) */}
-          {!isFullscreen && (
-            <>
-              {showAIChat && (
-                <div className="fixed bottom-4 right-4 z-40">
-                  <AIAssistantChatEnhanced 
-                    mindmapData={mindmapData}
-                    moodBoardImages={moodBoardImages}
-                    isCollapsed={!showAIChat}
-                    onToggleCollapse={() => setShowAIChat(!showAIChat)}
-                  />
-                </div>
-              )}
-              <FloatingMoodBoard />
-            </>
-          )}
-        </div>
+        </SpaceBackground>
       )}
-    </SpaceBackground>
+    </>
   );
 }
 

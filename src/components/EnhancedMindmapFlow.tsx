@@ -78,13 +78,15 @@ export function EnhancedMindmapFlow({
         },
         style: {
           width: 400,
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          background: 'rgba(0, 0, 0, 0.4)',
+          backdropFilter: 'blur(20px)',
           color: 'white',
-          border: '2px solid #764ba2',
-          borderRadius: '12px',
+          border: '2px solid rgba(139, 92, 246, 0.5)',
+          borderRadius: '16px',
           padding: '20px',
           fontSize: '18px',
           fontWeight: 'bold',
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5)',
         },
       });
     } else {
@@ -103,13 +105,15 @@ export function EnhancedMindmapFlow({
         },
         style: {
           width: 400,
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          background: 'rgba(0, 0, 0, 0.4)',
+          backdropFilter: 'blur(20px)',
           color: 'white',
-          border: '2px solid #764ba2',
-          borderRadius: '12px',
+          border: '2px solid rgba(139, 92, 246, 0.5)',
+          borderRadius: '16px',
           padding: '20px',
           fontSize: '18px',
           fontWeight: 'bold',
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5)',
         },
       });
     }
@@ -212,12 +216,14 @@ export function EnhancedMindmapFlow({
           ),
         },
         style: {
-          background: '#1f2937',
-          border: '2px solid #10b981',
-          borderRadius: '8px',
-          padding: '10px',
+          background: 'rgba(0, 0, 0, 0.4)',
+          backdropFilter: 'blur(20px)',
+          border: '2px solid rgba(16, 185, 129, 0.5)',
+          borderRadius: '16px',
+          padding: '16px',
           color: 'white',
           width: 180,
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5)',
         },
       });
 
@@ -496,8 +502,18 @@ export function EnhancedMindmapFlow({
     URL.revokeObjectURL(url);
   }, [data, nodes, edges]);
 
+  // Helper function to get priority color for borders
+  const getPriorityColor = (priority?: string) => {
+    switch(priority) {
+      case 'high': return '#ef4444'; // Red
+      case 'medium': return '#f59e0b'; // Orange  
+      case 'low': return '#10b981'; // Green
+      default: return '#6366f1'; // Indigo
+    }
+  };
+
   return (
-    <div className="w-full h-full bg-gray-950 relative" style={{ width: '100%', height: '100%', minHeight: '600px' }}>
+    <div className="w-full h-full relative" style={{ width: '100%', height: '100%', minHeight: '600px', background: 'transparent' }}>
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -506,17 +522,17 @@ export function EnhancedMindmapFlow({
         onConnect={onConnect}
         nodeTypes={nodeTypes}
         fitView
-        className="bg-gray-950"
-        style={{ width: '100%', height: '100%' }}
+        className="bg-transparent"
+        style={{ width: '100%', height: '100%', background: 'transparent' }}
         minZoom={0.1}
         maxZoom={2}
       >
         <Background 
-          color="#374151" 
+          color="rgba(255, 255, 255, 0.05)" 
           gap={20} 
           size={1}
           variant={BackgroundVariant.Dots}
-          style={{ backgroundColor: '#030712' }}
+          style={{ backgroundColor: 'transparent' }}
         />
         
         <Controls 
