@@ -12,7 +12,6 @@ import Header from '@/components/Header';
 import { MindmapData, Competitor, Feature } from '@/types/mindmap';
 import { useMindmapLimit } from '@/hooks/useMindmapLimit';
 import { SpaceBackground } from '@/components/ui/space-background';
-import { AnimatedAIChat } from '@/components/ui/animated-ai-chat';
 import Link from 'next/link';
 
 // Debug logging
@@ -252,12 +251,47 @@ function CreateProjectPageContent() {
               </div>
             )}
 
-            <AnimatedAIChat 
-              onSubmit={handleChatSubmit}
-              placeholder="Describe your app idea... Example: A SaaS platform that helps freelancers manage their invoices, track time, and accept payments from clients..."
-              title="What do you want to build?"
-              subtitle="Describe your app idea and we'll create a feature roadmap"
-            />
+            <div className="w-full max-w-2xl mx-auto">
+              <div className="text-center mb-8">
+                <h1 className="text-5xl md:text-6xl font-bold text-white mb-4 bg-gradient-to-r from-white via-blue-100 to-white bg-clip-text text-transparent">
+                  What do you want to build?
+                </h1>
+                <p className="text-white/60 text-lg">
+                  Describe your app idea and we'll create a feature roadmap
+                </p>
+              </div>
+
+              <form onSubmit={(e) => {
+                e.preventDefault();
+                const formData = new FormData(e.currentTarget);
+                const message = formData.get('ideaInput') as string;
+                if (message?.trim()) {
+                  console.log('📝 Calling handleChatSubmit with:', message);
+                  handleChatSubmit(message.trim());
+                }
+              }} className="space-y-4">
+                <div className="relative backdrop-blur-2xl bg-white/[0.02] rounded-2xl border border-white/[0.05] shadow-2xl">
+                  <div className="p-4">
+                    <textarea
+                      name="ideaInput"
+                      placeholder="Example: A fitness tracking app with workout plans, progress tracking, and social features..."
+                      className="w-full min-h-[120px] px-4 py-3 resize-none bg-transparent border-none text-white/90 text-base focus:outline-none placeholder:text-white/30"
+                      disabled={isGenerating}
+                      required
+                    />
+                  </div>
+                  <div className="px-4 pb-4 border-t border-white/[0.05] pt-4 flex justify-end">
+                    <button
+                      type="submit"
+                      disabled={isGenerating}
+                      className="px-6 py-3 rounded-lg text-sm font-medium transition-all bg-white text-black hover:bg-gray-100 disabled:bg-white/20 disabled:text-white/40 disabled:cursor-not-allowed"
+                    >
+                      {isGenerating ? 'Generating...' : 'Generate Mindmap'}
+                    </button>
+                  </div>
+                </div>
+              </form>
+            </div>
           </div>
         </div>
       ) : (
