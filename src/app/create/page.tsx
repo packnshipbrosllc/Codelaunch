@@ -1,7 +1,7 @@
 // src/app/create/page.tsx
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
 import { EnhancedMindmapFlow } from '@/components/EnhancedMindmapFlow';
@@ -35,6 +35,9 @@ function CreateProjectPageContent() {
   const [showAIChat, setShowAIChat] = useState(true);
   const [moodBoardImages, setMoodBoardImages] = useState<any[]>([]);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  
+  // Ref to track if we've already processed the URL param (prevent infinite loop)
+  const hasProcessedUrlParam = useRef(false);
 
   // Debug logging at component render
   console.log('🔍 CREATE PAGE RENDER - mindmapData exists:', !!mindmapData);
@@ -42,9 +45,15 @@ function CreateProjectPageContent() {
 
   // Check for mindmap data from query params (from new-project page)
   useEffect(() => {
+    // Only process once (prevent infinite loop)
+    if (hasProcessedUrlParam.current || mindmapData) {
+      return;
+    }
+    
     const mindmapParam = searchParams.get('mindmap');
     if (mindmapParam) {
       try {
+        hasProcessedUrlParam.current = true; // Mark as processed
         const decodedData = JSON.parse(decodeURIComponent(mindmapParam));
         console.log('📥 Received mindmap data:', decodedData);
         console.log('📥 Has nodes:', decodedData?.nodes?.length);
@@ -55,9 +64,10 @@ function CreateProjectPageContent() {
         // Keep URL parameter - don't clear it
       } catch (err) {
         console.error('Failed to parse mindmap data from URL:', err);
+        hasProcessedUrlParam.current = false; // Reset on error so we can retry
       }
     }
-  }, [searchParams]);
+  }, [searchParams]); // Only depend on searchParams, not mindmapData (prevents infinite loop)
 
   // Debug logging
   useEffect(() => {
