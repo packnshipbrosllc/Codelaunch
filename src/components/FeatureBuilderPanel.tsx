@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { X } from 'lucide-react';
 import { EnhancedFeature } from '@/types/enhanced-mindmap';
+import { Feature } from '@/types/mindmap';
 
 interface FeatureBuilderPanelProps {
   feature: EnhancedFeature;
@@ -367,8 +368,8 @@ function DependenciesStep({ feature, projectContext, formData, setFormData }: { 
           <p className="text-sm text-gray-400 mb-3">Features that must be completed first</p>
           <div className="space-y-2">
             {projectContext.allFeatures
-              .filter(f => f.id !== feature.id)
-              .map(f => (
+              .filter((f: EnhancedFeature) => f.id !== feature.id)
+              .map((f: EnhancedFeature) => (
                 <label key={f.id} className="flex items-center gap-3 p-3 bg-gray-800/50 rounded-lg cursor-pointer hover:bg-gray-800">
                   <input
                     type="checkbox"
