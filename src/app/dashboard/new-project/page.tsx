@@ -46,6 +46,9 @@ export default function NewProjectPage() {
       
       if (result.success && result.data) {
         const encodedData = encodeURIComponent(JSON.stringify(result.data));
+        console.log('🔄 Redirecting with data length:', encodedData.length);
+        console.log('🔄 Full URL (first 200 chars):', `/create?mindmap=${encodedData.substring(0, 200)}...`);
+        console.log('🔄 Original data keys:', Object.keys(result.data));
         router.push(`/create?mindmap=${encodedData}`);
       } else {
         throw new Error(result.error || 'Failed to generate mindmap');
