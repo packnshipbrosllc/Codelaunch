@@ -339,41 +339,44 @@ function CreateProjectPageContent() {
           </div>
         </div>
       ) : (
-        <div className="min-h-screen">
-          <Header title="Create New Project" showBackButton backUrl="/dashboard" />
-          <div className="container mx-auto px-4 py-8">
-            <div className="mb-6 flex items-center justify-between">
-              <div>
-                <h2 className="text-3xl font-bold mb-2">{mindmapData.projectName}</h2>
-                <p className="text-gray-400">{mindmapData.projectDescription}</p>
-              </div>
-              <div className="flex gap-3">
-                <button
-                  onClick={() => {
-                    setMindmapData(null);
-                    setIdea('');
-                  }}
-                  className="px-6 py-3 bg-gray-700 hover:bg-gray-600 rounded-lg font-semibold transition-all"
-                >
-                  ← Start Over
-                </button>
-                <button
-                  onClick={handleSave}
-                  className="px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 rounded-lg font-semibold transition-all shadow-lg"
-                >
-                  💾 Save Project
-                </button>
-                <button
-                  onClick={() => router.push('/dashboard')}
-                  className="px-6 py-3 bg-gray-700 hover:bg-gray-600 rounded-lg font-semibold transition-all"
-                >
-                  Dashboard →
-                </button>
-              </div>
-            </div>
+        <div className="min-h-screen bg-gray-900 p-8">
+          <h1 className="text-white text-2xl mb-4">Mindmap Generated: {mindmapData.projectName}</h1>
+          
+          {/* Test 1: Just show data - does this work? */}
+          <div className="mb-8 p-4 bg-gray-800 rounded">
+            <h2 className="text-white mb-2">Test 1: Basic Data Display</h2>
+            <p className="text-gray-400">Features: {mindmapData.features?.length}</p>
+            <p className="text-gray-400">Competitors: {mindmapData.competitors?.length}</p>
+            <p className="text-gray-400">Has Tech Stack: {mindmapData.techStack ? 'Yes' : 'No'}</p>
+            <p className="text-gray-400">Enhanced Data Ready: {enhancedMindmapData ? 'Yes' : 'No'}</p>
+          </div>
 
+          {/* Test 2: Try rendering Header component only */}
+          <div className="mb-8 p-4 bg-gray-800 rounded">
+            <h2 className="text-white mb-2">Test 2: Header Component</h2>
+            <Header title="Create New Project" showBackButton backUrl="/dashboard" />
+          </div>
+
+          {/* Test 3: Show memoized data structure */}
+          <div className="mb-8 p-4 bg-gray-800 rounded">
+            <h2 className="text-white mb-2">Test 3: Memoized Data Check</h2>
+            {enhancedMindmapData ? (
+              <div className="text-gray-400 text-sm">
+                <p>✅ Enhanced data exists</p>
+                <p>Project: {enhancedMindmapData.projectName}</p>
+                <p>Features count: {enhancedMindmapData.features?.length || 0}</p>
+              </div>
+            ) : (
+              <p className="text-red-400">❌ Enhanced data is null</p>
+            )}
+          </div>
+
+          {/* Test 4: Try rendering EnhancedMindmapFlow (THIS IS LIKELY THE PROBLEM) */}
+          <div className="mb-8 p-4 bg-gray-800 rounded">
+            <h2 className="text-white mb-2">Test 4: EnhancedMindmapFlow Component</h2>
+            <p className="text-gray-400 text-sm mb-2">If infinite loop happens here, this component is the problem:</p>
             {enhancedMindmapData && (
-              <div className="w-full relative" style={{ height: '600px', minHeight: '600px' }}>
+              <div className="w-full relative" style={{ height: '400px', minHeight: '400px', border: '2px solid red' }}>
                 <EnhancedMindmapFlow 
                   key={mindmapData.projectName} // Force remount on new project to prevent infinite loop
                   data={enhancedMindmapData} 
@@ -382,6 +385,13 @@ function CreateProjectPageContent() {
               </div>
             )}
           </div>
+          
+          <button 
+            onClick={() => setMindmapData(null)}
+            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+          >
+            Start Over
+          </button>
         </div>
       )}
     </SpaceBackground>
