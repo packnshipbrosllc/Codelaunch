@@ -14,6 +14,8 @@ export default function NewProjectPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    console.log('🚀 Submit clicked, message:', message);
+    
     if (!message.trim()) {
       setError('Please describe your app idea');
       return;
@@ -23,14 +25,19 @@ export default function NewProjectPage() {
     setError(null);
     
     try {
+      console.log('📡 Calling API...');
+      
       const response = await fetch('/api/generate-mindmap', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ idea: message.trim() })
       });
 
+      console.log('📥 Response status:', response.status);
+
       if (!response.ok) {
         const errorData = await response.json();
+        console.log('❌ Error data:', errorData);
         
         // Handle limit reached error
         if (response.status === 403 && errorData.error === 'FREE_LIMIT_REACHED') {
@@ -43,9 +50,11 @@ export default function NewProjectPage() {
       }
 
       const result = await response.json();
+      console.log('✅ API Result:', result);
       
       if (result.success && result.data) {
         const encodedData = encodeURIComponent(JSON.stringify(result.data));
+        console.log('🔄 Redirecting to:', `/create?mindmap=${encodedData.substring(0, 50)}...`);
         router.push(`/create?mindmap=${encodedData}`);
       } else {
         throw new Error(result.error || 'Failed to generate mindmap');

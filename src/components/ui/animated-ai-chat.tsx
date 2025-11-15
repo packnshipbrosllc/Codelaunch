@@ -273,14 +273,19 @@ export function AnimatedAIChat({
 
     const handleSendMessage = () => {
         if (value.trim()) {
-            onSubmit?.(value);
+            // Call the parent's onSubmit function
+            if (onSubmit) {
+                onSubmit(value.trim());
+            }
+            
+            // Show typing indicator
             startTransition(() => {
                 setIsTyping(true);
                 setTimeout(() => {
                     setIsTyping(false);
                     setValue("");
                     adjustHeight(true);
-                }, 3000);
+                }, 2000);
             });
         }
     };
