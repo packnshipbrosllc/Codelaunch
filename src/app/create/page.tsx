@@ -110,8 +110,8 @@ function CreateProjectPageContent() {
   }
 
   const handleGenerate = async () => {
-    if (!idea.trim() || idea.trim().length < 10) {
-      setError('Please provide a detailed app idea (at least 10 characters)');
+    if (!idea.trim()) {
+      setError('Please provide an app idea');
       return;
     }
 

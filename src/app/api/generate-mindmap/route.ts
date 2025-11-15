@@ -102,9 +102,9 @@ export async function POST(req: NextRequest) {
     // Now proceed with generation (counter already locked)
     const { idea } = await req.json();
 
-    if (!idea || idea.trim().length < 10) {
+    if (!idea || !idea.trim()) {
       return NextResponse.json(
-        { error: 'Please provide a detailed app idea (at least 10 characters)' },
+        { error: 'Please provide an app idea' },
         { status: 400 }
       );
     }
