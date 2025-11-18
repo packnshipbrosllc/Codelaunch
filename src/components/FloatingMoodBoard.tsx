@@ -3,7 +3,7 @@
 
 'use client';
 
-import { useState, useRef, useCallback, useEffect } from 'react';
+import { useState, useRef, useCallback, useEffect, Dispatch, SetStateAction } from 'react';
 import { useUser } from '@clerk/nextjs';
 
 interface MoodBoardImage {
@@ -15,15 +15,44 @@ interface MoodBoardImage {
 
 interface FloatingMoodBoardProps {
   projectId?: string;
-  onImagesChange?: (images: MoodBoardImage[]) => void;
+  images?: any[];
+  onImagesChange?: Dispatch<SetStateAction<any[]>> | ((images: MoodBoardImage[]) => void);
 }
 
 export default function FloatingMoodBoard({
   projectId,
+  images: imagesProp,
   onImagesChange,
 }: FloatingMoodBoardProps) {
   const { user } = useUser();
-  const [images, setImages] = useState<MoodBoardImage[]>([]);
+  const [internalImages, setInternalImages] = useState<MoodBoardImage[]>([]);
+  
+  // Use prop images if provided, otherwise use internal state
+  const images = imagesProp || internalImages;
+  
+  // Helper to update images (works with both controlled and uncontrolled)
+  const updateImages = useCallback((updater: any) => {
+    const newImages = typeof updater === 'function' ? updater(images) : updater;
+    
+    if (imagesProp && onImagesChange) {
+      // Controlled component - update parent state
+      // Try Dispatch<SetStateAction> first (can accept function or value)
+      try {
+        (onImagesChange as Dispatch<SetStateAction<any[]>>)(newImages);
+      } catch {
+        // Fallback to callback function
+        (onImagesChange as (images: MoodBoardImage[]) => void)(newImages);
+      }
+    } else {
+      // Uncontrolled component - update internal state
+      setInternalImages(newImages);
+      if (onImagesChange) {
+        (onImagesChange as (images: MoodBoardImage[]) => void)(newImages);
+      }
+    }
+  }, [images, imagesProp, onImagesChange]);
+  
+  const setImages = updateImages;
   const [isUploading, setIsUploading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
