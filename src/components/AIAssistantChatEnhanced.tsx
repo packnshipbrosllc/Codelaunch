@@ -5,6 +5,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { MindmapData } from '@/types/mindmap';
+import { EnhancedMindmapData } from '@/types/enhanced-mindmap';
 
 type ChatMode = 'explain' | 'suggest' | 'critique' | 'general';
 
@@ -16,7 +17,7 @@ interface Message {
 }
 
 interface AIAssistantChatEnhancedProps {
-  mindmapData: MindmapData;
+  mindmapData: MindmapData | EnhancedMindmapData;
   moodBoardImages?: string[];
   isCollapsed?: boolean;
   onToggleCollapse?: () => void;
@@ -84,12 +85,25 @@ export default function AIAssistantChatEnhanced({
   ];
 
   const getModePrompt = (mode: ChatMode, userMessage: string) => {
+    // Handle both MindmapData and EnhancedMindmapData types
+    const projectDescription = 'projectDescription' in mindmapData 
+      ? mindmapData.projectDescription 
+      : ('description' in mindmapData ? mindmapData.description : '');
+    
+    const targetAudience = 'targetAudience' in mindmapData 
+      ? mindmapData.targetAudience 
+      : (mindmapData.overview?.targetMarket || '');
+    
+    const techStackInfo = Array.isArray(mindmapData.techStack)
+      ? mindmapData.techStack.map((t: any) => t.title || t.name).join(', ')
+      : `${mindmapData.techStack.frontend}, ${mindmapData.techStack.backend}, ${mindmapData.techStack.database}`;
+    
     const context = `
 Current Project: ${mindmapData.projectName}
-Description: ${mindmapData.projectDescription}
-Target Audience: ${mindmapData.targetAudience}
+Description: ${projectDescription}
+Target Audience: ${targetAudience}
 Features: ${mindmapData.features.map((f) => f.title).join(', ')}
-Tech Stack: ${mindmapData.techStack.frontend}, ${mindmapData.techStack.backend}, ${mindmapData.techStack.database}
+Tech Stack: ${techStackInfo}
 ${moodBoardImages.length > 0 ? `\nMood Board: User has ${moodBoardImages.length} inspiration images uploaded` : ''}
 `;
 
