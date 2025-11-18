@@ -21,9 +21,9 @@ interface FeatureBuilderPanelProps {
 interface FormData {
   userStories: string;
   acceptanceCriteria: string;
-  apiEndpoints: Array<{ method: string; path: string; description: string }>;
-  dataModels: Record<string, any>;
-  uiComponents: string[];
+  apiEndpoints: Array<{ method: string; path: string; description: string }> | string;
+  dataModels: Record<string, any> | string;
+  uiComponents: string[] | string;
   dependencies: string[];
   edgeCases: string;
   errorHandling: string;
