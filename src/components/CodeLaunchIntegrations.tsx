@@ -1,11 +1,10 @@
 'use client';
 
 import { useRef } from 'react';
-import { Github, Sparkles, Terminal, Heart, Triangle, Zap } from 'lucide-react';
+import Image from 'next/image';
 import { AnimatedBeam } from '@/components/ui/animated-beam';
 
 export function CodeLaunchIntegrations() {
-  // FIX: Use non-null assertion to satisfy TypeScript
   const containerRef = useRef<HTMLDivElement>(null!);
   const codeLaunchRef = useRef<HTMLDivElement>(null!);
   const githubRef = useRef<HTMLDivElement>(null!);
@@ -15,8 +14,6 @@ export function CodeLaunchIntegrations() {
 
   return (
     <section className="relative py-32 bg-transparent overflow-visible">
-      {/* REMOVED: No gradient overlay that blocks content */}
-      
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-20 text-center">
         <h2 className="text-5xl sm:text-6xl font-black text-white mb-6">
           <span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
@@ -34,28 +31,42 @@ export function CodeLaunchIntegrations() {
       >
         {/* Left Side */}
         <div className="flex flex-col justify-center gap-16 absolute left-[15%] z-10">
+          {/* GitHub - Using favicon */}
           <div
             ref={githubRef}
             className="relative flex items-center justify-center w-24 h-24 rounded-2xl bg-white/5 border-2 border-white/10 shadow-2xl hover:scale-110 hover:bg-white/10 hover:brightness-110 transition-all duration-300 cursor-pointer group"
           >
-            <Github className="w-8 h-8 text-gray-300" />
+            <Image 
+              src="https://github.com/favicon.ico" 
+              alt="GitHub" 
+              width={32} 
+              height={32}
+              className="w-8 h-8"
+            />
             <div className="absolute left-28 opacity-0 group-hover:opacity-100 transition-opacity bg-gray-900/90 backdrop-blur-sm px-4 py-2 rounded-lg text-sm text-white whitespace-nowrap border border-gray-700 z-50">
               GitHub
             </div>
           </div>
 
+          {/* Claude AI - Using favicon */}
           <div
             ref={claudeRef}
             className="relative flex items-center justify-center w-24 h-24 rounded-2xl bg-white/5 border-2 border-white/10 shadow-2xl hover:scale-110 hover:bg-white/10 hover:brightness-110 transition-all duration-300 cursor-pointer group"
           >
-            <Sparkles className="w-8 h-8 text-purple-400" />
+            <Image 
+              src="https://claude.ai/favicon.ico" 
+              alt="Claude AI" 
+              width={32} 
+              height={32}
+              className="w-8 h-8"
+            />
             <div className="absolute left-28 opacity-0 group-hover:opacity-100 transition-opacity bg-gray-900/90 backdrop-blur-sm px-4 py-2 rounded-lg text-sm text-white whitespace-nowrap border border-gray-700 z-50">
               Claude AI
             </div>
           </div>
         </div>
 
-        {/* Center - Lower z-index so beams don't cover icons */}
+        {/* Center */}
         <div ref={codeLaunchRef} className="relative z-5 flex items-center justify-center">
           <div className="relative">
             <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full blur-[60px] opacity-50 animate-pulse"></div>
@@ -70,30 +81,44 @@ export function CodeLaunchIntegrations() {
           </div>
         </div>
 
-        {/* Right Side - Higher z-index to show above beams */}
+        {/* Right Side */}
         <div className="flex flex-col justify-center gap-16 absolute right-[15%] z-10">
+          {/* Cursor - Using favicon */}
           <div
             ref={cursorRef}
             className="relative flex items-center justify-center w-24 h-24 rounded-2xl bg-white/5 border-2 border-white/10 shadow-2xl hover:scale-110 hover:bg-white/10 hover:brightness-110 transition-all duration-300 cursor-pointer group"
           >
-            <Terminal className="w-8 h-8 text-blue-400" />
+            <Image 
+              src="https://cursor.sh/favicon.ico" 
+              alt="Cursor" 
+              width={32} 
+              height={32}
+              className="w-8 h-8"
+            />
             <div className="absolute right-28 opacity-0 group-hover:opacity-100 transition-opacity bg-gray-900/90 backdrop-blur-sm px-4 py-2 rounded-lg text-sm text-white whitespace-nowrap border border-gray-700 z-50">
               Cursor
             </div>
           </div>
 
+          {/* Lovable - Using favicon */}
           <div
             ref={lovableRef}
             className="relative flex items-center justify-center w-24 h-24 rounded-2xl bg-white/5 border-2 border-white/10 shadow-2xl hover:scale-110 hover:bg-white/10 hover:brightness-110 transition-all duration-300 cursor-pointer group"
           >
-            <Heart className="w-8 h-8 text-pink-400" />
+            <Image 
+              src="https://lovable.dev/favicon.ico" 
+              alt="Lovable" 
+              width={32} 
+              height={32}
+              className="w-8 h-8"
+            />
             <div className="absolute right-28 opacity-0 group-hover:opacity-100 transition-opacity bg-gray-900/90 backdrop-blur-sm px-4 py-2 rounded-lg text-sm text-white whitespace-nowrap border border-gray-700 z-50">
               Lovable
             </div>
           </div>
         </div>
 
-        {/* Animated Beams - Lower z-index (default) */}
+        {/* Animated Beams */}
         <AnimatedBeam
           containerRef={containerRef}
           fromRef={githubRef}
