@@ -27,6 +27,38 @@ export default clerkMiddleware(async (auth, req) => {
     return NextResponse.redirect(signInUrl);
   }
 
+  // Check onboarding status for authenticated users
+  const url = new URL(req.url);
+  const isOnboardingRoute = url.pathname === '/onboarding';
+  
+  // If user is on onboarding route, allow through
+  if (isOnboardingRoute) {
+    return NextResponse.next();
+  }
+
+  // For all other routes, check onboarding status
+  try {
+    const onboardingStatusUrl = new URL('/api/user/onboarding-status', req.url);
+    const response = await fetch(onboardingStatusUrl, {
+      headers: {
+        'Cookie': req.headers.get('cookie') || '',
+      },
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      
+      // If onboarding not completed, redirect to onboarding
+      if (!data.onboardingCompleted) {
+        const onboardingUrl = new URL('/onboarding', req.url);
+        return NextResponse.redirect(onboardingUrl);
+      }
+    }
+  } catch (error) {
+    console.error('Error checking onboarding status in middleware:', error);
+    // On error, allow through to avoid blocking users
+  }
+
   // ✅ FREE TIER ENABLED: Allow all authenticated users to access the app
   // The API will enforce the 3-mindmap limit when users try to save
   // Users can use the app for FREE until they hit the limit

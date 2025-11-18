@@ -100,13 +100,30 @@ export async function POST(req: NextRequest) {
     console.log(`✅ Counter incremented: ${mindmapsCreated} → ${newCounterValue} (STRICT: before generation)`);
 
     // Now proceed with generation (counter already locked)
-    const { idea } = await req.json();
+    const { idea, isDemo } = await req.json();
 
     if (!idea || !idea.trim()) {
       return NextResponse.json(
         { error: 'Please provide an app idea' },
         { status: 400 }
       );
+    }
+
+    // If this is a demo, don't increment counter or save to database
+    // Roll back the counter increment we did earlier
+    if (isDemo === true) {
+      const { error: rollbackError } = await supabase
+        .from('users')
+        .update({
+          mindmaps_created: mindmapsCreated, // Roll back to original value
+        })
+        .eq('id', userId);
+
+      if (rollbackError) {
+        console.error('Error rolling back demo counter:', rollbackError);
+      } else {
+        console.log('✅ Demo mode: Counter rolled back (not counting demo)');
+      }
     }
 
     console.log('🤖 Generating mindmap for idea:', idea);
