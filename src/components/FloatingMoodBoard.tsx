@@ -137,7 +137,7 @@ export default function FloatingMoodBoard({
             uploadedAt: new Date(),
           };
 
-          setImages((prev) => {
+          setImages((prev: MoodBoardImage[]) => {
             const updated = [...prev, newImage];
             onImagesChange?.(updated);
             return updated;
@@ -175,7 +175,7 @@ export default function FloatingMoodBoard({
   }, [handleFileUpload]);
 
   const handleRemoveImage = (id: string) => {
-    setImages((prev) => {
+    setImages((prev: MoodBoardImage[]) => {
       const updated = prev.filter((img) => img.id !== id);
       onImagesChange?.(updated);
       return updated;
