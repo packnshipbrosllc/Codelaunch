@@ -17,6 +17,7 @@ import {
   TrendingUp
 } from 'lucide-react';
 import { EnhancedFeature } from '@/types/enhanced-mindmap';
+import { downloadPRD, copyPRDToClipboard, downloadCode } from '@/utils/exportUtils';
 
 interface EnhancedFeatureNodeProps extends NodeProps {
   data: EnhancedFeature & {
@@ -217,6 +218,55 @@ export function EnhancedFeatureNode({ data, id }: EnhancedFeatureNodeProps) {
               </button>
             )}
           </div>
+
+          {/* Export Buttons */}
+          <div className="flex gap-2 mt-3">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                downloadPRD(data);
+              }}
+              className="flex items-center gap-1 px-3 py-1.5 bg-blue-500/20 hover:bg-blue-500/30 border border-blue-500/50 rounded-lg text-xs text-blue-300 transition-colors"
+              title="Download PRD as Markdown"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              Download PRD
+            </button>
+
+            <button
+              onClick={async (e) => {
+                e.stopPropagation();
+                const success = await copyPRDToClipboard(data);
+                if (success) {
+                  // Show toast notification (you can add a toast library or simple alert)
+                  alert('PRD copied to clipboard!');
+                }
+              }}
+              className="flex items-center gap-1 px-3 py-1.5 bg-purple-500/20 hover:bg-purple-500/30 border border-purple-500/50 rounded-lg text-xs text-purple-300 transition-colors"
+              title="Copy PRD to Clipboard"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+              </svg>
+              Copy
+            </button>
+
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                downloadCode(data);
+              }}
+              className="flex items-center gap-1 px-3 py-1.5 bg-green-500/20 hover:bg-green-500/30 border border-green-500/50 rounded-lg text-xs text-green-300 transition-colors"
+              title="Download Generated Code"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+              </svg>
+              Code
+            </button>
+          </div>
         </div>
       )}
 
@@ -408,6 +458,55 @@ export function EnhancedFeatureNode({ data, id }: EnhancedFeatureNodeProps) {
                 ✅ Approve
               </button>
             )}
+          </div>
+
+          {/* Export Buttons - Expanded View */}
+          <div className="flex gap-2 mt-3">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                downloadPRD(data);
+              }}
+              className="flex items-center gap-1 px-3 py-1.5 bg-blue-500/20 hover:bg-blue-500/30 border border-blue-500/50 rounded-lg text-xs text-blue-300 transition-colors"
+              title="Download PRD as Markdown"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              Download PRD
+            </button>
+
+            <button
+              onClick={async (e) => {
+                e.stopPropagation();
+                const success = await copyPRDToClipboard(data);
+                if (success) {
+                  // Show toast notification (you can add a toast library or simple alert)
+                  alert('PRD copied to clipboard!');
+                }
+              }}
+              className="flex items-center gap-1 px-3 py-1.5 bg-purple-500/20 hover:bg-purple-500/30 border border-purple-500/50 rounded-lg text-xs text-purple-300 transition-colors"
+              title="Copy PRD to Clipboard"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+              </svg>
+              Copy
+            </button>
+
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                downloadCode(data);
+              }}
+              className="flex items-center gap-1 px-3 py-1.5 bg-green-500/20 hover:bg-green-500/30 border border-green-500/50 rounded-lg text-xs text-green-300 transition-colors"
+              title="Download Generated Code"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+              </svg>
+              Code
+            </button>
           </div>
         </div>
       )}
