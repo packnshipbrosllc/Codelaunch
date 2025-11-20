@@ -5,6 +5,7 @@
 
 import { useState } from 'react';
 import { Sparkles, FileText, Code, Users, TrendingUp } from 'lucide-react';
+import { SpaceBackground } from '@/components/ui/space-background';
 
 const DEMO_PROJECT = {
   projectName: "FitConnect - Social Fitness App",
@@ -78,11 +79,12 @@ export default function DemoMindmapDisplay() {
   };
 
   return (
-    <div className="relative">
-      {/* Tooltip Overlay */}
-      {activeTooltip && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 flex items-center justify-center p-6">
-          <div className="bg-gray-800 border-2 border-purple-500 rounded-2xl p-8 max-w-lg shadow-2xl">
+    <SpaceBackground variant="default">
+      <div className="relative">
+        {/* Tooltip Overlay */}
+        {activeTooltip && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 flex items-center justify-center p-6">
+            <div className="bg-gray-800 border-2 border-purple-500 rounded-2xl p-8 max-w-lg shadow-2xl">
             {activeTooltip === 'mindmap' && (
               <>
                 <div className="flex items-center gap-3 mb-4">
@@ -141,8 +143,8 @@ export default function DemoMindmapDisplay() {
         </div>
       )}
 
-      {/* Demo Mindmap Display */}
-      <div className="bg-gray-800/50 backdrop-blur-sm border border-purple-500/20 rounded-2xl p-8">
+        {/* Demo Mindmap Display */}
+        <div className="bg-gray-900/40 backdrop-blur-sm border border-purple-500/20 rounded-2xl p-8 relative z-10">
         {/* Project Header */}
         <div className="mb-8 text-center">
           <h2 className="text-3xl font-bold text-white mb-2">
@@ -232,5 +234,6 @@ export default function DemoMindmapDisplay() {
         </div>
       </div>
     </div>
+    </SpaceBackground>
   );
 }

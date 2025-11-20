@@ -25,6 +25,7 @@ export default function DashboardPage() {
   const router = useRouter();
   const { user, isLoaded } = useUser();
   const [isCheckingOnboarding, setIsCheckingOnboarding] = useState(true);
+  const [onboardingChecked, setOnboardingChecked] = useState(false);
   
   const [projects, setProjects] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -32,24 +33,36 @@ export default function DashboardPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'recent' | 'name' | 'created'>('recent');
 
-  // Onboarding check - redirect first-time users to onboarding
+  // CRITICAL: Check onboarding status IMMEDIATELY on mount - before any content renders
   useEffect(() => {
     const checkOnboarding = async () => {
-      if (!isLoaded || !user) return;
+      // Wait for Clerk to load
+      if (!isLoaded) return;
 
+      // If not authenticated, redirect to sign-in
+      if (!user) {
+        router.push('/sign-in');
+        return;
+      }
+
+      // Check onboarding status immediately
       try {
         const response = await fetch('/api/user/onboarding-status');
         const data = await response.json();
 
         if (!data.completed) {
-          // Redirect to onboarding for first-time users
-          router.push('/onboarding');
+          // Redirect to onboarding IMMEDIATELY - don't wait
+          router.replace('/onboarding');
           return;
         }
 
+        // Onboarding complete - allow dashboard to render
+        setOnboardingChecked(true);
         setIsCheckingOnboarding(false);
       } catch (error) {
         console.error('Error checking onboarding:', error);
+        // On error, allow through (graceful degradation)
+        setOnboardingChecked(true);
         setIsCheckingOnboarding(false);
       }
     };
@@ -57,16 +70,12 @@ export default function DashboardPage() {
     checkOnboarding();
   }, [isLoaded, user, router]);
 
+  // Only fetch projects after onboarding check is complete
   useEffect(() => {
-    if (isLoaded && !user) {
-      router.push('/sign-in');
-      return;
-    }
-
-    if (user && !isCheckingOnboarding) {
+    if (onboardingChecked && user && isLoaded) {
       fetchProjects();
     }
-  }, [user, isLoaded, router, isCheckingOnboarding]);
+  }, [onboardingChecked, user, isLoaded]);
 
   const fetchProjects = async () => {
     try {
@@ -152,16 +161,19 @@ export default function DashboardPage() {
     }
   };
 
-  // Show loading state while checking onboarding
-  if (isCheckingOnboarding) {
+  // CRITICAL: Show loading state while checking onboarding - prevent any dashboard content from rendering
+  if (!isLoaded || isCheckingOnboarding || !onboardingChecked) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-black flex items-center justify-center">
-        <div className="text-white text-xl">Loading...</div>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-purple-500 mx-auto mb-4"></div>
+          <div className="text-white text-xl">Loading...</div>
+        </div>
       </div>
     );
   }
 
-  if (!isLoaded || isLoading) {
+  if (isLoading) {
     return (
       <SpaceBackground variant="subtle">
         <div className="flex items-center justify-center min-h-screen">
