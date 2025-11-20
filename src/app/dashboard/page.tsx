@@ -24,6 +24,7 @@ interface Project {
 export default function DashboardPage() {
   const router = useRouter();
   const { user, isLoaded } = useUser();
+  const [isCheckingOnboarding, setIsCheckingOnboarding] = useState(true);
   
   const [projects, setProjects] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -31,16 +32,41 @@ export default function DashboardPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'recent' | 'name' | 'created'>('recent');
 
+  // Onboarding check - redirect first-time users to onboarding
+  useEffect(() => {
+    const checkOnboarding = async () => {
+      if (!isLoaded || !user) return;
+
+      try {
+        const response = await fetch('/api/user/onboarding-status');
+        const data = await response.json();
+
+        if (!data.completed) {
+          // Redirect to onboarding for first-time users
+          router.push('/onboarding');
+          return;
+        }
+
+        setIsCheckingOnboarding(false);
+      } catch (error) {
+        console.error('Error checking onboarding:', error);
+        setIsCheckingOnboarding(false);
+      }
+    };
+
+    checkOnboarding();
+  }, [isLoaded, user, router]);
+
   useEffect(() => {
     if (isLoaded && !user) {
       router.push('/sign-in');
       return;
     }
 
-    if (user) {
+    if (user && !isCheckingOnboarding) {
       fetchProjects();
     }
-  }, [user, isLoaded, router]);
+  }, [user, isLoaded, router, isCheckingOnboarding]);
 
   const fetchProjects = async () => {
     try {
@@ -125,6 +151,15 @@ export default function DashboardPage() {
       default: return 'bg-gray-100 text-gray-700';
     }
   };
+
+  // Show loading state while checking onboarding
+  if (isCheckingOnboarding) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-black flex items-center justify-center">
+        <div className="text-white text-xl">Loading...</div>
+      </div>
+    );
+  }
 
   if (!isLoaded || isLoading) {
     return (

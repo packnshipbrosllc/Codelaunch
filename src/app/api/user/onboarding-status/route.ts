@@ -1,5 +1,8 @@
-import { NextResponse } from 'next/server';
+// FILE PATH: src/app/api/user/onboarding-status/route.ts
+// Check if user has completed onboarding
+
 import { auth } from '@clerk/nextjs/server';
+import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
 const supabase = createClient(
@@ -10,7 +13,7 @@ const supabase = createClient(
 export async function GET() {
   try {
     const { userId } = await auth();
-    
+
     if (!userId) {
       return NextResponse.json(
         { error: 'Unauthorized' },
@@ -18,32 +21,43 @@ export async function GET() {
       );
     }
 
+    // Check if user exists and has onboarding_completed flag
+    // Note: Using 'id' field to match existing codebase pattern
     const { data: user, error } = await supabase
       .from('users')
-      .select('onboarding_completed')
+      .select('onboarding_completed, mindmaps_created')
       .eq('id', userId)
       .single();
 
     if (error && error.code !== 'PGRST116') {
-      console.error('Error fetching onboarding status:', error);
+      // PGRST116 is "not found" error
+      console.error('Error fetching user:', error);
       return NextResponse.json(
-        { error: 'Failed to fetch onboarding status' },
+        { error: 'Database error' },
         { status: 500 }
       );
     }
 
-    // If user doesn't exist, they haven't completed onboarding
-    const onboardingCompleted = user?.onboarding_completed ?? false;
+    // If user doesn't exist yet, they need onboarding
+    if (!user) {
+      return NextResponse.json({
+        completed: false,
+        isNewUser: true,
+      });
+    }
+
+    // User has completed onboarding if flag is true OR they've created mindmaps
+    const completed = user.onboarding_completed === true || (user.mindmaps_created && user.mindmaps_created > 0);
 
     return NextResponse.json({
-      onboardingCompleted,
+      completed,
+      isNewUser: false,
     });
-  } catch (error: any) {
-    console.error('Error in onboarding-status route:', error);
+  } catch (error) {
+    console.error('Error checking onboarding status:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
     );
   }
 }
-

@@ -1,70 +1,58 @@
+// FILE PATH: src/app/onboarding/page.tsx
+// Main onboarding page for first-time users
+
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
-import { SpaceBackground } from '@/components/ui/space-background';
-import { OnboardingFlow } from '@/components/OnboardingFlow';
-import { Loader2 } from 'lucide-react';
+import OnboardingFlow from '@/components/OnboardingFlow';
 
 export default function OnboardingPage() {
-  const { user, isLoaded } = useUser();
   const router = useRouter();
-  const [isChecking, setIsChecking] = useState(true);
-  const [onboardingCompleted, setOnboardingCompleted] = useState(false);
+  const { user, isLoaded } = useUser();
+  const [isCheckingStatus, setIsCheckingStatus] = useState(true);
 
   useEffect(() => {
-    if (!isLoaded) return;
-
-    if (!user) {
-      router.push('/sign-in');
-      return;
-    }
-
-    // Check onboarding status
     const checkOnboardingStatus = async () => {
+      if (!isLoaded || !user) return;
+
       try {
         const response = await fetch('/api/user/onboarding-status');
-        const result = await response.json();
-        
-        if (result.onboardingCompleted) {
-          setOnboardingCompleted(true);
+        const data = await response.json();
+
+        // If onboarding is already completed, redirect to dashboard
+        if (data.completed) {
           router.push('/dashboard');
         } else {
-          setIsChecking(false);
+          setIsCheckingStatus(false);
         }
       } catch (error) {
         console.error('Error checking onboarding status:', error);
-        setIsChecking(false);
+        setIsCheckingStatus(false);
       }
     };
 
     checkOnboardingStatus();
-  }, [user, isLoaded, router]);
+  }, [isLoaded, user, router]);
 
-  if (!isLoaded || isChecking) {
+  // Redirect to sign-in if not authenticated
+  if (isLoaded && !user) {
+    router.push('/sign-in');
+    return null;
+  }
+
+  if (isCheckingStatus) {
     return (
-      <SpaceBackground variant="default">
-        <div className="min-h-screen flex items-center justify-center">
-          <div className="text-center">
-            <Loader2 className="w-16 h-16 text-white animate-spin mx-auto mb-4" />
-            <p className="text-white text-xl">Loading...</p>
-          </div>
-        </div>
-      </SpaceBackground>
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-black flex items-center justify-center">
+        <div className="text-white text-xl">Loading...</div>
+      </div>
     );
   }
 
-  if (onboardingCompleted) {
-    return null; // Will redirect
-  }
-
   return (
-    <SpaceBackground variant="default">
-      <div className="min-h-screen">
-        <OnboardingFlow />
-      </div>
-    </SpaceBackground>
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-black">
+      <OnboardingFlow />
+    </div>
   );
 }
-

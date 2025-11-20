@@ -1,378 +1,274 @@
+// FILE PATH: src/components/OnboardingFlow.tsx
+// Multi-step onboarding flow with interactive demo
+
 'use client';
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Rocket, Sparkles, ArrowRight, CheckCircle, Loader2 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { DemoMindmapDisplay } from './DemoMindmapDisplay';
+import { useUser } from '@clerk/nextjs';
+import DemoMindmapDisplay from '@/components/DemoMindmapDisplay';
+import { Sparkles, Rocket, Lightbulb, CheckCircle2, ArrowRight } from 'lucide-react';
 
-type OnboardingStep = 'welcome' | 'demo-generating' | 'demo-complete' | 'create-yours';
+type OnboardingStep = 'welcome' | 'demo' | 'create' | 'complete';
 
-const DEMO_IDEA = 'A meal planning app for busy professionals that generates weekly menus based on dietary preferences and automatically creates shopping lists';
-
-const LOADING_MESSAGES = [
-  'Analyzing your app idea...',
-  'Identifying key features...',
-  'Mapping user workflows...',
-  'Creating your mindmap...',
-];
-
-export function OnboardingFlow() {
+export default function OnboardingFlow() {
   const router = useRouter();
+  const { user } = useUser();
   const [currentStep, setCurrentStep] = useState<OnboardingStep>('welcome');
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [loadingMessageIndex, setLoadingMessageIndex] = useState(0);
-  const [demoMindmapData, setDemoMindmapData] = useState<any>(null);
   const [userIdea, setUserIdea] = useState('');
-  const [error, setError] = useState<string | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [error, setError] = useState('');
 
-  const trackEvent = async (eventName: string, eventData?: any) => {
-    try {
-      await fetch('/api/events/track', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          event_name: eventName,
-          event_data: eventData || {},
-        }),
-      });
-    } catch (error) {
-      console.error('Error tracking event:', error);
-    }
-  };
-
-  const completeOnboarding = async () => {
+  const handleCompleteOnboarding = async () => {
     try {
       await fetch('/api/user/complete-onboarding', {
         method: 'POST',
       });
+      router.push('/dashboard');
     } catch (error) {
       console.error('Error completing onboarding:', error);
+      router.push('/dashboard');
     }
   };
 
-  const handleGenerateDemo = async () => {
-    setIsGenerating(true);
-    setError(null);
-    setCurrentStep('demo-generating');
-    
-    await trackEvent('onboarding_demo_started');
-
-    // Rotate loading messages
-    const messageInterval = setInterval(() => {
-      setLoadingMessageIndex((prev) => (prev + 1) % LOADING_MESSAGES.length);
-    }, 2000);
-
-    try {
-      const response = await fetch('/api/generate-mindmap', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          idea: DEMO_IDEA,
-          isDemo: true,
-        }),
-      });
-
-      clearInterval(messageInterval);
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to generate demo mindmap');
-      }
-
-      const result = await response.json();
-      
-      if (result.success && result.data) {
-        setDemoMindmapData(result.data);
-        setCurrentStep('demo-complete');
-        await trackEvent('onboarding_demo_completed', {
-          projectName: result.data.projectName,
-          featureCount: result.data.features?.length || 0,
-        });
-      } else {
-        throw new Error(result.error || 'Failed to generate demo mindmap');
-      }
-    } catch (err: any) {
-      console.error('Error generating demo:', err);
-      setError(err.message || 'Failed to generate demo. Please try again.');
-      setCurrentStep('welcome');
-    } finally {
-      setIsGenerating(false);
-    }
+  const handleSkipToCreate = async () => {
+    await handleCompleteOnboarding();
+    router.push('/create');
   };
 
-  const handleCreateYourMindmap = async () => {
-    if (!userIdea.trim()) {
-      setError('Please enter your app idea');
+  const handleGenerateFromOnboarding = async () => {
+    if (!userIdea.trim() || userIdea.trim().length < 10) {
+      setError('Please describe your app idea (at least 10 characters)');
       return;
     }
 
     setIsGenerating(true);
-    setError(null);
-    setCurrentStep('demo-generating');
-    
-    await trackEvent('onboarding_user_mindmap_started', {
-      ideaLength: userIdea.length,
-    });
-
-    // Rotate loading messages
-    const messageInterval = setInterval(() => {
-      setLoadingMessageIndex((prev) => (prev + 1) % LOADING_MESSAGES.length);
-    }, 2000);
+    setError('');
 
     try {
       const response = await fetch('/api/generate-mindmap', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          idea: userIdea.trim(),
-          isDemo: false,
-        }),
+        body: JSON.stringify({ idea: userIdea.trim() }),
       });
 
-      clearInterval(messageInterval);
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to generate mindmap');
-      }
-
       const result = await response.json();
-      
-      if (result.success && result.data) {
-        // Save the mindmap and get project ID
-        const saveResponse = await fetch('/api/save-mindmap', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            mindmapData: result.data,
-          }),
-        });
 
-        const saveResult = await saveResponse.json();
-        
-        if (saveResult.success && saveResult.projectId) {
-          await trackEvent('onboarding_completed', {
-            projectId: saveResult.projectId,
-            projectName: result.data.projectName,
-          });
-          await completeOnboarding();
-          
-          // Redirect to the created mindmap
-          router.push(`/create?mindmap=${encodeURIComponent(JSON.stringify(result.data))}`);
-        } else {
-          throw new Error('Failed to save mindmap');
-        }
-      } else {
+      if (!response.ok || !result.success) {
         throw new Error(result.error || 'Failed to generate mindmap');
       }
+
+      // Mark onboarding as complete and redirect to the new mindmap
+      await handleCompleteOnboarding();
+      
+      // Redirect to create page with the idea pre-filled
+      router.push(`/create?idea=${encodeURIComponent(userIdea.trim())}`);
     } catch (err: any) {
       console.error('Error generating mindmap:', err);
       setError(err.message || 'Failed to generate mindmap. Please try again.');
-      setCurrentStep('create-yours');
-    } finally {
       setIsGenerating(false);
     }
   };
 
-  const handleSkip = async () => {
-    await trackEvent('onboarding_skipped');
-    await completeOnboarding();
-    router.push('/dashboard');
-  };
+  // Welcome Step
+  if (currentStep === 'welcome') {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-6">
+        <div className="max-w-2xl w-full">
+          <div className="text-center mb-12">
+            <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full mb-6">
+              <Rocket className="w-10 h-10 text-white" />
+            </div>
+            <h1 className="text-5xl font-bold text-white mb-4">
+              Welcome to CodeLaunch! 🚀
+            </h1>
+            <p className="text-xl text-gray-300">
+              Transform your app ideas into production-ready plans in minutes
+            </p>
+          </div>
 
-  return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-16">
-      <div className="w-full max-w-4xl">
-        <AnimatePresence mode="wait">
-          {currentStep === 'welcome' && (
-            <motion.div
-              key="welcome"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              className="text-center"
-            >
-              <motion.div
-                initial={{ scale: 0.8, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ delay: 0.2 }}
-                className="mb-8"
-              >
-                <Rocket className="w-24 h-24 text-purple-500 mx-auto mb-6 animate-pulse" />
-              </motion.div>
-              
-              <h1 className="text-5xl md:text-6xl font-bold text-white mb-6 bg-gradient-to-r from-white via-purple-200 to-pink-200 bg-clip-text text-transparent">
-                Welcome to CodeLaunch
-              </h1>
-              
-              <p className="text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
-                Let's start with a quick demo to show you how powerful AI-powered planning can be.
-                We'll generate a complete mindmap for a meal planning app in seconds.
-              </p>
-
-              <div className="bg-purple-900/30 border border-purple-500/30 rounded-2xl p-6 mb-8 backdrop-blur-xl">
-                <p className="text-purple-200 text-lg mb-2 font-semibold">Demo Idea:</p>
-                <p className="text-white text-base">{DEMO_IDEA}</p>
-              </div>
-
-              {error && (
-                <div className="mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded-xl">
-                  <p className="text-red-400">{error}</p>
+          <div className="bg-gray-800/50 backdrop-blur-sm border border-purple-500/20 rounded-2xl p-8 mb-8">
+            <h2 className="text-2xl font-semibold text-white mb-6">
+              Here's what CodeLaunch does:
+            </h2>
+            
+            <div className="space-y-4">
+              <div className="flex items-start gap-4">
+                <div className="flex-shrink-0 w-8 h-8 bg-purple-500/20 rounded-lg flex items-center justify-center">
+                  <Sparkles className="w-5 h-5 text-purple-400" />
                 </div>
-              )}
-
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <button
-                  onClick={handleGenerateDemo}
-                  disabled={isGenerating}
-                  className="px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white rounded-xl font-semibold text-lg transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-2xl hover:scale-105"
-                >
-                  <Sparkles className="w-5 h-5" />
-                  Generate Demo Mindmap
-                </button>
-                
-                <button
-                  onClick={handleSkip}
-                  disabled={isGenerating}
-                  className="px-8 py-4 bg-white/5 hover:bg-white/10 border border-white/20 text-white rounded-xl font-semibold text-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Skip Demo
-                </button>
-              </div>
-            </motion.div>
-          )}
-
-          {currentStep === 'demo-generating' && (
-            <motion.div
-              key="demo-generating"
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9 }}
-              className="text-center"
-            >
-              <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
-                className="mb-8"
-              >
-                <Rocket className="w-32 h-32 text-purple-500 mx-auto" />
-              </motion.div>
-              
-              <h2 className="text-3xl font-bold text-white mb-4">
-                {LOADING_MESSAGES[loadingMessageIndex]}
-              </h2>
-              
-              <div className="flex justify-center mb-4">
-                <Loader2 className="w-8 h-8 text-purple-500 animate-spin" />
-              </div>
-              
-              <p className="text-gray-400">
-                This usually takes 10-15 seconds...
-              </p>
-            </motion.div>
-          )}
-
-          {currentStep === 'demo-complete' && demoMindmapData && (
-            <motion.div
-              key="demo-complete"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-            >
-              <div className="text-center mb-8">
-                <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
-                <h2 className="text-3xl font-bold text-white mb-2">
-                  Demo Mindmap Generated!
-                </h2>
-                <p className="text-gray-300">
-                  Here's what a complete mindmap looks like. Now create your own!
-                </p>
-              </div>
-
-              <DemoMindmapDisplay mindmapData={demoMindmapData} />
-
-              <div className="mt-8 text-center">
-                <button
-                  onClick={() => setCurrentStep('create-yours')}
-                  className="px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white rounded-xl font-semibold text-lg transition-all flex items-center justify-center gap-2 mx-auto shadow-2xl hover:scale-105"
-                >
-                  Create My App
-                  <ArrowRight className="w-5 h-5" />
-                </button>
-              </div>
-            </motion.div>
-          )}
-
-          {currentStep === 'create-yours' && (
-            <motion.div
-              key="create-yours"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              className="max-w-2xl mx-auto"
-            >
-              <div className="text-center mb-8">
-                <h2 className="text-3xl font-bold text-white mb-2">
-                  Create Your First Mindmap
-                </h2>
-                <p className="text-gray-300">
-                  Describe your app idea and we'll generate a comprehensive mindmap with features, 
-                  technical specs, and implementation details.
-                </p>
-              </div>
-
-              {error && (
-                <div className="mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded-xl">
-                  <p className="text-red-400">{error}</p>
+                <div>
+                  <h3 className="text-lg font-semibold text-white mb-1">AI-Powered Mindmaps</h3>
+                  <p className="text-gray-400">
+                    Describe your app idea and instantly get a comprehensive feature mindmap
+                  </p>
                 </div>
-              )}
-
-              <div className="bg-gray-900/60 backdrop-blur-xl border border-white/10 rounded-2xl p-6 mb-6">
-                <label className="block text-white font-semibold mb-3">
-                  Your App Idea
-                </label>
-                <textarea
-                  value={userIdea}
-                  onChange={(e) => setUserIdea(e.target.value)}
-                  placeholder="Example: A fitness tracking app with workout plans, progress tracking, and social features..."
-                  className="w-full h-32 px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none"
-                  disabled={isGenerating}
-                />
               </div>
 
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <button
-                  onClick={handleCreateYourMindmap}
-                  disabled={isGenerating || !userIdea.trim()}
-                  className="px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white rounded-xl font-semibold text-lg transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-2xl hover:scale-105"
-                >
-                  {isGenerating ? (
-                    <>
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                      Generating...
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles className="w-5 h-5" />
-                      Generate My Mindmap
-                    </>
-                  )}
-                </button>
-                
-                <button
-                  onClick={handleSkip}
-                  disabled={isGenerating}
-                  className="px-8 py-4 bg-white/5 hover:bg-white/10 border border-white/20 text-white rounded-xl font-semibold text-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Skip for Now
-                </button>
+              <div className="flex items-start gap-4">
+                <div className="flex-shrink-0 w-8 h-8 bg-purple-500/20 rounded-lg flex items-center justify-center">
+                  <Lightbulb className="w-5 h-5 text-purple-400" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-white mb-1">Detailed Feature Planning</h3>
+                  <p className="text-gray-400">
+                    Click any feature to see user stories, technical specs, and implementation details
+                  </p>
+                </div>
               </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+
+              <div className="flex items-start gap-4">
+                <div className="flex-shrink-0 w-8 h-8 bg-purple-500/20 rounded-lg flex items-center justify-center">
+                  <CheckCircle2 className="w-5 h-5 text-purple-400" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-white mb-1">Production-Ready PRDs</h3>
+                  <p className="text-gray-400">
+                    Generate professional Product Requirement Documents ready for developers
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex gap-4">
+            <button
+              onClick={() => setCurrentStep('demo')}
+              className="flex-1 px-8 py-4 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-semibold rounded-xl transition-all transform hover:scale-105 flex items-center justify-center gap-2"
+            >
+              Show Me How It Works
+              <ArrowRight className="w-5 h-5" />
+            </button>
+            
+            <button
+              onClick={handleSkipToCreate}
+              className="px-8 py-4 bg-gray-700/50 hover:bg-gray-700 text-white font-semibold rounded-xl transition-all border border-gray-600"
+            >
+              Skip Tutorial
+            </button>
+          </div>
+        </div>
       </div>
-    </div>
-  );
-}
+    );
+  }
 
+  // Demo Step
+  if (currentStep === 'demo') {
+    return (
+      <div className="min-h-screen p-6">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-8">
+            <h1 className="text-4xl font-bold text-white mb-4">
+              Here's an Example Project
+            </h1>
+            <p className="text-xl text-gray-300 mb-6">
+              This is what CodeLaunch generates from a simple app idea
+            </p>
+          </div>
+
+          <DemoMindmapDisplay />
+
+          <div className="flex justify-center gap-4 mt-8">
+            <button
+              onClick={() => setCurrentStep('create')}
+              className="px-8 py-4 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-semibold rounded-xl transition-all transform hover:scale-105 flex items-center gap-2"
+            >
+              Create My Own Project
+              <ArrowRight className="w-5 h-5" />
+            </button>
+            
+            <button
+              onClick={() => setCurrentStep('welcome')}
+              className="px-8 py-4 bg-gray-700/50 hover:bg-gray-700 text-white font-semibold rounded-xl transition-all border border-gray-600"
+            >
+              Back
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Create Step
+  if (currentStep === 'create') {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-6">
+        <div className="max-w-2xl w-full">
+          <div className="text-center mb-12">
+            <h1 className="text-4xl font-bold text-white mb-4">
+              Now It's Your Turn! ✨
+            </h1>
+            <p className="text-xl text-gray-300">
+              Describe your app idea and watch the magic happen
+            </p>
+          </div>
+
+          <div className="bg-gray-800/50 backdrop-blur-sm border border-purple-500/20 rounded-2xl p-8">
+            <label className="block text-lg font-semibold text-white mb-4">
+              What app do you want to build?
+            </label>
+            
+            <textarea
+              value={userIdea}
+              onChange={(e) => setUserIdea(e.target.value)}
+              placeholder="Example: A fitness app that helps users track their workouts, set goals, and connect with friends for motivation. It should have progress charts, workout plans, and social features."
+              className="w-full h-40 px-4 py-3 bg-gray-900/50 border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none"
+              disabled={isGenerating}
+            />
+
+            {error && (
+              <div className="mt-4 p-4 bg-red-500/10 border border-red-500/50 rounded-lg text-red-400">
+                {error}
+              </div>
+            )}
+
+            <div className="mt-6 flex gap-4">
+              <button
+                onClick={handleGenerateFromOnboarding}
+                disabled={isGenerating || !userIdea.trim()}
+                className="flex-1 px-8 py-4 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-semibold rounded-xl transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center gap-2"
+              >
+                {isGenerating ? (
+                  <>
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-5 h-5" />
+                    Generate My Mindmap
+                  </>
+                )}
+              </button>
+
+              <button
+                onClick={() => setCurrentStep('demo')}
+                disabled={isGenerating}
+                className="px-8 py-4 bg-gray-700/50 hover:bg-gray-700 text-white font-semibold rounded-xl transition-all border border-gray-600 disabled:opacity-50"
+              >
+                Back
+              </button>
+            </div>
+
+            <div className="mt-6 p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+              <p className="text-sm text-blue-300 text-center">
+                💡 <strong>Tip:</strong> Be specific! The more details you provide, the better your mindmap will be.
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-6 text-center">
+            <button
+              onClick={handleSkipToCreate}
+              className="text-gray-400 hover:text-white transition-colors underline"
+            >
+              Skip and explore on my own
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return null;
+}

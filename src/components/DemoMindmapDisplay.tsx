@@ -1,211 +1,236 @@
+// FILE PATH: src/components/DemoMindmapDisplay.tsx
+// Pre-built demo mindmap with explanatory tooltips
+
 'use client';
 
 import { useState } from 'react';
-import { ChevronDown, ChevronUp } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { Sparkles, FileText, Code, Users, TrendingUp } from 'lucide-react';
 
-interface DemoMindmapDisplayProps {
-  mindmapData: {
-    projectName: string;
-    projectDescription: string;
-    features: Array<{
-      id: string;
-      title: string;
-      description: string;
-      priority: string;
-      userStories?: Array<{
-        persona: string;
-        need: string;
-        goal: string;
-      }>;
-      acceptanceCriteria?: string[];
-      technicalImplementation?: {
-        frontend?: string[];
-        backend?: string[];
-        database?: string[];
-        steps?: string[];
-      };
-    }>;
-    targetAudience?: string;
-    userPersona?: {
-      name: string;
-      description: string;
-      painPoint: string;
-      goal: string;
-    };
-  };
-}
+const DEMO_PROJECT = {
+  projectName: "FitConnect - Social Fitness App",
+  projectDescription: "A mobile fitness application that combines workout tracking with social features, allowing users to share progress, compete with friends, and discover new exercises.",
+  features: [
+    {
+      id: '1',
+      title: 'Workout Tracking',
+      description: 'Log exercises, sets, reps, and weights with an intuitive interface',
+      priority: 'high' as const,
+    },
+    {
+      id: '2',
+      title: 'Social Feed',
+      description: 'Share workout achievements and progress photos with friends',
+      priority: 'high' as const,
+    },
+    {
+      id: '3',
+      title: 'Progress Analytics',
+      description: 'Visual charts showing strength gains, consistency, and goal tracking',
+      priority: 'high' as const,
+    },
+    {
+      id: '4',
+      title: 'Exercise Library',
+      description: 'Comprehensive database of exercises with video demonstrations',
+      priority: 'medium' as const,
+    },
+    {
+      id: '5',
+      title: 'Custom Workout Plans',
+      description: 'Create and share personalized workout routines',
+      priority: 'medium' as const,
+    },
+    {
+      id: '6',
+      title: 'Friend Challenges',
+      description: 'Compete with friends in weekly fitness challenges',
+      priority: 'low' as const,
+    },
+  ],
+  targetAudience: "Fitness enthusiasts aged 18-45 who want to stay motivated through social accountability",
+  techStack: {
+    frontend: "React Native",
+    backend: "Node.js/Express",
+    database: "PostgreSQL",
+    auth: "Firebase Auth",
+    payments: "Stripe",
+    hosting: "AWS",
+  },
+  monetization: {
+    model: 'freemium' as const,
+    pricing: "$9.99/month for Pro features",
+    freeTier: "Basic workout tracking and limited social features",
+    paidTier: "Unlimited workouts, advanced analytics, custom plans, ad-free",
+  },
+};
 
-export function DemoMindmapDisplay({ mindmapData }: DemoMindmapDisplayProps) {
-  const [expandedFeatures, setExpandedFeatures] = useState<Set<string>>(new Set());
+type TooltipStep = 'mindmap' | 'features' | 'details' | 'prd' | null;
 
-  const toggleFeature = (featureId: string) => {
-    setExpandedFeatures((prev) => {
-      const next = new Set(prev);
-      if (next.has(featureId)) {
-        next.delete(featureId);
-      } else {
-        next.add(featureId);
-      }
-      return next;
-    });
-  };
+export default function DemoMindmapDisplay() {
+  const [activeTooltip, setActiveTooltip] = useState<TooltipStep>('mindmap');
+  const [selectedFeature, setSelectedFeature] = useState<string | null>(null);
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority?.toLowerCase()) {
-      case 'high':
-        return 'border-red-500/50 bg-red-500/10';
-      case 'medium':
-        return 'border-yellow-500/50 bg-yellow-500/10';
-      case 'low':
-        return 'border-green-500/50 bg-green-500/10';
-      default:
-        return 'border-purple-500/50 bg-purple-500/10';
-    }
+  const nextTooltip = () => {
+    if (activeTooltip === 'mindmap') setActiveTooltip('features');
+    else if (activeTooltip === 'features') setActiveTooltip('details');
+    else if (activeTooltip === 'details') setActiveTooltip('prd');
+    else if (activeTooltip === 'prd') setActiveTooltip(null);
   };
 
   return (
-    <div className="space-y-6">
-      {/* Core Concept */}
-      <div className="bg-gradient-to-r from-purple-900/40 to-pink-900/40 border border-purple-500/30 rounded-2xl p-6 backdrop-blur-xl">
-        <h3 className="text-2xl font-bold text-white mb-2">{mindmapData.projectName}</h3>
-        <p className="text-gray-300">{mindmapData.projectDescription}</p>
-      </div>
+    <div className="relative">
+      {/* Tooltip Overlay */}
+      {activeTooltip && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 flex items-center justify-center p-6">
+          <div className="bg-gray-800 border-2 border-purple-500 rounded-2xl p-8 max-w-lg shadow-2xl">
+            {activeTooltip === 'mindmap' && (
+              <>
+                <div className="flex items-center gap-3 mb-4">
+                  <Sparkles className="w-8 h-8 text-purple-400" />
+                  <h3 className="text-2xl font-bold text-white">Your AI-Generated Mindmap</h3>
+                </div>
+                <p className="text-gray-300 text-lg mb-6">
+                  This is what CodeLaunch creates from a simple app description. Each bubble represents a key feature of your app.
+                </p>
+              </>
+            )}
 
-      {/* Target Users */}
-      {mindmapData.targetAudience && (
-        <div className="bg-gray-900/60 border border-white/10 rounded-xl p-4">
-          <h4 className="text-lg font-semibold text-white mb-2">Target Audience</h4>
-          <p className="text-gray-300">{mindmapData.targetAudience}</p>
-        </div>
-      )}
+            {activeTooltip === 'features' && (
+              <>
+                <div className="flex items-center gap-3 mb-4">
+                  <Code className="w-8 h-8 text-purple-400" />
+                  <h3 className="text-2xl font-bold text-white">Click Any Feature</h3>
+                </div>
+                <p className="text-gray-300 text-lg mb-6">
+                  Click on any feature bubble to see detailed planning information, including user stories, technical specs, and implementation details.
+                </p>
+              </>
+            )}
 
-      {/* User Persona */}
-      {mindmapData.userPersona && (
-        <div className="bg-blue-900/30 border border-blue-500/30 rounded-xl p-4">
-          <h4 className="text-lg font-semibold text-white mb-2">Primary User: {mindmapData.userPersona.name}</h4>
-          <p className="text-gray-300 mb-2">{mindmapData.userPersona.description}</p>
-          <div className="mt-3 space-y-2">
-            <div>
-              <span className="text-blue-300 font-medium">Pain Point: </span>
-              <span className="text-gray-300">{mindmapData.userPersona.painPoint}</span>
-            </div>
-            <div>
-              <span className="text-blue-300 font-medium">Goal: </span>
-              <span className="text-gray-300">{mindmapData.userPersona.goal}</span>
-            </div>
+            {activeTooltip === 'details' && (
+              <>
+                <div className="flex items-center gap-3 mb-4">
+                  <Users className="w-8 h-8 text-purple-400" />
+                  <h3 className="text-2xl font-bold text-white">Complete Project Details</h3>
+                </div>
+                <p className="text-gray-300 text-lg mb-6">
+                  See target audience, tech stack recommendations, competitors, and monetization strategies - all generated by AI.
+                </p>
+              </>
+            )}
+
+            {activeTooltip === 'prd' && (
+              <>
+                <div className="flex items-center gap-3 mb-4">
+                  <FileText className="w-8 h-8 text-purple-400" />
+                  <h3 className="text-2xl font-bold text-white">Generate PRDs</h3>
+                </div>
+                <p className="text-gray-300 text-lg mb-6">
+                  Generate professional Product Requirement Documents for any feature - ready to hand off to developers.
+                </p>
+              </>
+            )}
+
+            <button
+              onClick={nextTooltip}
+              className="w-full px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-semibold rounded-xl transition-all"
+            >
+              {activeTooltip === 'prd' ? 'Got It!' : 'Next'}
+            </button>
           </div>
         </div>
       )}
 
-      {/* Features */}
-      <div className="space-y-4">
-        <h4 className="text-xl font-bold text-white">Key Features ({mindmapData.features?.length || 0})</h4>
-        
-        {mindmapData.features?.map((feature) => {
-          const isExpanded = expandedFeatures.has(feature.id);
-          
-          return (
-            <div
+      {/* Demo Mindmap Display */}
+      <div className="bg-gray-800/50 backdrop-blur-sm border border-purple-500/20 rounded-2xl p-8">
+        {/* Project Header */}
+        <div className="mb-8 text-center">
+          <h2 className="text-3xl font-bold text-white mb-2">
+            {DEMO_PROJECT.projectName}
+          </h2>
+          <p className="text-gray-400">
+            {DEMO_PROJECT.projectDescription}
+          </p>
+        </div>
+
+        {/* Feature Bubbles in Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+          {DEMO_PROJECT.features.map((feature) => (
+            <button
               key={feature.id}
-              className={`border rounded-xl overflow-hidden transition-all ${getPriorityColor(feature.priority)}`}
+              onClick={() => setSelectedFeature(selectedFeature === feature.id ? null : feature.id)}
+              className={`p-6 rounded-xl border-2 transition-all transform hover:scale-105 ${
+                selectedFeature === feature.id
+                  ? 'bg-purple-500/20 border-purple-400 shadow-lg shadow-purple-500/50'
+                  : 'bg-gray-700/30 border-gray-600 hover:border-purple-500/50'
+              }`}
             >
-              <button
-                onClick={() => toggleFeature(feature.id)}
-                className="w-full p-4 text-left flex items-center justify-between hover:bg-white/5 transition-colors"
-              >
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-1">
-                    <h5 className="text-lg font-semibold text-white">{feature.title}</h5>
-                    <span className={`px-2 py-0.5 rounded text-xs font-medium ${
-                      feature.priority === 'high' ? 'bg-red-500/20 text-red-300' :
-                      feature.priority === 'medium' ? 'bg-yellow-500/20 text-yellow-300' :
-                      'bg-green-500/20 text-green-300'
-                    }`}>
-                      {feature.priority}
-                    </span>
-                  </div>
-                  <p className="text-gray-300 text-sm">{feature.description}</p>
-                </div>
-                <div className="ml-4">
-                  {isExpanded ? (
-                    <ChevronUp className="w-5 h-5 text-gray-400" />
-                  ) : (
-                    <ChevronDown className="w-5 h-5 text-gray-400" />
-                  )}
-                </div>
-              </button>
+              <div className="flex items-start justify-between mb-2">
+                <h3 className="text-lg font-semibold text-white text-left">
+                  {feature.title}
+                </h3>
+                <span className={`text-xs px-2 py-1 rounded-full ${
+                  feature.priority === 'high' ? 'bg-red-500/20 text-red-300' :
+                  feature.priority === 'medium' ? 'bg-yellow-500/20 text-yellow-300' :
+                  'bg-green-500/20 text-green-300'
+                }`}>
+                  {feature.priority}
+                </span>
+              </div>
+              <p className="text-sm text-gray-400 text-left">
+                {feature.description}
+              </p>
 
-              <AnimatePresence>
-                {isExpanded && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: 'auto', opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.3 }}
-                    className="overflow-hidden"
-                  >
-                    <div className="p-4 pt-0 space-y-4 border-t border-white/10 mt-2">
-                      {/* User Stories */}
-                      {feature.userStories && feature.userStories.length > 0 && (
-                        <div>
-                          <h6 className="text-sm font-semibold text-purple-300 mb-2">User Stories</h6>
-                          <div className="space-y-2">
-                            {feature.userStories.map((story, idx) => (
-                              <div key={idx} className="bg-gray-800/50 rounded-lg p-3 text-sm">
-                                <span className="text-white font-medium">As a {story.persona}, </span>
-                                <span className="text-gray-300">I need {story.need} </span>
-                                <span className="text-gray-400">so that {story.goal}</span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Acceptance Criteria */}
-                      {feature.acceptanceCriteria && feature.acceptanceCriteria.length > 0 && (
-                        <div>
-                          <h6 className="text-sm font-semibold text-blue-300 mb-2">Acceptance Criteria</h6>
-                          <ul className="space-y-1">
-                            {feature.acceptanceCriteria.map((criterion, idx) => (
-                              <li key={idx} className="text-gray-300 text-sm flex items-start gap-2">
-                                <span className="text-blue-400 mt-1">•</span>
-                                <span>{criterion}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
-
-                      {/* Technical Implementation */}
-                      {feature.technicalImplementation && (
-                        <div>
-                          <h6 className="text-sm font-semibold text-green-300 mb-2">Technical Details</h6>
-                          <div className="space-y-2 text-sm">
-                            {feature.technicalImplementation.frontend && feature.technicalImplementation.frontend.length > 0 && (
-                              <div>
-                                <span className="text-green-400 font-medium">Frontend: </span>
-                                <span className="text-gray-300">{feature.technicalImplementation.frontend.join(', ')}</span>
-                              </div>
-                            )}
-                            {feature.technicalImplementation.backend && feature.technicalImplementation.backend.length > 0 && (
-                              <div>
-                                <span className="text-green-400 font-medium">Backend: </span>
-                                <span className="text-gray-300">{feature.technicalImplementation.backend.join(', ')}</span>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      )}
+              {selectedFeature === feature.id && (
+                <div className="mt-4 pt-4 border-t border-gray-600">
+                  <div className="text-left space-y-2">
+                    <div className="flex items-center gap-2 text-sm text-purple-300">
+                      <FileText className="w-4 h-4" />
+                      <span>User stories generated</span>
                     </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          );
-        })}
+                    <div className="flex items-center gap-2 text-sm text-purple-300">
+                      <Code className="w-4 h-4" />
+                      <span>Technical specs ready</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-purple-300">
+                      <TrendingUp className="w-4 h-4" />
+                      <span>Implementation details available</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </button>
+          ))}
+        </div>
+
+        {/* Project Details */}
+        <div className="grid md:grid-cols-2 gap-6">
+          <div className="bg-gray-700/30 rounded-xl p-6 border border-gray-600">
+            <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
+              <Users className="w-5 h-5 text-purple-400" />
+              Target Audience
+            </h3>
+            <p className="text-gray-300">{DEMO_PROJECT.targetAudience}</p>
+          </div>
+
+          <div className="bg-gray-700/30 rounded-xl p-6 border border-gray-600">
+            <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
+              <TrendingUp className="w-5 h-5 text-purple-400" />
+              Monetization
+            </h3>
+            <p className="text-gray-300 mb-2">
+              <strong>Model:</strong> {DEMO_PROJECT.monetization.model}
+            </p>
+            <p className="text-gray-300">{DEMO_PROJECT.monetization.pricing}</p>
+          </div>
+        </div>
+
+        <div className="mt-6 p-4 bg-purple-500/10 border border-purple-500/30 rounded-lg text-center">
+          <p className="text-purple-200">
+            ✨ <strong>This entire project plan was generated in seconds</strong> from just a simple description!
+          </p>
+        </div>
       </div>
     </div>
   );
 }
-
