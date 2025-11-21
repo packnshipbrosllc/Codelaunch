@@ -1,7 +1,6 @@
 'use client';
 
 import { useRef } from 'react';
-import Image from 'next/image';
 import { AnimatedBeam } from '@/components/ui/animated-beam';
 
 export function CodeLaunchIntegrations() {
@@ -31,35 +30,27 @@ export function CodeLaunchIntegrations() {
       >
         {/* Left Side */}
         <div className="flex flex-col justify-center gap-16 absolute left-[15%] z-10">
-          {/* GitHub - Using favicon */}
+          {/* GitHub - SVG Logo */}
           <div
             ref={githubRef}
             className="relative flex items-center justify-center w-24 h-24 rounded-2xl bg-white/5 border-2 border-white/10 shadow-2xl hover:scale-110 hover:bg-white/10 hover:brightness-110 transition-all duration-300 cursor-pointer group"
           >
-            <Image 
-              src="https://github.com/favicon.ico" 
-              alt="GitHub" 
-              width={32} 
-              height={32}
-              className="w-8 h-8"
-            />
+            <svg className="w-10 h-10 text-white" viewBox="0 0 16 16" fill="currentColor">
+              <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
+            </svg>
             <div className="absolute left-28 opacity-0 group-hover:opacity-100 transition-opacity bg-gray-900/90 backdrop-blur-sm px-4 py-2 rounded-lg text-sm text-white whitespace-nowrap border border-gray-700 z-50">
               GitHub
             </div>
           </div>
 
-          {/* Claude AI - Using favicon */}
+          {/* Claude AI - Gradient Icon */}
           <div
             ref={claudeRef}
             className="relative flex items-center justify-center w-24 h-24 rounded-2xl bg-white/5 border-2 border-white/10 shadow-2xl hover:scale-110 hover:bg-white/10 hover:brightness-110 transition-all duration-300 cursor-pointer group"
           >
-            <Image 
-              src="https://claude.ai/favicon.ico" 
-              alt="Claude AI" 
-              width={32} 
-              height={32}
-              className="w-8 h-8"
-            />
+            <div className="w-10 h-10 bg-gradient-to-br from-purple-400 via-purple-500 to-pink-500 rounded-xl flex items-center justify-center text-white font-bold text-2xl shadow-lg">
+              C
+            </div>
             <div className="absolute left-28 opacity-0 group-hover:opacity-100 transition-opacity bg-gray-900/90 backdrop-blur-sm px-4 py-2 rounded-lg text-sm text-white whitespace-nowrap border border-gray-700 z-50">
               Claude AI
             </div>
@@ -83,35 +74,37 @@ export function CodeLaunchIntegrations() {
 
         {/* Right Side */}
         <div className="flex flex-col justify-center gap-16 absolute right-[15%] z-10">
-          {/* Cursor - Using favicon */}
+          {/* Cursor - Pointer Icon */}
           <div
             ref={cursorRef}
             className="relative flex items-center justify-center w-24 h-24 rounded-2xl bg-white/5 border-2 border-white/10 shadow-2xl hover:scale-110 hover:bg-white/10 hover:brightness-110 transition-all duration-300 cursor-pointer group"
           >
-            <Image 
-              src="https://cursor.sh/favicon.ico" 
-              alt="Cursor" 
-              width={32} 
-              height={32}
-              className="w-8 h-8"
-            />
+            <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-cyan-400 rounded-xl flex items-center justify-center shadow-lg">
+              <svg className="w-6 h-6 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"/>
+                <path d="M13 13l6 6"/>
+              </svg>
+            </div>
             <div className="absolute right-28 opacity-0 group-hover:opacity-100 transition-opacity bg-gray-900/90 backdrop-blur-sm px-4 py-2 rounded-lg text-sm text-white whitespace-nowrap border border-gray-700 z-50">
               Cursor
             </div>
           </div>
 
-          {/* Lovable - Using favicon */}
+          {/* Lovable - Heart Icon */}
           <div
             ref={lovableRef}
             className="relative flex items-center justify-center w-24 h-24 rounded-2xl bg-white/5 border-2 border-white/10 shadow-2xl hover:scale-110 hover:bg-white/10 hover:brightness-110 transition-all duration-300 cursor-pointer group"
           >
-            <Image 
-              src="https://lovable.dev/favicon.ico" 
-              alt="Lovable" 
-              width={32} 
-              height={32}
-              className="w-8 h-8"
-            />
+            <svg className="w-10 h-10" viewBox="0 0 24 24" fill="url(#loveGradient)">
+              <defs>
+                <linearGradient id="loveGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" style={{stopColor: '#ec4899'}} />
+                  <stop offset="50%" style={{stopColor: '#f472b6'}} />
+                  <stop offset="100%" style={{stopColor: '#fb923c'}} />
+                </linearGradient>
+              </defs>
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+            </svg>
             <div className="absolute right-28 opacity-0 group-hover:opacity-100 transition-opacity bg-gray-900/90 backdrop-blur-sm px-4 py-2 rounded-lg text-sm text-white whitespace-nowrap border border-gray-700 z-50">
               Lovable
             </div>

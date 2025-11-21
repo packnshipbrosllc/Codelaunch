@@ -409,8 +409,8 @@ export default function LandingPage() {
                   $39<span className="text-xl text-gray-400">.99/mo</span>
                 </div>
                 <p className="text-gray-400">For serious builders</p>
-              </div>
-              
+        </div>
+
               <ul className="space-y-3 mb-8 text-gray-300">
                 <li className="flex items-start">
                   <span className="text-green-400 mr-2">✓</span>
@@ -571,10 +571,10 @@ export default function LandingPage() {
                       </div>
                     </div>
                   </div>
-                </div>
+        </div>
 
                 <div className="pt-6 border-t border-purple-900/30">
-                  <p className="text-gray-400 text-sm">
+          <p className="text-gray-400 text-sm">
                     For urgent issues or enterprise inquiries, please email us directly at{' '}
                     <a href="mailto:support@codelaunch.ai" className="text-purple-400 hover:text-purple-300">
                       support@codelaunch.ai

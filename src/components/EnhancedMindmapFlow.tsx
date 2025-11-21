@@ -24,6 +24,7 @@ import { EnhancedFeatureNode } from './nodes/EnhancedFeatureNode';
 import { EnhancedCompetitorNode } from './nodes/EnhancedCompetitorNode';
 import { EnhancedPersonaNode } from './nodes/EnhancedPersonaNode';
 import PRDModal from '@/components/features/PRDModal';
+import FeatureSidebar from '@/components/FeatureSidebar';
 import { useMindmapLimit } from '@/hooks/useMindmapLimit';
 import { 
   EnhancedMindmapData, 
@@ -67,6 +68,11 @@ export function EnhancedMindmapFlow({
   const [prdModalOpen, setPRDModalOpen] = useState(false);
   const [selectedFeatureId, setSelectedFeatureId] = useState<string | null>(null);
   const [isGeneratingPRD, setIsGeneratingPRD] = useState(false);
+  
+  // Feature Sidebar state
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarFeature, setSidebarFeature] = useState<any>(null);
+  const [showPRDPreview, setShowPRDPreview] = useState(false);
 
   // Generate initial nodes and edges from data - MEMOIZED WITHOUT expandedNodes to prevent infinite loop
   const { initialNodes, initialEdges } = useMemo(() => {
@@ -164,7 +170,15 @@ export function EnhancedMindmapFlow({
           requirementsProgress,
           hasPRD,
           hasCode,
-          onClick: onNodeClick ? () => onNodeClick(feature) : undefined,
+          onClick: () => {
+            // Open sidebar when feature is clicked
+            setSidebarFeature(feature);
+            setSidebarOpen(true);
+            // Also call the original onNodeClick if provided
+            if (onNodeClick) {
+              onNodeClick(feature);
+            }
+          },
         },
       });
 
@@ -686,6 +700,24 @@ export function EnhancedMindmapFlow({
       </ReactFlow>
 
       {/* PRD Modal */}
+      {/* Feature Sidebar */}
+      <FeatureSidebar
+        feature={sidebarFeature}
+        isOpen={sidebarOpen}
+        onClose={() => {
+          setSidebarOpen(false);
+          setSidebarFeature(null);
+        }}
+        isSubscribed={isSubscribed}
+        onGeneratePRD={(featureId, featureData) => {
+          handleGeneratePRD(featureId);
+        }}
+        onShowPRDPreview={(feature) => {
+          setShowPRDPreview(true);
+          setSidebarFeature(feature);
+        }}
+      />
+
       <PRDModal
         isOpen={prdModalOpen}
         onClose={() => setPRDModalOpen(false)}

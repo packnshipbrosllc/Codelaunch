@@ -3,7 +3,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
 import DemoMindmapDisplay from '@/components/DemoMindmapDisplay';
@@ -19,6 +19,11 @@ export default function OnboardingFlow() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState('');
 
+  // Track when component mounts (welcome step loaded)
+  useEffect(() => {
+    console.log('Onboarding: Welcome step loaded');
+  }, []);
+
   const handleCompleteOnboarding = async () => {
     try {
       await fetch('/api/user/complete-onboarding', {
@@ -32,16 +37,20 @@ export default function OnboardingFlow() {
   };
 
   const handleSkipToCreate = async () => {
+    console.log('Onboarding: User skipped');
     await handleCompleteOnboarding();
     router.push('/create');
   };
 
   const handleGenerateFromOnboarding = async () => {
+    console.log('Onboarding: User submitted idea:', userIdea);
+    
     if (!userIdea.trim() || userIdea.trim().length < 10) {
       setError('Please describe your app idea (at least 10 characters)');
       return;
     }
 
+    console.log('Onboarding: Generation started');
     setIsGenerating(true);
     setError('');
 
@@ -58,6 +67,7 @@ export default function OnboardingFlow() {
         throw new Error(result.error || 'Failed to generate mindmap');
       }
 
+      console.log('Onboarding: Generation succeeded, completing onboarding');
       // Mark onboarding as complete and redirect to the new mindmap
       await handleCompleteOnboarding();
       
@@ -133,7 +143,10 @@ export default function OnboardingFlow() {
 
           <div className="flex gap-4">
             <button
-              onClick={() => setCurrentStep('demo')}
+              onClick={() => {
+                console.log('Onboarding: Moved to demo step');
+                setCurrentStep('demo');
+              }}
               className="flex-1 px-8 py-4 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-semibold rounded-xl transition-all transform hover:scale-105 flex items-center justify-center gap-2"
             >
               Show Me How It Works
@@ -170,7 +183,10 @@ export default function OnboardingFlow() {
 
           <div className="flex justify-center gap-4 mt-8">
             <button
-              onClick={() => setCurrentStep('create')}
+              onClick={() => {
+                console.log('Onboarding: Moved to create step');
+                setCurrentStep('create');
+              }}
               className="px-8 py-4 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-semibold rounded-xl transition-all transform hover:scale-105 flex items-center gap-2"
             >
               Create My Own Project

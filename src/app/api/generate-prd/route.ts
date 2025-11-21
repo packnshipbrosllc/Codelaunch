@@ -4,6 +4,12 @@ export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 import { auth } from '@clerk/nextjs/server';
+import { createClient } from '@supabase/supabase-js';
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -19,6 +25,27 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { success: false, error: 'Unauthorized' },
         { status: 401 }
+      );
+    }
+
+    // Check subscription status - PRD generation is Pro feature
+    const { data: user, error: userError } = await supabase
+      .from('users')
+      .select('subscription_status')
+      .eq('id', userId)
+      .single();
+
+    const isSubscribed = user?.subscription_status === 'active';
+    
+    if (!isSubscribed) {
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: 'PRD generation is a Pro feature',
+          requiresUpgrade: true,
+          message: 'Upgrade to Pro to unlock full PRD generation, AI code generation, and export features.'
+        },
+        { status: 403 }
       );
     }
 

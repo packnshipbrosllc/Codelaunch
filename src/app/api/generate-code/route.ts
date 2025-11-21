@@ -1,13 +1,27 @@
-// src/app/api/generate-code/route.ts
+// API Route for Generating Code from PRD
+// Location: src/app/api/generate-code/route.ts
+
+export const maxDuration = 120;
+export const dynamic = 'force-dynamic';
+
 import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 import { auth } from '@clerk/nextjs/server';
+import { createClient } from '@supabase/supabase-js';
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });
 
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
+
 export async function POST(request: NextRequest) {
+  const startTime = Date.now();
+  console.log('🚀 [Backend] Code generation request received');
+  
   try {
     const { userId } = await auth();
     
@@ -18,145 +32,248 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const body = await request.json();
-    const { 
-      projectName, 
-      idea, 
-      techStack, 
-      codeType, // 'component', 'api', 'database', 'fullstack'
-      specificFeature 
-    } = body;
+    // Check subscription status - Code generation is Pro feature
+    const { data: user, error: userError } = await supabase
+      .from('users')
+      .select('subscription_status')
+      .eq('id', userId)
+      .single();
 
-    if (!projectName || !idea || !codeType) {
+    const isSubscribed = user?.subscription_status === 'active';
+    
+    if (!isSubscribed) {
       return NextResponse.json(
-        { success: false, error: 'Missing required fields' },
+        { 
+          success: false, 
+          error: 'Code generation is a Pro feature',
+          requiresUpgrade: true,
+          message: 'Upgrade to Pro to unlock AI code generation, full PRDs, and export features.'
+        },
+        { status: 403 }
+      );
+    }
+
+    const body = await request.json();
+    const { prdContent, techStack, featureName } = body;
+
+    // Validate required inputs
+    if (!prdContent) {
+      return NextResponse.json(
+        { success: false, error: 'PRD content is required' },
         { status: 400 }
       );
     }
 
-    const prompts = {
-      component: `Generate a React/Next.js component for: ${specificFeature || projectName}
-      
-Project: ${projectName}
-Description: ${idea}
-${techStack ? `Tech Stack: ${JSON.stringify(techStack)}` : ''}
+    const techStackStr = techStack || 'React, Next.js, TypeScript, Node.js, PostgreSQL';
+    const featureNameStr = featureName || 'Feature';
 
-Create a fully functional, production-ready component with:
-- TypeScript types
-- Proper prop interfaces
-- Error handling
-- Loading states
-- Responsive design with Tailwind CSS
-- Comments explaining key logic
-- Best practices and patterns
+    console.log('📦 [Backend] Code generation request validated:', {
+      hasPRD: !!prdContent,
+      techStack: techStackStr,
+      featureName: featureNameStr,
+      prdLength: typeof prdContent === 'string' ? prdContent.length : JSON.stringify(prdContent).length,
+    });
 
-Provide the code in a structured JSON format with file paths and content.`,
+    // Build comprehensive prompt for code generation
+    const prompt = `You are a senior full-stack developer generating production-ready code based on a Product Requirements Document.
 
-      api: `Generate API endpoints for: ${specificFeature || projectName}
+CRITICAL REQUIREMENTS:
+- Generate production-ready, well-commented code
+- Follow best practices and industry standards
+- Include proper error handling
+- Use TypeScript for type safety
+- Include proper imports and exports
+- Code should be immediately usable
 
-Project: ${projectName}
-Description: ${idea}
-${techStack ? `Tech Stack: ${JSON.stringify(techStack)}` : ''}
+TECH STACK: ${techStackStr}
 
-Create production-ready API routes with:
-- Input validation
-- Error handling
-- Type safety
-- Authentication/authorization
-- Database operations
-- Response formatting
-- Comments
+FEATURE: ${featureNameStr}
 
-Provide multiple related API endpoints in a structured format.`,
+PRD CONTENT:
+${typeof prdContent === 'string' ? prdContent : JSON.stringify(prdContent, null, 2)}
 
-      database: `Generate database schema and models for: ${projectName}
+Generate a complete implementation as a JSON object with this structure:
 
-Project: ${projectName}
-Description: ${idea}
-${techStack ? `Tech Stack: ${JSON.stringify(techStack)}` : ''}
+{
+  "files": [
+    {
+      "path": "src/components/FeatureName.tsx",
+      "content": "// Complete React component code with TypeScript",
+      "type": "component"
+    },
+    {
+      "path": "src/app/api/feature-name/route.ts",
+      "content": "// Complete API route code",
+      "type": "api"
+    },
+    {
+      "path": "prisma/schema.prisma",
+      "content": "// Prisma schema definitions",
+      "type": "schema"
+    },
+    {
+      "path": "README.md",
+      "content": "// Setup and deployment instructions",
+      "type": "documentation"
+    }
+  ],
+  "structure": {
+    "frontend": {
+      "components": ["Component1.tsx", "Component2.tsx"],
+      "hooks": ["useFeature.ts"],
+      "utils": ["featureUtils.ts"]
+    },
+    "backend": {
+      "routes": ["api/feature/route.ts"],
+      "services": ["featureService.ts"],
+      "types": ["featureTypes.ts"]
+    },
+    "database": {
+      "tables": ["table_name"],
+      "migrations": ["migration_description"]
+    }
+  },
+  "dependencies": {
+    "npm": ["package1@version", "package2@version"],
+    "devDependencies": ["@types/package1@version"]
+  },
+  "setupInstructions": [
+    "Step 1: Install dependencies",
+    "Step 2: Set up environment variables",
+    "Step 3: Run database migrations",
+    "Step 4: Start development server"
+  ],
+  "environmentVariables": {
+    "DATABASE_URL": "postgresql://...",
+    "API_KEY": "your-api-key"
+  }
+}
 
-Create comprehensive database schema including:
-- Table definitions with proper types
-- Relationships and foreign keys
-- Indexes for performance
-- Constraints and validations
-- Sample data/migrations
-- ORM/query examples
+IMPORTANT:
+- Generate ALL necessary files for a complete implementation
+- Include frontend components with proper TypeScript types
+- Include backend API routes with error handling
+- Include database schema (Prisma format)
+- Include proper imports and exports
+- Add comments explaining complex logic
+- Include error handling and validation
+- Make code production-ready (not just examples)
+- Include a comprehensive README with setup steps
+- List all npm dependencies with versions
+- Include environment variable requirements
 
-Provide SQL and ORM code as needed.`,
+Return ONLY the JSON object, no markdown, no code blocks, no explanations.`;
 
-      fullstack: `Generate a complete full-stack boilerplate for: ${projectName}
-
-Project: ${projectName}
-Description: ${idea}
-${techStack ? `Tech Stack: ${JSON.stringify(techStack)}` : ''}
-
-Create a production-ready starter including:
-- Project structure
-- Frontend components (key pages/features)
-- Backend API routes
-- Database schema
-- Authentication setup
-- Configuration files
-- README with setup instructions
-- Environment variables template
-
-Provide all files in a structured format with clear organization.`,
-    };
-
+    console.log('🤖 [Backend] Calling Anthropic API for code generation...');
     const message = await anthropic.messages.create({
       model: 'claude-sonnet-4-5-20250929',
-      max_tokens: 8000,
-      temperature: 0.7,
+      max_tokens: 16000, // Large token limit for multiple files
+      temperature: 0.3, // Lower temperature for more consistent code
       messages: [
         {
           role: 'user',
-          content: prompts[codeType as keyof typeof prompts],
+          content: prompt,
         },
       ],
     });
+
+    const duration = Date.now() - startTime;
+    console.log(`✅ [Backend] Anthropic responded in ${duration}ms`);
 
     const responseText = message.content[0].type === 'text' 
       ? message.content[0].text 
       : '';
 
-    // Parse the code output
-    let codeOutput;
-    try {
-      codeOutput = JSON.parse(responseText);
-    } catch {
-      // If not JSON, structure it as a single file
-      codeOutput = {
-        files: [
-          {
-            path: `${codeType}.${techStack?.frontend?.framework === 'React' ? 'tsx' : 'js'}`,
-            content: responseText,
-            language: 'typescript',
-          },
-        ],
-      };
+    // Extract JSON from response
+    let jsonContent = responseText.trim();
+    
+    // Remove markdown code blocks if present
+    if (jsonContent.startsWith('```')) {
+      const lines = jsonContent.split('\n');
+      jsonContent = lines.slice(1, -1).join('\n');
     }
+    
+    // Parse JSON
+    let parsedContent;
+    try {
+      parsedContent = JSON.parse(jsonContent);
+    } catch (parseError) {
+      console.error('❌ [Backend] JSON parse error:', parseError);
+      const jsonMatch = jsonContent.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        try {
+          parsedContent = JSON.parse(jsonMatch[0]);
+        } catch (e) {
+          throw new Error('Failed to parse code generation JSON response');
+        }
+      } else {
+        throw new Error('No valid JSON found in response');
+      }
+    }
+
+    // Clean any accidental model references
+    const cleanObject = (obj: any): any => {
+      if (typeof obj === 'string') {
+        return obj
+          .replace(/#{1,6}\s*Model:?\s*[^\n]*/gi, '')
+          .replace(/#{1,6}\s*Generated by:?\s*[^\n]*/gi, '')
+          .replace(/Model:\s*claude[^\n]*/gi, '')
+          .replace(/Generated by Claude[^\n]*/gi, '')
+          .split('\n')
+          .filter((line) => !line.toLowerCase().includes('claude-sonnet'))
+          .join('\n')
+          .trim();
+      } else if (Array.isArray(obj)) {
+        return obj.map(cleanObject);
+      } else if (obj && typeof obj === 'object') {
+        const cleaned: any = {};
+        for (const key in obj) {
+          cleaned[key] = cleanObject(obj[key]);
+        }
+        return cleaned;
+      }
+      return obj;
+    };
+
+    const cleanedContent = cleanObject(parsedContent);
 
     return NextResponse.json({
       success: true,
-      data: {
-        codeType,
-        files: codeOutput.files || codeOutput,
-        metadata: {
-          projectName,
-          techStack,
-          generatedAt: new Date().toISOString(),
-          model: 'claude-sonnet-4-5',
-        },
+      code: cleanedContent,
+      metadata: {
+        featureName: featureNameStr,
+        generatedAt: new Date().toISOString(),
+        processingTime: duration,
+        filesCount: cleanedContent.files?.length || 0,
       },
     });
 
   } catch (error: any) {
-    console.error('Error generating code:', error);
+    const duration = Date.now() - startTime;
+    console.error('❌ [Backend] Code generation failed:', {
+      error: error?.message,
+      duration,
+      stack: error?.stack,
+    });
+
+    if (error?.status === 401) {
+      return NextResponse.json(
+        { success: false, error: 'API authentication failed' },
+        { status: 500 }
+      );
+    }
+
+    if (error?.status === 429) {
+      return NextResponse.json(
+        { success: false, error: 'Rate limit exceeded. Please try again later.' },
+        { status: 429 }
+      );
+    }
+
     return NextResponse.json(
       { 
         success: false, 
-        error: error.message || 'Failed to generate code' 
+        error: error?.message || 'Failed to generate code',
       },
       { status: 500 }
     );
