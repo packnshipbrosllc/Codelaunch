@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { SignInButton, SignUpButton, UserButton, useUser } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
@@ -8,10 +8,46 @@ import HeroSection from '@/components/sections/HeroSection';
 import { CodeLaunchIntegrations } from '@/components/CodeLaunchIntegrations';
 
 export default function LandingPage() {
-  const { isSignedIn } = useUser();
+  const { isSignedIn, isLoaded } = useUser();
   const router = useRouter();
   const [contactForm, setContactForm] = useState({ name: '', email: '', message: '' });
   const [checkoutLoading, setCheckoutLoading] = useState<'monthly' | 'yearly' | null>(null);
+  const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    if (isSignedIn && isLoaded) {
+      fetch('/api/user/onboarding-status')
+        .then(r => r.json())
+        .then(data => setHasCompletedOnboarding(data.completed))
+        .catch(() => setHasCompletedOnboarding(true)); // On error, allow through
+    }
+  }, [isSignedIn, isLoaded]);
+
+  const handleStartBuilding = async () => {
+    if (!isSignedIn) {
+      // Not logged in - go to sign up
+      router.push('/sign-up');
+      return;
+    }
+
+    // User is logged in - check onboarding status
+    try {
+      const response = await fetch('/api/user/onboarding-status');
+      const data = await response.json();
+
+      if (!data.completed) {
+        // Not completed onboarding - force them there
+        router.push('/onboarding');
+      } else {
+        // Completed onboarding - can use builder
+        router.push('/create');
+      }
+    } catch (error) {
+      console.error('Error checking onboarding:', error);
+      // On error, allow through to create
+      router.push('/create');
+    }
+  };
 
   const handleContactSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -87,9 +123,14 @@ export default function LandingPage() {
             <Link href="#contact" className="text-gray-300 hover:text-purple-400 transition-colors">
               Contact
             </Link>
-            {isSignedIn && (
+            {isSignedIn && hasCompletedOnboarding && (
               <Link href="/dashboard" className="text-gray-300 hover:text-purple-400 transition-colors">
                 Dashboard
+              </Link>
+            )}
+            {isSignedIn && !hasCompletedOnboarding && (
+              <Link href="/onboarding" className="text-gray-300 hover:text-purple-400 transition-colors">
+                Complete Setup
               </Link>
             )}
           </nav>
@@ -110,11 +151,19 @@ export default function LandingPage() {
               </>
             ) : (
               <>
-                <Link href="/dashboard">
-                  <button className="bg-purple-600 hover:bg-purple-500 text-white px-6 py-2 rounded-lg font-medium transition shadow-lg shadow-purple-600/20">
-                    Dashboard
-                  </button>
-                </Link>
+                {hasCompletedOnboarding ? (
+                  <Link href="/dashboard">
+                    <button className="bg-purple-600 hover:bg-purple-500 text-white px-6 py-2 rounded-lg font-medium transition shadow-lg shadow-purple-600/20">
+                      Dashboard
+                    </button>
+                  </Link>
+                ) : (
+                  <Link href="/onboarding">
+                    <button className="bg-purple-600 hover:bg-purple-500 text-white px-6 py-2 rounded-lg font-medium transition shadow-lg shadow-purple-600/20">
+                      Complete Setup
+                    </button>
+                  </Link>
+                )}
                 <UserButton 
                   afterSignOutUrl="/"
                   userProfileMode="navigation"
@@ -282,11 +331,12 @@ export default function LandingPage() {
                 </button>
               </SignUpButton>
             ) : (
-              <Link href="/dashboard">
-                <button className="bg-purple-600 hover:bg-purple-500 text-white px-8 py-3 rounded-lg font-semibold transition">
-                  Go to Dashboard
-                </button>
-              </Link>
+              <button
+                onClick={handleStartBuilding}
+                className="bg-purple-600 hover:bg-purple-500 text-white px-8 py-3 rounded-lg font-semibold transition"
+              >
+                {hasCompletedOnboarding ? 'Go to Dashboard' : 'Complete Setup'}
+              </button>
             )}
           </div>
         </div>
@@ -387,11 +437,12 @@ export default function LandingPage() {
                   </button>
                 </SignUpButton>
               ) : (
-                <Link href="/dashboard">
-                  <button className="w-full bg-gray-800 hover:bg-gray-700 text-white py-3 rounded-lg font-medium transition border border-purple-900/30">
-                    Go to Dashboard
-                  </button>
-                </Link>
+                <button
+                  onClick={handleStartBuilding}
+                  className="w-full bg-gray-800 hover:bg-gray-700 text-white py-3 rounded-lg font-medium transition border border-purple-900/30"
+                >
+                  {hasCompletedOnboarding ? 'Go to Dashboard' : 'Complete Setup'}
+                </button>
               )}
             </div>
 
@@ -666,8 +717,11 @@ export default function LandingPage() {
                 <ul className="space-y-2 text-gray-400 text-sm">
                   <li><Link href="#features" className="hover:text-purple-400 transition">Features</Link></li>
                   <li><Link href="#pricing" className="hover:text-purple-400 transition">Pricing</Link></li>
-                  {isSignedIn && (
+                  {isSignedIn && hasCompletedOnboarding && (
                     <li><Link href="/dashboard" className="hover:text-purple-400 transition">Dashboard</Link></li>
+                  )}
+                  {isSignedIn && !hasCompletedOnboarding && (
+                    <li><Link href="/onboarding" className="hover:text-purple-400 transition">Complete Setup</Link></li>
                   )}
                 </ul>
               </div>

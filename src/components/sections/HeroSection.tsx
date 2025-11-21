@@ -4,9 +4,47 @@ import { DisplayCards } from '@/components/DisplayCards';
 import Starfield from '@/components/Starfield';
 import Link from 'next/link';
 import { useUser, SignUpButton } from '@clerk/nextjs';
+import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
 
 export default function HeroSection() {
-  const { isSignedIn } = useUser();
+  const { isSignedIn, isLoaded } = useUser();
+  const router = useRouter();
+  const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    if (isSignedIn && isLoaded) {
+      fetch('/api/user/onboarding-status')
+        .then(r => r.json())
+        .then(data => setHasCompletedOnboarding(data.completed))
+        .catch(() => setHasCompletedOnboarding(true)); // On error, allow through
+    }
+  }, [isSignedIn, isLoaded]);
+
+  const handleStartBuilding = async () => {
+    if (!isSignedIn) {
+      // Not logged in - SignUpButton will handle it
+      return;
+    }
+
+    // User is logged in - check onboarding status
+    try {
+      const response = await fetch('/api/user/onboarding-status');
+      const data = await response.json();
+
+      if (!data.completed) {
+        // Not completed onboarding - force them there
+        router.push('/onboarding');
+      } else {
+        // Completed onboarding - can use builder
+        router.push('/create');
+      }
+    } catch (error) {
+      console.error('Error checking onboarding:', error);
+      // On error, allow through to create
+      router.push('/create');
+    }
+  };
 
   return (
     <section className="relative min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8 pt-24 pb-16 overflow-hidden">
@@ -67,13 +105,13 @@ export default function HeroSection() {
                   </button>
                 </SignUpButton>
               ) : (
-                <Link
-                  href="/create"
+                <button
+                  onClick={handleStartBuilding}
                   className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl font-bold text-lg text-white shadow-lg shadow-purple-500/50 hover:shadow-purple-500/70 hover:scale-105 transition-all duration-200"
                 >
                   Start Building Free
                   <span>→</span>
-                </Link>
+                </button>
               )}
               <button className="px-8 py-4 bg-white/5 backdrop-blur-sm border-2 border-purple-500/30 rounded-xl font-bold text-lg text-white hover:bg-purple-500/10 hover:border-purple-500/50 transition-all duration-200">
                 Watch Demo

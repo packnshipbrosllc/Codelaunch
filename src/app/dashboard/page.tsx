@@ -24,8 +24,6 @@ interface Project {
 export default function DashboardPage() {
   const router = useRouter();
   const { user, isLoaded } = useUser();
-  const [isCheckingOnboarding, setIsCheckingOnboarding] = useState(true);
-  const [onboardingChecked, setOnboardingChecked] = useState(false);
   
   const [projects, setProjects] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -33,49 +31,12 @@ export default function DashboardPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'recent' | 'name' | 'created'>('recent');
 
-  // CRITICAL: Check onboarding status IMMEDIATELY on mount - before any content renders
+  // Middleware handles onboarding redirect, so we just need to fetch projects
   useEffect(() => {
-    const checkOnboarding = async () => {
-      // Wait for Clerk to load
-      if (!isLoaded) return;
-
-      // If not authenticated, redirect to sign-in
-      if (!user) {
-        router.push('/sign-in');
-        return;
-      }
-
-      // Check onboarding status immediately
-      try {
-        const response = await fetch('/api/user/onboarding-status');
-        const data = await response.json();
-
-        if (!data.completed) {
-          // Redirect to onboarding IMMEDIATELY - don't wait
-          router.replace('/onboarding');
-          return;
-        }
-
-        // Onboarding complete - allow dashboard to render
-        setOnboardingChecked(true);
-        setIsCheckingOnboarding(false);
-      } catch (error) {
-        console.error('Error checking onboarding:', error);
-        // On error, allow through (graceful degradation)
-        setOnboardingChecked(true);
-        setIsCheckingOnboarding(false);
-      }
-    };
-
-    checkOnboarding();
-  }, [isLoaded, user, router]);
-
-  // Only fetch projects after onboarding check is complete
-  useEffect(() => {
-    if (onboardingChecked && user && isLoaded) {
+    if (isLoaded && user) {
       fetchProjects();
     }
-  }, [onboardingChecked, user, isLoaded]);
+  }, [isLoaded, user]);
 
   const fetchProjects = async () => {
     try {
@@ -161,8 +122,7 @@ export default function DashboardPage() {
     }
   };
 
-  // CRITICAL: Show loading state while checking onboarding - prevent any dashboard content from rendering
-  if (!isLoaded || isCheckingOnboarding || !onboardingChecked) {
+  if (!isLoaded || !user) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-black flex items-center justify-center">
         <div className="text-center">

@@ -36,6 +36,12 @@ export default clerkMiddleware(async (auth, req) => {
     return NextResponse.next();
   }
 
+  // Allow onboarding API routes to be accessed (needed for checking status)
+  const url = new URL(req.url);
+  if (url.pathname.startsWith('/api/user/onboarding')) {
+    return NextResponse.next();
+  }
+
   // For all other routes, check onboarding status
   try {
     const onboardingStatusUrl = new URL('/api/user/onboarding-status', req.url);
@@ -49,7 +55,7 @@ export default clerkMiddleware(async (auth, req) => {
       const data = await response.json();
       
       // If onboarding not completed, redirect to onboarding
-      if (!data.onboardingCompleted) {
+      if (!data.completed) {
         const onboardingUrl = new URL('/onboarding', req.url);
         return NextResponse.redirect(onboardingUrl);
       }
