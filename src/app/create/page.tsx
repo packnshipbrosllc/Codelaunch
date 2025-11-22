@@ -44,84 +44,22 @@ function CreateProjectPageContent() {
   
   // Ref to track if we've already processed the URL param (prevent infinite loop)
   const hasProcessedUrlParam = useRef(false);
-  const hasProcessedOnboardingParam = useRef(false);
+  const [fromOnboarding, setFromOnboarding] = useState(false);
 
   // Debug logging at component render
   console.log('🔍 CREATE PAGE RENDER - mindmapData exists:', !!mindmapData);
   console.log('🔍 CREATE PAGE RENDER - searchParams:', searchParams.toString());
 
-  // Check for onboarding auto-generate (from onboarding flow)
+  // Pre-fill idea from URL params (from onboarding flow)
   useEffect(() => {
-    // Only process once (prevent infinite loop)
-    if (hasProcessedOnboardingParam.current) {
-      return;
-    }
-
     const ideaParam = searchParams.get('idea');
-    const autoGenerate = searchParams.get('autoGenerate');
-
-    if (ideaParam && autoGenerate === 'true') {
-      hasProcessedOnboardingParam.current = true; // Mark as processed immediately
-      console.log('🚀 Onboarding auto-generate detected, idea:', ideaParam);
-      
-      // Auto-fill the idea field
+    if (ideaParam && !idea) {
       const decodedIdea = decodeURIComponent(ideaParam);
       setIdea(decodedIdea);
-      
-      // Auto-trigger generation after a small delay so user sees the transition
-      const timeoutId = setTimeout(() => {
-        console.log('🚀 Auto-triggering generation from onboarding');
-        const ideaToUse = decodedIdea.trim();
-        
-        if (!ideaToUse) {
-          console.error('Empty idea after decode');
-          return;
-        }
-
-        // Check limit
-        if (!canCreateMore) {
-          setError('You\'ve reached your free mindmap limit. Please upgrade to Pro to continue creating mindmaps.');
-          return;
-        }
-
-        setIsGenerating(true);
-        setError('');
-
-        // Generate the mindmap
-        fetch('/api/generate-mindmap', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ idea: ideaToUse }),
-        })
-          .then(async response => {
-            const result = await response.json();
-            
-            // Handle limit reached error from API
-            if (response.status === 403 && result.error === 'FREE_LIMIT_REACHED') {
-              setError(result.message || 'You\'ve reached your free mindmap limit. Please upgrade to Pro.');
-              setIsGenerating(false);
-              return;
-            }
-
-            if (!response.ok || !result.success) {
-              throw new Error(result.error || 'Failed to generate mindmap');
-            }
-
-            // Success! Show mindmap
-            console.log('✅ Mindmap generated successfully from onboarding');
-            setMindmapData(result.data);
-            setIsGenerating(false);
-          })
-          .catch(err => {
-            console.error('❌ Error generating mindmap:', err);
-            setError(err.message || 'Failed to generate mindmap. Please try again.');
-            setIsGenerating(false);
-          });
-      }, 800); // Slightly longer delay to ensure page is fully loaded
-
-      return () => clearTimeout(timeoutId);
+      setFromOnboarding(true); // Flag that they came from onboarding
+      console.log('📝 Pre-filled idea from onboarding:', decodedIdea);
     }
-  }, [searchParams, canCreateMore]); // Removed mindmapData and isGenerating from dependencies to prevent blocking
+  }, [searchParams]); // Only depend on searchParams
 
   // Check for mindmap data from query params (from new-project page)
   useEffect(() => {
@@ -444,6 +382,15 @@ function CreateProjectPageContent() {
                 </p>
               </div>
 
+              {/* Show special message if from onboarding */}
+              {fromOnboarding && (
+                <div className="mb-6 text-center">
+                  <p className="text-purple-400 mb-2 animate-pulse text-lg font-medium">
+                    ✨ Your idea is ready! Click below to generate your mindmap:
+                  </p>
+                </div>
+              )}
+
               <form onSubmit={(e) => {
                 e.preventDefault();
                 const formData = new FormData(e.currentTarget);
@@ -465,13 +412,26 @@ function CreateProjectPageContent() {
                       required
                     />
                   </div>
-                  <div className="px-4 pb-4 border-t border-white/[0.05] pt-4 flex justify-end">
+                  <div className="px-4 pb-4 border-t border-white/[0.05] pt-4 flex justify-center">
                     <button
                       type="submit"
-                      disabled={isGenerating}
-                      className="px-6 py-3 rounded-lg text-sm font-medium transition-all bg-white text-black hover:bg-gray-100 disabled:bg-white/20 disabled:text-white/40 disabled:cursor-not-allowed"
+                      disabled={isGenerating || !idea.trim()}
+                      className={`px-8 py-4 rounded-xl font-bold text-lg transition-all ${
+                        fromOnboarding
+                          ? 'bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white shadow-lg shadow-purple-500/50 hover:shadow-purple-500/70 hover:scale-105 animate-pulse'
+                          : 'bg-white text-black hover:bg-gray-100'
+                      } disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:animate-none`}
                     >
-                      {isGenerating ? 'Generating...' : 'Generate Mindmap'}
+                      {isGenerating ? (
+                        <>
+                          <span className="inline-block w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin mr-2"></span>
+                          Generating...
+                        </>
+                      ) : fromOnboarding ? (
+                        '🚀 Generate My First Mindmap'
+                      ) : (
+                        'Generate Mindmap'
+                      )}
                     </button>
                   </div>
                 </div>
