@@ -25,15 +25,17 @@ function DisplayCard({
     <div
       className={cn(
         // Base card styling with glass morphism
-        "relative flex h-48 w-[22rem] select-none flex-col justify-between rounded-2xl border-2 px-6 py-6 transition-all duration-500",
+        "relative flex h-48 w-[22rem] select-none flex-col justify-between rounded-2xl border-2 px-6 py-6 transition-all duration-500 ease-out",
         // Glass effect
         "backdrop-blur-xl",
         // Shadow and glow
         "shadow-xl",
-        // Hover effects
+        // Hover effects - scale and rotation support
         "hover:scale-105 hover:shadow-2xl",
+        // Z-index support for hover
+        "z-10 hover:z-50",
         // Gradient overlay for grayscale effect
-        "before:absolute before:inset-0 before:rounded-2xl before:bg-gradient-to-br before:from-gray-900/50 before:to-transparent before:opacity-100 hover:before:opacity-0 before:transition-opacity before:duration-700",
+        "before:absolute before:inset-0 before:rounded-2xl before:bg-gradient-to-br before:from-gray-900/50 before:to-transparent before:opacity-100 hover:before:opacity-0 before:transition-opacity before:duration-500 before:pointer-events-none",
         // Grayscale to color transition
         "grayscale hover:grayscale-0",
         className

@@ -57,38 +57,95 @@ export default function HeroSection() {
         {/* Top Section - Headline with DisplayCards on the side */}
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center mb-16">
           {/* Left: DisplayCards */}
-          <div className="hidden lg:flex justify-center animate-[fadeUp_1s_ease-out_0.5s_both]">
-            <DisplayCards 
-              cards={[
-                {
-                  icon: <Network className="w-6 h-6 text-purple-400" />,
-                  title: "AI Mindmaps",
-                  description: "Visualize your entire app architecture. Every feature, flow, and dependency mapped instantly with AI-powered planning.",
-                  date: "Core Feature",
-                  iconClassName: "text-purple-400",
-                  titleClassName: "text-purple-400",
-                  className: "[grid-area:stack] hover:-translate-y-10 border-purple-500/30 bg-gradient-to-br from-gray-900/90 via-purple-900/50 to-black/90 shadow-purple-500/20 hover:shadow-purple-500/40 hover:border-purple-500",
-                },
-                {
-                  icon: <FileText className="w-6 h-6 text-pink-400" />,
-                  title: "PRD Generation",
-                  description: "Production-ready documentation with detailed user stories, API specifications, database schemas, and implementation roadmaps.",
-                  date: "Core Feature",
-                  iconClassName: "text-pink-400",
-                  titleClassName: "text-pink-400",
-                  className: "[grid-area:stack] translate-x-16 translate-y-10 hover:-translate-y-1 border-pink-500/30 bg-gradient-to-br from-gray-900/90 via-pink-900/50 to-black/90 shadow-pink-500/20 hover:shadow-pink-500/40 hover:border-pink-500",
-                },
-                {
-                  icon: <Code className="w-6 h-6 text-blue-400" />,
-                  title: "Code Generation",
-                  description: "Full-stack Next.js application with authentication, database integration, UI components, and API routes. Export to any editor.",
-                  date: "Core Feature",
-                  iconClassName: "text-blue-400",
-                  titleClassName: "text-blue-400",
-                  className: "[grid-area:stack] translate-x-32 translate-y-20 hover:translate-y-10 border-blue-500/30 bg-gradient-to-br from-gray-900/90 via-blue-900/50 to-black/90 shadow-blue-500/20 hover:shadow-blue-500/40 hover:border-blue-500",
-                },
-              ]}
-            />
+          <div className="relative z-20">
+            {/* Desktop: Stacked cards with fan spread effect */}
+            <div className="hidden md:flex justify-center animate-[fadeUp_1s_ease-out_0.5s_both]">
+              <DisplayCards 
+                cards={[
+                  {
+                    icon: <Network className="w-6 h-6 text-purple-400" />,
+                    title: "AI Mindmaps",
+                    description: "Visualize your entire app architecture. Every feature, flow, and dependency mapped instantly.",
+                    date: "Core Feature",
+                    iconClassName: "text-purple-400",
+                    titleClassName: "text-purple-400",
+                    className:
+                      // Base position: leftmost
+                      "[grid-area:stack] -translate-x-8 translate-y-2" +
+                      // Hover this card: move left and up
+                      " hover:-translate-x-64 hover:-translate-y-12 hover:rotate-[-8deg] hover:z-50" +
+                      // Styling
+                      " border-purple-500/30 bg-gradient-to-br from-gray-900/90 via-purple-900/50 to-black/90 shadow-purple-500/20 hover:shadow-purple-500/50 hover:border-purple-500 hover:shadow-2xl" +
+                      // Grayscale effect
+                      " before:absolute before:inset-0 before:rounded-2xl before:bg-gray-900/70 before:opacity-100 hover:before:opacity-0 before:transition-opacity before:duration-500 grayscale hover:grayscale-0",
+                  },
+                  {
+                    icon: <FileText className="w-6 h-6 text-pink-400" />,
+                    title: "PRD Generation",
+                    description: "Production-ready documentation with user stories, API specs, and database schemas.",
+                    date: "Core Feature",
+                    iconClassName: "text-pink-400",
+                    titleClassName: "text-pink-400",
+                    className:
+                      // Base position: center
+                      "[grid-area:stack] translate-x-8 translate-y-12" +
+                      // Hover this card: minimal movement (stays center)
+                      " hover:translate-x-8 hover:-translate-y-8 hover:z-50" +
+                      // Styling
+                      " border-pink-500/30 bg-gradient-to-br from-gray-900/90 via-pink-900/50 to-black/90 shadow-pink-500/20 hover:shadow-pink-500/50 hover:border-pink-500 hover:shadow-2xl" +
+                      // Grayscale effect
+                      " before:absolute before:inset-0 before:rounded-2xl before:bg-gray-900/70 before:opacity-100 hover:before:opacity-0 before:transition-opacity before:duration-500 grayscale hover:grayscale-0",
+                  },
+                  {
+                    icon: <Code className="w-6 h-6 text-blue-400" />,
+                    title: "Code Generation",
+                    description: "Full-stack Next.js with auth, database, UI components. Export to any editor.",
+                    date: "Core Feature",
+                    iconClassName: "text-blue-400",
+                    titleClassName: "text-blue-400",
+                    className:
+                      // Base position: rightmost
+                      "[grid-area:stack] translate-x-24 translate-y-22" +
+                      // Hover this card: move right and down
+                      " hover:translate-x-80 hover:translate-y-12 hover:rotate-[8deg] hover:z-50" +
+                      // Styling
+                      " border-blue-500/30 bg-gradient-to-br from-gray-900/90 via-blue-900/50 to-black/90 shadow-blue-500/20 hover:shadow-blue-500/50 hover:border-blue-500 hover:shadow-2xl" +
+                      // Grayscale effect
+                      " before:absolute before:inset-0 before:rounded-2xl before:bg-gray-900/70 before:opacity-100 hover:before:opacity-0 before:transition-opacity before:duration-500 grayscale hover:grayscale-0",
+                  },
+                ]}
+              />
+            </div>
+
+            {/* Mobile: Simple grid */}
+            <div className="md:hidden max-w-6xl mx-auto px-4 grid grid-cols-1 gap-4 animate-[fadeUp_1s_ease-out_0.5s_both]">
+              {/* Card 1: AI Mindmaps */}
+              <div className="bg-gradient-to-br from-gray-900/90 via-purple-900/50 to-black/90 backdrop-blur-xl border border-purple-500/30 rounded-2xl p-6 shadow-xl shadow-purple-500/20">
+                <div className="w-12 h-12 bg-purple-500/20 rounded-xl flex items-center justify-center mb-4 border border-purple-500/30">
+                  <Network className="w-6 h-6 text-purple-400" />
+                </div>
+                <h3 className="text-xl font-bold text-white mb-2">AI Mindmaps</h3>
+                <p className="text-gray-300 text-sm leading-relaxed">Visualize your entire app architecture. Every feature, flow, and dependency mapped instantly.</p>
+              </div>
+
+              {/* Card 2: PRD Generation */}
+              <div className="bg-gradient-to-br from-gray-900/90 via-pink-900/50 to-black/90 backdrop-blur-xl border border-pink-500/30 rounded-2xl p-6 shadow-xl shadow-pink-500/20">
+                <div className="w-12 h-12 bg-pink-500/20 rounded-xl flex items-center justify-center mb-4 border border-pink-500/30">
+                  <FileText className="w-6 h-6 text-pink-400" />
+                </div>
+                <h3 className="text-xl font-bold text-white mb-2">PRD Generation</h3>
+                <p className="text-gray-300 text-sm leading-relaxed">Production-ready documentation with user stories, API specs, and database schemas.</p>
+              </div>
+
+              {/* Card 3: Code Generation */}
+              <div className="bg-gradient-to-br from-gray-900/90 via-blue-900/50 to-black/90 backdrop-blur-xl border border-blue-500/30 rounded-2xl p-6 shadow-xl shadow-blue-500/20">
+                <div className="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center mb-4 border border-blue-500/30">
+                  <Code className="w-6 h-6 text-blue-400" />
+                </div>
+                <h3 className="text-xl font-bold text-white mb-2">Code Generation</h3>
+                <p className="text-gray-300 text-sm leading-relaxed">Full-stack Next.js with auth, database, UI components. Export to any editor.</p>
+              </div>
+            </div>
           </div>
 
           {/* Right: Headline and CTAs */}
