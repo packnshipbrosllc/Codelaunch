@@ -1,13 +1,13 @@
 'use client';
 
-import { DisplayCards } from '@/components/DisplayCards';
 import Starfield from '@/components/Starfield';
 import HeroMockup from '@/components/sections/HeroMockup';
+import DisplayCards from '@/components/ui/display-cards';
 import Link from 'next/link';
 import { useUser, SignUpButton } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import { Network, FileText, Code } from 'lucide-react';
+import { Network, FileText, Code, Sparkles } from 'lucide-react';
 
 export default function HeroSection() {
   const { isSignedIn, isLoaded } = useUser();
@@ -54,36 +54,74 @@ export default function HeroSection() {
       <Starfield />
       
       <div className="relative z-10 max-w-7xl mx-auto w-full">
-        {/* Top Section - Headline and CTAs */}
-        <div className="text-center mb-16 animate-[fadeUp_1s_ease-out_0.3s_both]">
-          {/* Badge */}
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-purple-600/10 border border-purple-600/30 rounded-full text-sm text-purple-400 mb-6 backdrop-blur-sm">
-            🚀 AI-Powered App Development
+        {/* Top Section - Headline with DisplayCards on the side */}
+        <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center mb-16">
+          {/* Left: DisplayCards */}
+          <div className="hidden lg:flex justify-center animate-[fadeUp_1s_ease-out_0.5s_both]">
+            <DisplayCards 
+              cards={[
+                {
+                  icon: <Network className="size-4 text-purple-300" />,
+                  title: "AI Mindmaps",
+                  description: "Visualize your entire app architecture",
+                  date: "Step 1 • 1-2 days",
+                  iconClassName: "text-purple-500",
+                  titleClassName: "text-purple-400",
+                  className: "[grid-area:stack] hover:-translate-y-10 before:absolute before:w-[100%] before:outline-1 before:rounded-xl before:outline-border before:h-[100%] before:content-[''] before:bg-blend-overlay before:bg-gray-950/50 grayscale-[100%] hover:before:opacity-0 before:transition-opacity before:duration:700 hover:grayscale-0 before:left-0 before:top-0",
+                },
+                {
+                  icon: <FileText className="size-4 text-pink-300" />,
+                  title: "PRD Generation",
+                  description: "Production-ready documentation",
+                  date: "Step 2 • 3-5 days",
+                  iconClassName: "text-pink-500",
+                  titleClassName: "text-pink-400",
+                  className: "[grid-area:stack] translate-x-16 translate-y-10 hover:-translate-y-1 before:absolute before:w-[100%] before:outline-1 before:rounded-xl before:outline-border before:h-[100%] before:content-[''] before:bg-blend-overlay before:bg-gray-950/50 grayscale-[100%] hover:before:opacity-0 before:transition-opacity before:duration:700 hover:grayscale-0 before:left-0 before:top-0",
+                },
+                {
+                  icon: <Code className="size-4 text-blue-300" />,
+                  title: "Code Generation",
+                  description: "Full-stack Next.js app ready",
+                  date: "Step 3 • 1-2 weeks",
+                  iconClassName: "text-blue-500",
+                  titleClassName: "text-blue-400",
+                  className: "[grid-area:stack] translate-x-32 translate-y-20 hover:translate-y-10",
+                },
+              ]}
+            />
           </div>
 
-          {/* Rocket Icon */}
-          <div className="text-6xl sm:text-8xl mb-6 inline-block animate-[fadeUp_1s_ease-out_0.5s_both,rocketFloat_3s_ease-in-out_1.5s_infinite]">
-            🚀
-          </div>
+          {/* Right: Headline and CTAs */}
+          <div className="text-center lg:text-left animate-[fadeUp_1s_ease-out_0.3s_both]">
+            {/* Badge */}
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-purple-600/10 border border-purple-600/30 rounded-full text-sm text-purple-400 mb-6 backdrop-blur-sm">
+              🚀 AI-Powered App Development
+            </div>
 
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-black mb-6 leading-tight">
-            <span className="bg-gradient-to-r from-white via-purple-200 to-purple-400 bg-clip-text text-transparent">
-              Turn Ideas Into Code
-            </span>
-          </h1>
+            {/* Rocket Icon */}
+            <div className="text-6xl sm:text-8xl mb-6 inline-block animate-[fadeUp_1s_ease-out_0.5s_both,rocketFloat_3s_ease-in-out_1.5s_infinite]">
+              🚀
+            </div>
 
-          <p className="text-lg sm:text-xl text-gray-400 mb-4 max-w-3xl mx-auto">
-            AI-powered workflow: Mindmap → PRD → Full-stack code in weeks
-          </p>
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-black mb-6 leading-tight">
+              <span className="bg-gradient-to-r from-white via-purple-200 to-purple-400 bg-clip-text text-transparent">
+                Turn Ideas Into Code
+              </span>
+            </h1>
 
-          <p className="text-base sm:text-lg text-gray-500 mb-8 max-w-3xl mx-auto">
-            No dev team. No 6-month wait. Just production-ready code.
-          </p>
+            <p className="text-lg sm:text-xl text-gray-400 mb-4 lg:max-w-2xl">
+              AI-powered workflow: Mindmap → PRD → Full-stack code in weeks
+            </p>
 
-          {/* Trust Badge */}
-          <div className="text-sm text-gray-500 flex items-center gap-2 justify-center mb-8">
-            <span className="text-purple-500">✓</span>
-            3 free mindmaps • No credit card required
+            <p className="text-base sm:text-lg text-gray-500 mb-8 lg:max-w-2xl">
+              No dev team. No 6-month wait. Just production-ready code.
+            </p>
+
+            {/* Trust Badge */}
+            <div className="text-sm text-gray-500 flex items-center gap-2 justify-center lg:justify-start mb-8">
+              <span className="text-purple-500">✓</span>
+              3 free mindmaps • No credit card required
+            </div>
           </div>
         </div>
 
@@ -92,43 +130,6 @@ export default function HeroSection() {
           <HeroMockup />
         </div>
 
-        {/* Three Floating Feature Cards - Overlapping Mockup */}
-        <div className="relative -mt-8 md:-mt-32 mb-16 animate-[fadeUp_1s_ease-out_1.2s_both]">
-          <div className="max-w-6xl mx-auto px-4 grid md:grid-cols-3 gap-6">
-            {/* Card 1: AI Mindmaps */}
-            <div className="group bg-gradient-to-br from-gray-900/90 via-purple-900/50 to-black/90 backdrop-blur-xl border border-purple-500/30 rounded-2xl p-6 hover:border-purple-500 hover:scale-105 transition-all duration-300 shadow-xl shadow-purple-500/10 hover:shadow-purple-500/20">
-              <div className="w-12 h-12 bg-purple-500/20 rounded-xl flex items-center justify-center mb-4 group-hover:bg-purple-500/30 transition-colors">
-                <Network className="w-6 h-6 text-purple-400" />
-              </div>
-              <h3 className="text-xl font-bold text-white mb-2">AI Mindmaps</h3>
-              <p className="text-gray-400 text-sm leading-relaxed">
-                Visualize your entire app architecture. Every feature, flow, and dependency mapped instantly.
-              </p>
-            </div>
-
-            {/* Card 2: PRD Generation */}
-            <div className="group bg-gradient-to-br from-gray-900/90 via-purple-900/50 to-black/90 backdrop-blur-xl border border-purple-500/30 rounded-2xl p-6 hover:border-purple-500 hover:scale-105 transition-all duration-300 shadow-xl shadow-purple-500/10 hover:shadow-purple-500/20">
-              <div className="w-12 h-12 bg-pink-500/20 rounded-xl flex items-center justify-center mb-4 group-hover:bg-pink-500/30 transition-colors">
-                <FileText className="w-6 h-6 text-pink-400" />
-              </div>
-              <h3 className="text-xl font-bold text-white mb-2">PRD Generation</h3>
-              <p className="text-gray-400 text-sm leading-relaxed">
-                Production-ready documentation with user stories, API specs, and database schemas.
-              </p>
-            </div>
-
-            {/* Card 3: Code Generation */}
-            <div className="group bg-gradient-to-br from-gray-900/90 via-purple-900/50 to-black/90 backdrop-blur-xl border border-purple-500/30 rounded-2xl p-6 hover:border-purple-500 hover:scale-105 transition-all duration-300 shadow-xl shadow-purple-500/10 hover:shadow-purple-500/20">
-              <div className="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center mb-4 group-hover:bg-blue-500/30 transition-colors">
-                <Code className="w-6 h-6 text-blue-400" />
-              </div>
-              <h3 className="text-xl font-bold text-white mb-2">Code Generation</h3>
-              <p className="text-gray-400 text-sm leading-relaxed">
-                Full-stack Next.js app with auth, database, and UI components. Export to any editor.
-              </p>
-            </div>
-          </div>
-        </div>
 
         {/* Bottom CTA Section */}
         <div className="text-center animate-[fadeUp_1s_ease-out_1.4s_both]">
