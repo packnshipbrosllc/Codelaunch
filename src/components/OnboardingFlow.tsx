@@ -7,7 +7,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
 import DemoMindmapDisplay from '@/components/DemoMindmapDisplay';
-import { Rocket, Lightbulb, CheckCircle2, ArrowRight } from 'lucide-react';
+import { Sparkles, Rocket, Lightbulb, CheckCircle2, ArrowRight } from 'lucide-react';
 
 type OnboardingStep = 'welcome' | 'demo';
 
