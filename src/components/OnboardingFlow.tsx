@@ -46,16 +46,8 @@ export default function OnboardingFlow() {
     await handleCompleteOnboarding('/create');
   };
 
-  const handleStartBuilding = async () => {
-    // Mark onboarding complete and redirect to /create
-    try {
-      await fetch('/api/user/complete-onboarding', {
-        method: 'POST',
-      });
-    } catch (error) {
-      console.error('Error completing onboarding:', error);
-      // Continue anyway - non-critical
-    }
+  const handleStartBuilding = () => {
+    // Just redirect to /create - that's it!
     router.push('/create');
   };
 
