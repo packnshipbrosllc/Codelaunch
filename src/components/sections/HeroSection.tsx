@@ -70,14 +70,15 @@ export default function HeroSection() {
                     iconClassName: "text-purple-400",
                     titleClassName: "text-purple-400",
                     className:
-                      // Base position: leftmost
-                      "[grid-area:stack] -translate-x-8 translate-y-2" +
-                      // Hover this card: move left and up
-                      " hover:-translate-x-64 hover:-translate-y-12 hover:rotate-[-8deg] hover:z-50" +
+                      // Base position: bottom of stack
+                      "[grid-area:stack]" +
+                      // Hover: lift up dramatically
+                      " hover:-translate-y-32 hover:z-50" +
                       // Styling
-                      " border-purple-500/30 bg-gradient-to-br from-gray-900/90 via-purple-900/50 to-black/90 shadow-purple-500/20 hover:shadow-purple-500/50 hover:border-purple-500 hover:shadow-2xl" +
-                      // Grayscale effect
-                      " before:absolute before:inset-0 before:rounded-2xl before:bg-gray-900/70 before:opacity-100 hover:before:opacity-0 before:transition-opacity before:duration-500 grayscale hover:grayscale-0",
+                      " border-purple-500/30 bg-gradient-to-br from-gray-900/90 via-purple-900/50 to-black/90 shadow-xl shadow-purple-500/20 hover:shadow-2xl hover:shadow-purple-500/40 hover:border-purple-500" +
+                      // Grayscale overlay
+                      " before:absolute before:inset-0 before:rounded-2xl before:bg-gray-900/60 before:opacity-100 hover:before:opacity-0 before:transition-opacity before:duration-500 before:pointer-events-none" +
+                      " grayscale hover:grayscale-0 transition-all duration-500",
                   },
                   {
                     icon: <FileText className="w-6 h-6 text-pink-400" />,
@@ -87,14 +88,15 @@ export default function HeroSection() {
                     iconClassName: "text-pink-400",
                     titleClassName: "text-pink-400",
                     className:
-                      // Base position: center
-                      "[grid-area:stack] translate-x-8 translate-y-12" +
-                      // Hover this card: minimal movement (stays center)
-                      " hover:translate-x-8 hover:-translate-y-8 hover:z-50" +
+                      // Base position: middle of stack
+                      "[grid-area:stack] translate-x-12 translate-y-8" +
+                      // Hover: lift up medium
+                      " hover:translate-x-12 hover:-translate-y-16 hover:z-50" +
                       // Styling
-                      " border-pink-500/30 bg-gradient-to-br from-gray-900/90 via-pink-900/50 to-black/90 shadow-pink-500/20 hover:shadow-pink-500/50 hover:border-pink-500 hover:shadow-2xl" +
-                      // Grayscale effect
-                      " before:absolute before:inset-0 before:rounded-2xl before:bg-gray-900/70 before:opacity-100 hover:before:opacity-0 before:transition-opacity before:duration-500 grayscale hover:grayscale-0",
+                      " border-pink-500/30 bg-gradient-to-br from-gray-900/90 via-pink-900/50 to-black/90 shadow-xl shadow-pink-500/20 hover:shadow-2xl hover:shadow-pink-500/40 hover:border-pink-500" +
+                      // Grayscale overlay
+                      " before:absolute before:inset-0 before:rounded-2xl before:bg-gray-900/60 before:opacity-100 hover:before:opacity-0 before:transition-opacity before:duration-500 before:pointer-events-none" +
+                      " grayscale hover:grayscale-0 transition-all duration-500",
                   },
                   {
                     icon: <Code className="w-6 h-6 text-blue-400" />,
@@ -104,14 +106,15 @@ export default function HeroSection() {
                     iconClassName: "text-blue-400",
                     titleClassName: "text-blue-400",
                     className:
-                      // Base position: rightmost
-                      "[grid-area:stack] translate-x-24 translate-y-22" +
-                      // Hover this card: move right and down
-                      " hover:translate-x-80 hover:translate-y-12 hover:rotate-[8deg] hover:z-50" +
+                      // Base position: top of stack
+                      "[grid-area:stack] translate-x-24 translate-y-16" +
+                      // Hover: lift up slightly (already at top)
+                      " hover:translate-x-24 hover:translate-y-4 hover:z-50" +
                       // Styling
-                      " border-blue-500/30 bg-gradient-to-br from-gray-900/90 via-blue-900/50 to-black/90 shadow-blue-500/20 hover:shadow-blue-500/50 hover:border-blue-500 hover:shadow-2xl" +
-                      // Grayscale effect
-                      " before:absolute before:inset-0 before:rounded-2xl before:bg-gray-900/70 before:opacity-100 hover:before:opacity-0 before:transition-opacity before:duration-500 grayscale hover:grayscale-0",
+                      " border-blue-500/30 bg-gradient-to-br from-gray-900/90 via-blue-900/50 to-black/90 shadow-xl shadow-blue-500/20 hover:shadow-2xl hover:shadow-blue-500/40 hover:border-blue-500" +
+                      // Grayscale overlay
+                      " before:absolute before:inset-0 before:rounded-2xl before:bg-gray-900/60 before:opacity-100 hover:before:opacity-0 before:transition-opacity before:duration-500 before:pointer-events-none" +
+                      " grayscale hover:grayscale-0 transition-all duration-500",
                   },
                 ]}
               />
