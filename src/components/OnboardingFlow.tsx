@@ -154,7 +154,7 @@ export default function OnboardingFlow() {
 
           <div className="flex justify-center gap-4 mt-8">
                 <button
-              onClick={handleStartBuilding}
+              onClick={() => window.location.href = '/create'}
               className="px-8 py-4 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-semibold rounded-xl transition-all transform hover:scale-105 flex items-center gap-2"
             >
               Start Building
