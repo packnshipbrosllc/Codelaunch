@@ -43,6 +43,8 @@ export default clerkMiddleware(async (auth, req) => {
   }
 
   // For all other routes, check onboarding status
+  // COMMENTED OUT - Bypassing onboarding check to allow access to /create
+  /*
   try {
     const onboardingStatusUrl = new URL('/api/user/onboarding-status', req.url);
     const response = await fetch(onboardingStatusUrl, {
@@ -64,6 +66,7 @@ export default clerkMiddleware(async (auth, req) => {
     console.error('Error checking onboarding status in middleware:', error);
     // On error, allow through to avoid blocking users
   }
+  */
 
   // ✅ FREE TIER ENABLED: Allow all authenticated users to access the app
   // The API will enforce the 3-mindmap limit when users try to save
