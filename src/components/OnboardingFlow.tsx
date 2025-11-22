@@ -50,21 +50,8 @@ export default function OnboardingFlow() {
   };
 
   const handleGenerateFromOnboarding = async () => {
-    console.log('Onboarding: User submitted idea:', userIdea);
-    
-    if (!userIdea.trim() || userIdea.trim().length < 10) {
-      setError('Please describe your app idea (at least 10 characters)');
-      return;
-    }
-
-    console.log('Onboarding: Redirecting to create with auto-generation');
-    setIsGenerating(true);
-    setError('');
-
-    // Skip API call - just redirect immediately
-    // The /create page will mark onboarding complete when mindmap is generated
-    const ideaParam = encodeURIComponent(userIdea.trim());
-    router.push(`/create?idea=${ideaParam}&autoGenerate=true`);
+    // Just redirect to /create - that's it!
+    router.push('/create');
   };
 
   // Welcome Step
