@@ -50,39 +50,27 @@ export default function OnboardingFlow() {
       return;
     }
 
-    console.log('Onboarding: Generation started');
+    console.log('Onboarding: Completing onboarding and redirecting to create');
     setIsGenerating(true);
     setError('');
 
     try {
-      const response = await fetch('/api/generate-mindmap', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ idea: userIdea.trim() }),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok || !result.success) {
-        throw new Error(result.error || 'Failed to generate mindmap');
-      }
-
-      console.log('Onboarding: Generation succeeded, completing onboarding');
-      // Mark onboarding as complete and redirect to the new mindmap
+      // Mark onboarding as complete first
       await handleCompleteOnboarding();
       
-      // Redirect to create page with the idea pre-filled
-      router.push(`/create?idea=${encodeURIComponent(userIdea.trim())}`);
+      // Redirect to /create with the idea as a URL parameter
+      // The /create page will handle generation
+      router.push(`/create?idea=${encodeURIComponent(userIdea.trim())}&autoGenerate=true`);
     } catch (err: any) {
-      console.error('Error generating mindmap:', err);
-      setError(err.message || 'Failed to generate mindmap. Please try again.');
+      console.error('Error completing onboarding:', err);
+      setError(err.message || 'Failed to complete onboarding. Please try again.');
       setIsGenerating(false);
     }
   };
 
   // Welcome Step
   if (currentStep === 'welcome') {
-    return (
+  return (
       <div className="min-h-screen flex items-center justify-center p-6">
         <div className="max-w-2xl w-full">
           <div className="text-center mb-12">
@@ -139,8 +127,8 @@ export default function OnboardingFlow() {
                 </div>
               </div>
             </div>
-          </div>
-
+              </div>
+              
           <div className="flex gap-4">
             <button
               onClick={() => {
@@ -170,19 +158,19 @@ export default function OnboardingFlow() {
     return (
       <div className="min-h-screen p-6">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-8">
+              <div className="text-center mb-8">
             <h1 className="text-4xl font-bold text-white mb-4">
               Here's an Example Project
             </h1>
             <p className="text-xl text-gray-300 mb-6">
               This is what CodeLaunch generates from a simple app idea
-            </p>
-          </div>
+                </p>
+              </div>
 
           <DemoMindmapDisplay />
 
           <div className="flex justify-center gap-4 mt-8">
-            <button
+                <button
               onClick={() => {
                 console.log('Onboarding: Moved to create step');
                 setCurrentStep('create');
@@ -190,8 +178,8 @@ export default function OnboardingFlow() {
               className="px-8 py-4 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-semibold rounded-xl transition-all transform hover:scale-105 flex items-center gap-2"
             >
               Create My Own Project
-              <ArrowRight className="w-5 h-5" />
-            </button>
+                  <ArrowRight className="w-5 h-5" />
+                </button>
             
             <button
               onClick={() => setCurrentStep('welcome')}
@@ -216,21 +204,21 @@ export default function OnboardingFlow() {
             </h1>
             <p className="text-xl text-gray-300">
               Describe your app idea and watch the magic happen
-            </p>
-          </div>
+                </p>
+              </div>
 
           <div className="bg-gray-800/50 backdrop-blur-sm border border-purple-500/20 rounded-2xl p-8">
             <label className="block text-lg font-semibold text-white mb-4">
               What app do you want to build?
             </label>
             
-            <textarea
-              value={userIdea}
-              onChange={(e) => setUserIdea(e.target.value)}
+                <textarea
+                  value={userIdea}
+                  onChange={(e) => setUserIdea(e.target.value)}
               placeholder="Example: A fitness app that helps users track their workouts, set goals, and connect with friends for motivation. It should have progress charts, workout plans, and social features."
               className="w-full h-40 px-4 py-3 bg-gray-900/50 border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none"
-              disabled={isGenerating}
-            />
+                  disabled={isGenerating}
+                />
 
             {error && (
               <div className="mt-4 p-4 bg-red-500/10 border border-red-500/50 rounded-lg text-red-400">
@@ -239,27 +227,27 @@ export default function OnboardingFlow() {
             )}
 
             <div className="mt-6 flex gap-4">
-              <button
+                <button
                 onClick={handleGenerateFromOnboarding}
-                disabled={isGenerating || !userIdea.trim()}
+                  disabled={isGenerating || !userIdea.trim()}
                 className="flex-1 px-8 py-4 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-semibold rounded-xl transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center gap-2"
-              >
-                {isGenerating ? (
-                  <>
+                >
+                  {isGenerating ? (
+                    <>
                     <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    Generating...
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="w-5 h-5" />
-                    Generate My Mindmap
-                  </>
-                )}
-              </button>
-
-              <button
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-5 h-5" />
+                      Generate My Mindmap
+                    </>
+                  )}
+                </button>
+                
+                <button
                 onClick={() => setCurrentStep('demo')}
-                disabled={isGenerating}
+                  disabled={isGenerating}
                 className="px-8 py-4 bg-gray-700/50 hover:bg-gray-700 text-white font-semibold rounded-xl transition-all border border-gray-600 disabled:opacity-50"
               >
                 Back
@@ -279,12 +267,12 @@ export default function OnboardingFlow() {
               className="text-gray-400 hover:text-white transition-colors underline"
             >
               Skip and explore on my own
-            </button>
-          </div>
+                </button>
+              </div>
         </div>
-      </div>
-    );
-  }
+    </div>
+  );
+}
 
   return null;
 }

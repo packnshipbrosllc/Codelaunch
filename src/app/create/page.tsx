@@ -44,10 +44,83 @@ function CreateProjectPageContent() {
   
   // Ref to track if we've already processed the URL param (prevent infinite loop)
   const hasProcessedUrlParam = useRef(false);
+  const hasProcessedOnboardingParam = useRef(false);
 
   // Debug logging at component render
   console.log('🔍 CREATE PAGE RENDER - mindmapData exists:', !!mindmapData);
   console.log('🔍 CREATE PAGE RENDER - searchParams:', searchParams.toString());
+
+  // Check for onboarding auto-generate (from onboarding flow)
+  useEffect(() => {
+    // Only process once (prevent infinite loop)
+    if (hasProcessedOnboardingParam.current || mindmapData || isGenerating) {
+      return;
+    }
+
+    const ideaParam = searchParams.get('idea');
+    const autoGenerate = searchParams.get('autoGenerate');
+
+    if (ideaParam && autoGenerate === 'true') {
+      hasProcessedOnboardingParam.current = true; // Mark as processed
+      console.log('🚀 Onboarding auto-generate detected, idea:', ideaParam);
+      
+      // Auto-fill the idea field
+      setIdea(ideaParam);
+      
+      // Auto-trigger generation after a small delay so user sees the transition
+      const timeoutId = setTimeout(() => {
+        console.log('🚀 Auto-triggering generation from onboarding');
+        // Trigger generation by calling handleGenerate with the idea
+        // We'll use a workaround to call it without dependency issues
+        const ideaToUse = ideaParam.trim();
+        
+        if (!ideaToUse) {
+          return;
+        }
+
+        // Check limit
+        if (!canCreateMore) {
+          setError('You\'ve reached your free mindmap limit. Please upgrade to Pro to continue creating mindmaps.');
+          return;
+        }
+
+        setIsGenerating(true);
+        setError('');
+
+        // Generate the mindmap (inline logic to avoid dependency issues)
+        fetch('/api/generate-mindmap', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ idea: ideaToUse }),
+        })
+          .then(async response => {
+            const result = await response.json();
+            
+            // Handle limit reached error from API
+            if (response.status === 403 && result.error === 'FREE_LIMIT_REACHED') {
+              setError(result.message || 'You\'ve reached your free mindmap limit. Please upgrade to Pro.');
+              setIsGenerating(false);
+              return;
+            }
+
+            if (!response.ok || !result.success) {
+              throw new Error(result.error || 'Failed to generate mindmap');
+            }
+
+            // Success! Show mindmap
+            setMindmapData(result.data);
+            setIsGenerating(false);
+          })
+          .catch(err => {
+            console.error('Error generating mindmap:', err);
+            setError(err.message || 'Failed to generate mindmap. Please try again.');
+            setIsGenerating(false);
+          });
+      }, 500);
+
+      return () => clearTimeout(timeoutId);
+    }
+  }, [searchParams, mindmapData, isGenerating, canCreateMore]); // Include dependencies
 
   // Check for mindmap data from query params (from new-project page)
   useEffect(() => {

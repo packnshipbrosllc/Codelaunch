@@ -1,8 +1,8 @@
 // src/app/api/generate-prd/route.ts
-export const maxDuration = 90;
+export const maxDuration = 120; // Increased for GPT-4o processing time
 export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
-import Anthropic from '@anthropic-ai/sdk';
+import OpenAI from 'openai';
 import { auth } from '@clerk/nextjs/server';
 import { createClient } from '@supabase/supabase-js';
 
@@ -11,8 +11,8 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
 });
 
 export async function POST(request: NextRequest) {
@@ -101,25 +101,129 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Build comprehensive prompt for structured JSON PRD generation
-    const prompt = `You are a senior product manager and technical architect creating a comprehensive Product Requirements Document (PRD) in JSON format.
+    // Build EXCEPTIONAL comprehensive prompt for production-ready PRD generation
+    const systemPrompt = `You are a senior product manager and technical architect with 15+ years of experience. 
 
-CRITICAL REQUIREMENTS:
+Create an EXCEPTIONALLY detailed Product Requirement Document that is production-ready and can be handed directly to a development team.
+
+The PRD must include:
+
+# 1. EXECUTIVE SUMMARY
+- Feature overview (2-3 paragraphs)
+- Business value and impact
+- Success metrics
+
+# 2. USER STORIES (Minimum 5-7 detailed stories)
+Format each as:
+- As a [user type]
+- I want to [action]
+- So that [benefit]
+- Acceptance criteria (3-5 bullet points per story)
+
+# 3. TECHNICAL REQUIREMENTS
+- Specific technologies and frameworks to use
+- Architecture patterns (e.g., MVC, microservices)
+- Performance requirements (response times, load capacity)
+- Security requirements (authentication, authorization, data protection)
+- Scalability considerations
+
+# 4. API DESIGN (RESTful)
+For each endpoint provide:
+- Method and path (e.g., POST /api/users/signup)
+- Request headers
+- Request body (JSON schema)
+- Response codes (200, 400, 401, 500, etc.)
+- Response body (JSON schema)
+- Error handling
+- Example requests and responses
+
+Minimum 5-8 endpoints per feature.
+
+# 5. DATABASE SCHEMA
+- Table name and purpose
+- All columns with:
+  * Column name
+  * Data type (be specific: VARCHAR(255), UUID, TIMESTAMP, etc.)
+  * Constraints (PRIMARY KEY, FOREIGN KEY, NOT NULL, UNIQUE)
+  * Default values
+  * Indexes for performance
+- Relationships between tables (one-to-many, many-to-many)
+- Migration script example
+
+# 6. UI/UX SPECIFICATIONS
+- Component hierarchy
+- Component names (React/Next.js style)
+- Props for each component
+- State management approach
+- User flows and interactions
+- Validation rules
+- Error states
+- Loading states
+- Responsive design considerations
+
+# 7. DEPENDENCIES & TECH STACK
+- Frontend packages (with versions)
+- Backend packages (with versions)
+- External APIs or services
+- Development tools needed
+
+# 8. IMPLEMENTATION ROADMAP
+Break down into phases:
+- Phase 1: Core functionality (what to build first)
+- Phase 2: Enhanced features
+- Phase 3: Polish and optimization
+
+For each phase:
+- Estimated time
+- Specific tasks (numbered list)
+- Dependencies
+
+# 9. TESTING STRATEGY
+- Unit tests to write
+- Integration tests needed
+- E2E test scenarios
+- Performance testing requirements
+- Security testing checklist
+
+# 10. EDGE CASES & ERROR HANDLING
+- What happens when... (minimum 8-10 scenarios)
+- Error messages (user-friendly)
+- Fallback behaviors
+- Retry logic
+
+# 11. SECURITY CONSIDERATIONS
+- Authentication approach
+- Authorization rules
+- Data encryption
+- Input validation
+- Rate limiting
+- CORS configuration
+
+# 12. PERFORMANCE OPTIMIZATION
+- Caching strategy
+- Database query optimization
+- Code splitting (frontend)
+- Lazy loading
+- CDN usage
+
+# 13. MONITORING & ANALYTICS
+- Metrics to track
+- Logging requirements
+- Error tracking setup
+- User analytics events
+
+Make this so detailed that a developer could start coding immediately without asking clarifying questions.
+
+Use technical language. Be specific. Include code examples where helpful.
+
+This should be a 3,000-5,000 word document.
+
+CRITICAL FORMATTING REQUIREMENTS:
 - Return ONLY valid JSON (no markdown, no code blocks, no explanations)
-- Do NOT include any references to AI models, Claude, Anthropic, or how the document was generated
+- Do NOT include any references to AI models, OpenAI, GPT, or how the document was generated
 - Do NOT add metadata about generation
 - Focus only on the product requirements
-- Make it detailed enough that a developer can copy sections directly into Claude/Cursor and get production-ready code
-
-PROJECT DETAILS:
-- Project Name: ${extractedProjectName}
-- Description: ${extractedIdea || 'No description provided'}
-${extractedFeatures ? `- Features: ${JSON.stringify(extractedFeatures, null, 2)}` : ''}
-${extractedCompetitors ? `- Competitors: ${JSON.stringify(extractedCompetitors, null, 2)}` : ''}
-${extractedTechStack ? `- Tech Stack: ${JSON.stringify(extractedTechStack, null, 2)}` : ''}
-${mindmapData?.targetAudience ? `- Target Audience: ${mindmapData.targetAudience}` : ''}
-${mindmapData?.userPersona ? `- User Persona: ${JSON.stringify(mindmapData.userPersona, null, 2)}` : ''}
-${mindmapData?.monetization ? `- Monetization: ${JSON.stringify(mindmapData.monetization, null, 2)}` : ''}
+- Make it detailed enough that a developer can copy sections directly into an AI code generator and get production-ready code
 
 Generate a comprehensive PRD as a JSON object with this EXACT structure:
 
@@ -332,6 +436,22 @@ IMPORTANT:
 
 Return ONLY the JSON object, no markdown, no code blocks, no explanations.`;
 
+    // Build user prompt with project context
+    const userPrompt = `Generate a comprehensive PRD for this project:
+
+Project Name: ${extractedProjectName}
+Description: ${extractedIdea || 'No description provided'}
+${extractedFeatures ? `Features: ${JSON.stringify(extractedFeatures, null, 2)}` : ''}
+${extractedCompetitors ? `Competitors: ${JSON.stringify(extractedCompetitors, null, 2)}` : ''}
+${extractedTechStack ? `Tech Stack: ${JSON.stringify(extractedTechStack, null, 2)}` : ''}
+${mindmapData?.targetAudience ? `Target Audience: ${mindmapData.targetAudience}` : ''}
+${mindmapData?.userPersona ? `User Persona: ${JSON.stringify(mindmapData.userPersona, null, 2)}` : ''}
+${mindmapData?.monetization ? `Monetization: ${JSON.stringify(mindmapData.monetization, null, 2)}` : ''}
+
+Target Tech Stack: React/Next.js frontend, Node.js/Express backend, PostgreSQL database
+
+Make this EXCEPTIONAL - production-ready quality. Include all 13 sections listed in the system prompt. Return ONLY valid JSON following the structure specified.`;
+
     console.log('📦 [Backend] Request validated:', {
       projectName: extractedProjectName,
       idea: extractedIdea?.substring(0, 100) + '...',
@@ -341,30 +461,34 @@ Return ONLY the JSON object, no markdown, no code blocks, no explanations.`;
       mindmapSize: JSON.stringify(mindmapData).length,
     });
 
-    console.log('🤖 [Backend] Calling Anthropic API...');
-    const message = await anthropic.messages.create({
-      model: 'claude-sonnet-4-5-20250929',
-      max_tokens: 8192, // Increased for detailed PRDs
-      temperature: 0.7,
+    console.log('🤖 [Backend] Calling OpenAI GPT-4o API for exceptional PRD generation...');
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-4o', // Using GPT-4o for exceptional quality (worth the extra cost for $40/mo customers)
       messages: [
         {
+          role: 'system',
+          content: systemPrompt,
+        },
+        {
           role: 'user',
-          content: prompt,
+          content: userPrompt,
         },
       ],
+      temperature: 0.7,
+      max_tokens: 8000, // Increased for comprehensive, detailed PRDs
     });
 
     const duration = Date.now() - startTime;
-    console.log(`✅ [Backend] Anthropic responded in ${duration}ms`);
-    // @ts-ignore usage may be present depending on SDK version
-    if ((message as any)?.usage) {
-      // @ts-ignore
-      console.log('📊 [Backend] Token usage:', (message as any).usage);
+    console.log(`✅ [Backend] OpenAI GPT-4o responded in ${duration}ms`);
+    if (completion.usage) {
+      console.log('📊 [Backend] Token usage:', {
+        prompt_tokens: completion.usage.prompt_tokens,
+        completion_tokens: completion.usage.completion_tokens,
+        total_tokens: completion.usage.total_tokens,
+      });
     }
 
-    const responseText = message.content[0].type === 'text' 
-      ? message.content[0].text 
-      : '';
+    const responseText = completion.choices[0]?.message?.content || '';
 
     // Extract JSON from response (handle markdown code blocks if present)
     let jsonContent = responseText.trim();
@@ -407,11 +531,11 @@ Return ONLY the JSON object, no markdown, no code blocks, no explanations.`;
         return obj
           .replace(/#{1,6}\s*Model:?\s*[^\n]*/gi, '')
           .replace(/#{1,6}\s*Generated by:?\s*[^\n]*/gi, '')
-          .replace(/Model:\s*claude[^\n]*/gi, '')
-          .replace(/Generated by Claude[^\n]*/gi, '')
-          .replace(/Anthropic's Claude[^\n]*/gi, '')
+          .replace(/Model:\s*(claude|gpt|openai)[^\n]*/gi, '')
+          .replace(/Generated by (Claude|GPT|OpenAI)[^\n]*/gi, '')
+          .replace(/(Anthropic's Claude|OpenAI's GPT)[^\n]*/gi, '')
           .split('\n')
-          .filter((line) => !line.toLowerCase().includes('claude-sonnet'))
+          .filter((line) => !line.toLowerCase().includes('claude-sonnet') && !line.toLowerCase().includes('gpt-4'))
           .join('\n')
           .trim();
       } else if (Array.isArray(obj)) {
@@ -439,9 +563,8 @@ Return ONLY the JSON object, no markdown, no code blocks, no explanations.`;
         metadata: {
           projectName: extractedProjectName,
           generatedAt: new Date().toISOString(),
-          model: 'redacted',
-          // @ts-ignore usage may be present
-          tokensUsed: (message as any)?.usage,
+          model: 'gpt-4o',
+          tokensUsed: completion.usage,
           processingTime: duration,
         },
       },
