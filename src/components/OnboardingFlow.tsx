@@ -7,17 +7,14 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
 import DemoMindmapDisplay from '@/components/DemoMindmapDisplay';
-import { Sparkles, Rocket, Lightbulb, CheckCircle2, ArrowRight } from 'lucide-react';
+import { Rocket, Lightbulb, CheckCircle2, ArrowRight } from 'lucide-react';
 
-type OnboardingStep = 'welcome' | 'demo' | 'create' | 'complete';
+type OnboardingStep = 'welcome' | 'demo';
 
 export default function OnboardingFlow() {
   const router = useRouter();
   const { user } = useUser();
   const [currentStep, setCurrentStep] = useState<OnboardingStep>('welcome');
-  const [userIdea, setUserIdea] = useState('');
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [error, setError] = useState('');
 
   // Track when component mounts (welcome step loaded)
   useEffect(() => {
@@ -49,8 +46,16 @@ export default function OnboardingFlow() {
     await handleCompleteOnboarding('/create');
   };
 
-  const handleGenerateFromOnboarding = async () => {
-    // Just redirect to /create - that's it!
+  const handleStartBuilding = async () => {
+    // Mark onboarding complete and redirect to /create
+    try {
+      await fetch('/api/user/complete-onboarding', {
+        method: 'POST',
+      });
+    } catch (error) {
+      console.error('Error completing onboarding:', error);
+      // Continue anyway - non-critical
+    }
     router.push('/create');
   };
 
@@ -157,13 +162,10 @@ export default function OnboardingFlow() {
 
           <div className="flex justify-center gap-4 mt-8">
                 <button
-              onClick={() => {
-                console.log('Onboarding: Moved to create step');
-                setCurrentStep('create');
-              }}
+              onClick={handleStartBuilding}
               className="px-8 py-4 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-semibold rounded-xl transition-all transform hover:scale-105 flex items-center gap-2"
             >
-              Create My Own Project
+              Start Building
                   <ArrowRight className="w-5 h-5" />
                 </button>
             
@@ -179,86 +181,6 @@ export default function OnboardingFlow() {
     );
   }
 
-  // Create Step
-  if (currentStep === 'create') {
-    return (
-      <div className="min-h-screen flex items-center justify-center p-6">
-        <div className="max-w-2xl w-full">
-          <div className="text-center mb-12">
-            <h1 className="text-4xl font-bold text-white mb-4">
-              Now It's Your Turn! ✨
-            </h1>
-            <p className="text-xl text-gray-300">
-              Describe your app idea and watch the magic happen
-                </p>
-              </div>
-
-          <div className="bg-gray-800/50 backdrop-blur-sm border border-purple-500/20 rounded-2xl p-8">
-            <label className="block text-lg font-semibold text-white mb-4">
-              What app do you want to build?
-            </label>
-            
-                <textarea
-                  value={userIdea}
-                  onChange={(e) => setUserIdea(e.target.value)}
-              placeholder="Example: A fitness app that helps users track their workouts, set goals, and connect with friends for motivation. It should have progress charts, workout plans, and social features."
-              className="w-full h-40 px-4 py-3 bg-gray-900/50 border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none"
-                  disabled={isGenerating}
-                />
-
-            {error && (
-              <div className="mt-4 p-4 bg-red-500/10 border border-red-500/50 rounded-lg text-red-400">
-                {error}
-              </div>
-            )}
-
-            <div className="mt-6 flex gap-4">
-                <button
-                onClick={handleGenerateFromOnboarding}
-                  disabled={isGenerating || !userIdea.trim()}
-                className="flex-1 px-8 py-4 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-semibold rounded-xl transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center gap-2"
-                >
-                  {isGenerating ? (
-                    <>
-                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      Generating...
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles className="w-5 h-5" />
-                      Generate My Mindmap
-                    </>
-                  )}
-                </button>
-                
-                <button
-                onClick={() => setCurrentStep('demo')}
-                  disabled={isGenerating}
-                className="px-8 py-4 bg-gray-700/50 hover:bg-gray-700 text-white font-semibold rounded-xl transition-all border border-gray-600 disabled:opacity-50"
-              >
-                Back
-              </button>
-            </div>
-
-            <div className="mt-6 p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg">
-              <p className="text-sm text-blue-300 text-center">
-                💡 <strong>Tip:</strong> Be specific! The more details you provide, the better your mindmap will be.
-              </p>
-            </div>
-          </div>
-
-          <div className="mt-6 text-center">
-            <button
-              onClick={handleSkipToCreate}
-              className="text-gray-400 hover:text-white transition-colors underline"
-            >
-              Skip and explore on my own
-                </button>
-              </div>
-        </div>
-    </div>
-  );
-}
 
   return null;
 }
