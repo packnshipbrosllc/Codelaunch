@@ -1,7 +1,7 @@
 // src/components/ui/shooting-stars.tsx
 "use client";
 import { cn } from "@/lib/utils";
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, memo } from "react";
 
 interface ShootingStar {
   id: number;
@@ -47,7 +47,7 @@ const getRandomStartPoint = () => {
   }
 };
 
-export const ShootingStars: React.FC<ShootingStarsProps> = ({
+export const ShootingStars: React.FC<ShootingStarsProps> = memo(({
   minSpeed = 10,
   maxSpeed = 30,
   minDelay = 1200,
@@ -168,4 +168,4 @@ export const ShootingStars: React.FC<ShootingStarsProps> = ({
       </defs>
     </svg>
   );
-};
+});
