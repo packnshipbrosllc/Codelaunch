@@ -1,6 +1,7 @@
 // src/components/ui/space-background.tsx
 'use client';
 
+import { memo } from 'react';
 import { ShootingStars } from '@/components/ui/shooting-stars';
 import { SparklesCore } from '@/components/ui/sparkles-core';
 
@@ -9,7 +10,7 @@ interface SpaceBackgroundProps {
   variant?: 'default' | 'intense' | 'subtle';
 }
 
-export function SpaceBackground({ children, variant = 'default' }: SpaceBackgroundProps) {
+export const SpaceBackground = memo(function SpaceBackground({ children, variant = 'default' }: SpaceBackgroundProps) {
   return (
     <div className="relative min-h-screen overflow-hidden">
       {/* Dark background */}
@@ -49,4 +50,4 @@ export function SpaceBackground({ children, variant = 'default' }: SpaceBackgrou
       </div>
     </div>
   );
-}
+});
