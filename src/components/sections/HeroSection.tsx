@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { useUser, SignUpButton } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
+import { Network, FileText, Code } from 'lucide-react';
 
 export default function HeroSection() {
   const { isSignedIn, isLoaded } = useUser();
@@ -79,8 +80,59 @@ export default function HeroSection() {
             No dev team. No 6-month wait. Just production-ready code.
           </p>
 
-          {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
+          {/* Trust Badge */}
+          <div className="text-sm text-gray-500 flex items-center gap-2 justify-center mb-8">
+            <span className="text-purple-500">✓</span>
+            3 free mindmaps • No credit card required
+          </div>
+        </div>
+
+        {/* Hero Mockup - Split View */}
+        <div className="animate-[fadeUp_1s_ease-out_0.8s_both] mb-20">
+          <HeroMockup />
+        </div>
+
+        {/* Three Floating Feature Cards - Overlapping Mockup */}
+        <div className="relative -mt-8 md:-mt-32 mb-16 animate-[fadeUp_1s_ease-out_1.2s_both]">
+          <div className="max-w-6xl mx-auto px-4 grid md:grid-cols-3 gap-6">
+            {/* Card 1: AI Mindmaps */}
+            <div className="group bg-gradient-to-br from-gray-900/90 via-purple-900/50 to-black/90 backdrop-blur-xl border border-purple-500/30 rounded-2xl p-6 hover:border-purple-500 hover:scale-105 transition-all duration-300 shadow-xl shadow-purple-500/10 hover:shadow-purple-500/20">
+              <div className="w-12 h-12 bg-purple-500/20 rounded-xl flex items-center justify-center mb-4 group-hover:bg-purple-500/30 transition-colors">
+                <Network className="w-6 h-6 text-purple-400" />
+              </div>
+              <h3 className="text-xl font-bold text-white mb-2">AI Mindmaps</h3>
+              <p className="text-gray-400 text-sm leading-relaxed">
+                Visualize your entire app architecture. Every feature, flow, and dependency mapped instantly.
+              </p>
+            </div>
+
+            {/* Card 2: PRD Generation */}
+            <div className="group bg-gradient-to-br from-gray-900/90 via-purple-900/50 to-black/90 backdrop-blur-xl border border-purple-500/30 rounded-2xl p-6 hover:border-purple-500 hover:scale-105 transition-all duration-300 shadow-xl shadow-purple-500/10 hover:shadow-purple-500/20">
+              <div className="w-12 h-12 bg-pink-500/20 rounded-xl flex items-center justify-center mb-4 group-hover:bg-pink-500/30 transition-colors">
+                <FileText className="w-6 h-6 text-pink-400" />
+              </div>
+              <h3 className="text-xl font-bold text-white mb-2">PRD Generation</h3>
+              <p className="text-gray-400 text-sm leading-relaxed">
+                Production-ready documentation with user stories, API specs, and database schemas.
+              </p>
+            </div>
+
+            {/* Card 3: Code Generation */}
+            <div className="group bg-gradient-to-br from-gray-900/90 via-purple-900/50 to-black/90 backdrop-blur-xl border border-purple-500/30 rounded-2xl p-6 hover:border-purple-500 hover:scale-105 transition-all duration-300 shadow-xl shadow-purple-500/10 hover:shadow-purple-500/20">
+              <div className="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center mb-4 group-hover:bg-blue-500/30 transition-colors">
+                <Code className="w-6 h-6 text-blue-400" />
+              </div>
+              <h3 className="text-xl font-bold text-white mb-2">Code Generation</h3>
+              <p className="text-gray-400 text-sm leading-relaxed">
+                Full-stack Next.js app with auth, database, and UI components. Export to any editor.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom CTA Section */}
+        <div className="text-center animate-[fadeUp_1s_ease-out_1.4s_both]">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             {!isSignedIn ? (
               <SignUpButton mode="modal">
                 <button className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl font-bold text-lg text-white shadow-lg shadow-purple-500/50 hover:shadow-purple-500/70 hover:scale-105 transition-all duration-200">
@@ -98,20 +150,9 @@ export default function HeroSection() {
               </button>
             )}
             <button className="px-8 py-4 bg-white/5 backdrop-blur-sm border-2 border-purple-500/30 rounded-xl font-bold text-lg text-white hover:bg-purple-500/10 hover:border-purple-500/50 transition-all duration-200">
-              Watch Demo
+              View Sample Code
             </button>
           </div>
-
-          {/* Trust Badge */}
-          <div className="text-sm text-gray-500 flex items-center gap-2 justify-center mb-12">
-            <span className="text-purple-500">✓</span>
-            3 free mindmaps • No credit card required
-          </div>
-        </div>
-
-        {/* Hero Mockup - Split View */}
-        <div className="animate-[fadeUp_1s_ease-out_0.8s_both]">
-          <HeroMockup />
         </div>
       </div>
 
