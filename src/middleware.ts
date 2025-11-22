@@ -37,8 +37,8 @@ export default clerkMiddleware(async (auth, req) => {
   }
 
   // Allow onboarding API routes to be accessed (needed for checking status)
-  const url = new URL(req.url);
-  if (url.pathname.startsWith('/api/user/onboarding')) {
+  const requestUrl = new URL(req.url);
+  if (requestUrl.pathname.startsWith('/api/user/onboarding')) {
     return NextResponse.next();
   }
 
