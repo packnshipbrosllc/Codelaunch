@@ -23,20 +23,33 @@ export default function OnboardingFlow() {
 
   const handleCompleteOnboarding = async (redirectTo?: string) => {
     try {
-      await fetch('/api/user/complete-onboarding', {
+      const response = await fetch('/api/user/complete-onboarding', {
         method: 'POST',
       });
-      if (redirectTo) {
-        router.push(redirectTo);
+      
+      if (!response.ok) {
+        console.error('Failed to complete onboarding:', response.status, response.statusText);
+        // Still redirect even if API fails - don't block user
       } else {
-        router.push('/dashboard');
+        const data = await response.json();
+        console.log('Onboarding marked complete:', data);
+      }
+      
+      // Wait a moment for database to update before redirecting
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      if (redirectTo) {
+        window.location.href = redirectTo; // Use window.location for hard redirect
+      } else {
+        window.location.href = '/dashboard';
       }
     } catch (error) {
       console.error('Error completing onboarding:', error);
+      // Still redirect even on error - don't block user
       if (redirectTo) {
-        router.push(redirectTo);
+        window.location.href = redirectTo;
       } else {
-        router.push('/dashboard');
+        window.location.href = '/dashboard';
       }
     }
   };
