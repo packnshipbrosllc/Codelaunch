@@ -24,22 +24,29 @@ export default function OnboardingFlow() {
     console.log('Onboarding: Welcome step loaded');
   }, []);
 
-  const handleCompleteOnboarding = async () => {
+  const handleCompleteOnboarding = async (redirectTo?: string) => {
     try {
       await fetch('/api/user/complete-onboarding', {
         method: 'POST',
       });
-      router.push('/dashboard');
+      if (redirectTo) {
+        router.push(redirectTo);
+      } else {
+        router.push('/dashboard');
+      }
     } catch (error) {
       console.error('Error completing onboarding:', error);
-      router.push('/dashboard');
+      if (redirectTo) {
+        router.push(redirectTo);
+      } else {
+        router.push('/dashboard');
+      }
     }
   };
 
   const handleSkipToCreate = async () => {
     console.log('Onboarding: User skipped');
-    await handleCompleteOnboarding();
-    router.push('/create');
+    await handleCompleteOnboarding('/create');
   };
 
   const handleGenerateFromOnboarding = async () => {
@@ -50,17 +57,20 @@ export default function OnboardingFlow() {
       return;
     }
 
-    console.log('Onboarding: Completing onboarding and redirecting to create');
+    console.log('Onboarding: Completing onboarding and redirecting to create with auto-generation');
     setIsGenerating(true);
     setError('');
 
     try {
-      // Mark onboarding as complete first
-      await handleCompleteOnboarding();
+      // Mark onboarding as complete WITHOUT redirecting
+      await fetch('/api/user/complete-onboarding', {
+        method: 'POST',
+      });
       
-      // Redirect to /create with the idea as a URL parameter
-      // The /create page will handle generation
-      router.push(`/create?idea=${encodeURIComponent(userIdea.trim())}&autoGenerate=true`);
+      // Redirect to /create with the idea and autoGenerate flag
+      // The /create page will handle auto-generation
+      const ideaParam = encodeURIComponent(userIdea.trim());
+      router.push(`/create?idea=${ideaParam}&autoGenerate=true`);
     } catch (err: any) {
       console.error('Error completing onboarding:', err);
       setError(err.message || 'Failed to complete onboarding. Please try again.');

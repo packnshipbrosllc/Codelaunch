@@ -53,7 +53,7 @@ function CreateProjectPageContent() {
   // Check for onboarding auto-generate (from onboarding flow)
   useEffect(() => {
     // Only process once (prevent infinite loop)
-    if (hasProcessedOnboardingParam.current || mindmapData || isGenerating) {
+    if (hasProcessedOnboardingParam.current) {
       return;
     }
 
@@ -61,20 +61,20 @@ function CreateProjectPageContent() {
     const autoGenerate = searchParams.get('autoGenerate');
 
     if (ideaParam && autoGenerate === 'true') {
-      hasProcessedOnboardingParam.current = true; // Mark as processed
+      hasProcessedOnboardingParam.current = true; // Mark as processed immediately
       console.log('🚀 Onboarding auto-generate detected, idea:', ideaParam);
       
       // Auto-fill the idea field
-      setIdea(ideaParam);
+      const decodedIdea = decodeURIComponent(ideaParam);
+      setIdea(decodedIdea);
       
       // Auto-trigger generation after a small delay so user sees the transition
       const timeoutId = setTimeout(() => {
         console.log('🚀 Auto-triggering generation from onboarding');
-        // Trigger generation by calling handleGenerate with the idea
-        // We'll use a workaround to call it without dependency issues
-        const ideaToUse = ideaParam.trim();
+        const ideaToUse = decodedIdea.trim();
         
         if (!ideaToUse) {
+          console.error('Empty idea after decode');
           return;
         }
 
@@ -87,7 +87,7 @@ function CreateProjectPageContent() {
         setIsGenerating(true);
         setError('');
 
-        // Generate the mindmap (inline logic to avoid dependency issues)
+        // Generate the mindmap
         fetch('/api/generate-mindmap', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -108,19 +108,20 @@ function CreateProjectPageContent() {
             }
 
             // Success! Show mindmap
+            console.log('✅ Mindmap generated successfully from onboarding');
             setMindmapData(result.data);
             setIsGenerating(false);
           })
           .catch(err => {
-            console.error('Error generating mindmap:', err);
+            console.error('❌ Error generating mindmap:', err);
             setError(err.message || 'Failed to generate mindmap. Please try again.');
             setIsGenerating(false);
           });
-      }, 500);
+      }, 800); // Slightly longer delay to ensure page is fully loaded
 
       return () => clearTimeout(timeoutId);
     }
-  }, [searchParams, mindmapData, isGenerating, canCreateMore]); // Include dependencies
+  }, [searchParams, canCreateMore]); // Removed mindmapData and isGenerating from dependencies to prevent blocking
 
   // Check for mindmap data from query params (from new-project page)
   useEffect(() => {
@@ -456,6 +457,8 @@ function CreateProjectPageContent() {
                   <div className="p-4">
                     <textarea
                       name="ideaInput"
+                      value={idea}
+                      onChange={(e) => setIdea(e.target.value)}
                       placeholder="Example: A fitness tracking app with workout plans, progress tracking, and social features..."
                       className="w-full min-h-[120px] px-4 py-3 resize-none bg-transparent border-none text-white/90 text-base focus:outline-none placeholder:text-white/30"
                       disabled={isGenerating}
