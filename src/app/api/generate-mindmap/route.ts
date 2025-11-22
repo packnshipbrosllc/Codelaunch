@@ -266,6 +266,18 @@ Rules:
 
     console.log('✅ Mindmap generated:', mindmapData.projectName);
 
+    // Mark onboarding as complete when first mindmap is generated
+    // This handles the case where user comes from onboarding flow
+    try {
+      await supabase
+        .from('users')
+        .update({ onboarding_completed: true })
+        .eq('id', userId);
+    } catch (onboardingError) {
+      // Non-critical - log but don't fail the request
+      console.log('Note: Could not mark onboarding complete (non-critical):', onboardingError);
+    }
+
     // Return mindmap data with usage info
     return NextResponse.json({
       success: true,

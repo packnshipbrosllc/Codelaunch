@@ -57,25 +57,14 @@ export default function OnboardingFlow() {
       return;
     }
 
-    console.log('Onboarding: Completing onboarding and redirecting to create with auto-generation');
+    console.log('Onboarding: Redirecting to create with auto-generation');
     setIsGenerating(true);
     setError('');
 
-    try {
-      // Mark onboarding as complete WITHOUT redirecting
-      await fetch('/api/user/complete-onboarding', {
-        method: 'POST',
-      });
-      
-      // Redirect to /create with the idea and autoGenerate flag
-      // The /create page will handle auto-generation
-      const ideaParam = encodeURIComponent(userIdea.trim());
-      router.push(`/create?idea=${ideaParam}&autoGenerate=true`);
-    } catch (err: any) {
-      console.error('Error completing onboarding:', err);
-      setError(err.message || 'Failed to complete onboarding. Please try again.');
-      setIsGenerating(false);
-    }
+    // Skip API call - just redirect immediately
+    // The /create page will mark onboarding complete when mindmap is generated
+    const ideaParam = encodeURIComponent(userIdea.trim());
+    router.push(`/create?idea=${ideaParam}&autoGenerate=true`);
   };
 
   // Welcome Step
