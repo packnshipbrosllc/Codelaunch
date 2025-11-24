@@ -12,6 +12,15 @@ const isPublicRoute = createRouteMatcher([
   '/api/stripe/create-checkout',
 ]);
 
+// Define onboarding route
+const isOnboardingRoute = createRouteMatcher(['/onboarding']);
+
+// Define API routes that should bypass onboarding check
+const isOnboardingApiRoute = createRouteMatcher([
+  '/api/user/onboarding-status',
+  '/api/user/complete-onboarding',
+]);
+
 export default clerkMiddleware(async (auth, req) => {
   // Allow public routes
   if (isPublicRoute(req)) {
@@ -27,27 +36,22 @@ export default clerkMiddleware(async (auth, req) => {
     return NextResponse.redirect(signInUrl);
   }
 
-  // Check onboarding status for authenticated users
-  const url = new URL(req.url);
-  const isOnboardingRoute = url.pathname === '/onboarding';
-  
-  // If user is on onboarding route, allow through
-  if (isOnboardingRoute) {
+  // Allow onboarding route itself
+  if (isOnboardingRoute(req)) {
     return NextResponse.next();
   }
 
-  // Allow onboarding API routes to be accessed (needed for checking status)
-  const requestUrl = new URL(req.url);
-  if (requestUrl.pathname.startsWith('/api/user/onboarding')) {
+  // Allow onboarding API routes
+  if (isOnboardingApiRoute(req)) {
     return NextResponse.next();
   }
 
   // For all other routes, check onboarding status
-  // COMMENTED OUT - Bypassing onboarding check to allow access to /create
-  /*
   try {
     const onboardingStatusUrl = new URL('/api/user/onboarding-status', req.url);
-    const response = await fetch(onboardingStatusUrl, {
+    
+    const response = await fetch(onboardingStatusUrl.toString(), {
+      method: 'GET',
       headers: {
         'Cookie': req.headers.get('cookie') || '',
       },
@@ -57,23 +61,21 @@ export default clerkMiddleware(async (auth, req) => {
       const data = await response.json();
       
       // If onboarding not completed, redirect to onboarding
-      if (!data.completed) {
+      // But only for NEW users (not existing users who never had onboarding)
+      if (!data.completed && data.isNewUser) {
         const onboardingUrl = new URL('/onboarding', req.url);
         return NextResponse.redirect(onboardingUrl);
       }
+    } else {
+      // If API call fails, log but allow through (don't block users)
+      console.error('Onboarding status check failed:', response.status);
     }
   } catch (error) {
-    console.error('Error checking onboarding status in middleware:', error);
     // On error, allow through to avoid blocking users
+    console.error('Error checking onboarding status in middleware:', error);
   }
-  */
 
-  // ✅ FREE TIER ENABLED: Allow all authenticated users to access the app
-  // The API will enforce the 3-mindmap limit when users try to save
-  // Users can use the app for FREE until they hit the limit
-  
   // Allow access to all routes for authenticated users
-  // Subscription checks happen in the API routes, not middleware
   return NextResponse.next();
 });
 
