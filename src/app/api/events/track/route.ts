@@ -27,13 +27,21 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Enrich event data with server-side metadata
+    const enrichedEventData = {
+      ...(event_data || {}),
+      // Server-side metadata (backup in case client-side metadata is missing)
+      server_timestamp: new Date().toISOString(),
+      server_received_at: new Date().toISOString(),
+    };
+
     // Insert event into user_events table
     const { error } = await supabase
       .from('user_events')
       .insert({
-        user_id: userId,
+        user_id: userId, // CRITICAL: User ID from auth session
         event_name,
-        event_data: event_data || {},
+        event_data: enrichedEventData,
         created_at: new Date().toISOString(),
       });
 

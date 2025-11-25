@@ -1,9 +1,13 @@
 'use client';
 
 import { useState } from 'react';
-import { X } from 'lucide-react';
+import { X, Lock } from 'lucide-react';
 import { EnhancedFeature } from '@/types/enhanced-mindmap';
 import { Feature } from '@/types/mindmap';
+import { useSubscription } from '@/hooks/useSubscription';
+import { useMindmapLimit } from '@/hooks/useMindmapLimit';
+import UpgradeModal from '@/components/UpgradeModal';
+import { trackPaywallViewed, trackUpgradeClicked } from '@/utils/analytics';
 
 interface FeatureBuilderPanelProps {
   feature: EnhancedFeature;
@@ -77,6 +81,10 @@ export default function FeatureBuilderPanel({
 }: FeatureBuilderPanelProps) {
   const [currentStep, setCurrentStep] = useState<number>(1);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const { hasSubscription, isLoading: isLoadingSubscription } = useSubscription();
+  const { remainingFreeMindmaps, mindmapsCreated, freeLimit, isLoading: isLoadingLimit, error: limitError } = useMindmapLimit();
+  const isProUser = hasSubscription === true;
 
   const [formData, setFormData] = useState<FormData>({
     userStories: feature.userStories?.map(us => `As a ${us.persona}, I want to ${us.need} so that ${us.goal}`).join('\n') || '',
@@ -147,26 +155,47 @@ export default function FeatureBuilderPanel({
               const stepProgress = (step.id / steps.length) * 100;
               const isCompleted = requirementsProgress >= stepProgress;
               const isActive = currentStep === step.id;
+              const isProFeature = step.id === 5 || step.id === 6; // PRD and Code generation are Pro features
+              const isLocked = isProFeature && !isProUser;
               
               return (
                 <button
                   key={step.id}
-                  onClick={() => setCurrentStep(step.id)}
-                  className={`w-full text-left p-4 rounded-xl transition-all ${
+                  onClick={() => {
+                    if (isLocked) {
+                      trackPaywallViewed(step.id === 5 ? 'prd_generation' : 'code_generation', 'step_click');
+                      setShowUpgradeModal(true);
+                    } else {
+                      setCurrentStep(step.id);
+                    }
+                  }}
+                  className={`w-full text-left p-4 rounded-xl transition-all relative ${
                     isActive
                       ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg scale-105'
                       : isCompleted
                       ? 'bg-green-600/20 border border-green-500/30 text-green-300'
+                      : isLocked
+                      ? 'bg-gray-800/30 border border-gray-700/50 text-gray-500 cursor-not-allowed opacity-60'
                       : 'bg-gray-800/50 text-gray-400 hover:bg-gray-800'
                   }`}
                 >
                   <div className="flex items-center gap-3">
                     <span className="text-2xl">{step.icon}</span>
                     <div className="flex-1">
-                      <div className="font-semibold text-sm">{step.title}</div>
+                      <div className="font-semibold text-sm flex items-center gap-2">
+                        {step.title}
+                        {isProFeature && (
+                          <span className="text-xs bg-purple-500/20 text-purple-300 px-2 py-0.5 rounded border border-purple-500/30">
+                            PRO
+                          </span>
+                        )}
+                      </div>
                       <div className="text-xs opacity-70 mt-1">{step.description}</div>
                     </div>
-                    {isCompleted && (
+                    {isLocked && (
+                      <Lock className="w-4 h-4 text-yellow-400" />
+                    )}
+                    {isCompleted && !isLocked && (
                       <span className="text-green-400">✓</span>
                     )}
                   </div>
@@ -182,8 +211,8 @@ export default function FeatureBuilderPanel({
           {currentStep === 2 && <TechnicalSpecsStep feature={feature} projectContext={projectContext} formData={formData} setFormData={setFormData} />}
           {currentStep === 3 && <DependenciesStep feature={feature} projectContext={projectContext} formData={formData} setFormData={setFormData} />}
           {currentStep === 4 && <EdgeCasesStep feature={feature} formData={formData} setFormData={setFormData} />}
-          {currentStep === 5 && <GeneratePRDStep feature={feature} formData={formData} onSavePRD={onSavePRD} isGenerating={isGenerating} setIsGenerating={setIsGenerating} />}
-          {currentStep === 6 && <GenerateCodeStep feature={feature} formData={formData} onGenerateCode={onGenerateCode} isGenerating={isGenerating} setIsGenerating={setIsGenerating} />}
+          {currentStep === 5 && <GeneratePRDStep feature={feature} formData={formData} onSavePRD={onSavePRD} isGenerating={isGenerating} setIsGenerating={setIsGenerating} isProUser={isProUser} remainingFreeMindmaps={remainingFreeMindmaps} mindmapsCreated={mindmapsCreated} freeLimit={freeLimit} onUpgrade={() => { trackPaywallViewed('prd_generation', 'button_click'); trackUpgradeClicked('prd_button'); setShowUpgradeModal(true); }} />}
+          {currentStep === 6 && <GenerateCodeStep feature={feature} formData={formData} onGenerateCode={onGenerateCode} isGenerating={isGenerating} setIsGenerating={setIsGenerating} isProUser={isProUser} remainingFreeMindmaps={remainingFreeMindmaps} mindmapsCreated={mindmapsCreated} freeLimit={freeLimit} onUpgrade={() => { trackPaywallViewed('code_generation', 'button_click'); trackUpgradeClicked('code_button'); setShowUpgradeModal(true); }} />}
 
           {/* Navigation Buttons */}
           <div className="flex justify-between mt-8 pt-8 border-t border-gray-700">
@@ -207,6 +236,13 @@ export default function FeatureBuilderPanel({
           </div>
         </div>
       </div>
+
+      {/* Upgrade Modal */}
+      <UpgradeModal
+        isOpen={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+        featureName={currentStep === 5 ? 'PRD Generation' : currentStep === 6 ? 'Code Generation' : undefined}
+      />
     </div>
   );
 }
@@ -506,8 +542,13 @@ function EdgeCasesStep({ feature, formData, setFormData }: { feature: EnhancedFe
   );
 }
 
-function GeneratePRDStep({ feature, formData, onSavePRD, isGenerating, setIsGenerating }: { feature: EnhancedFeature; formData: FormData; onSavePRD: (featureId: string, prd: any) => void; isGenerating: boolean; setIsGenerating: (val: boolean) => void }) {
+function GeneratePRDStep({ feature, formData, onSavePRD, isGenerating, setIsGenerating, isProUser, remainingFreeMindmaps, mindmapsCreated, freeLimit, onUpgrade }: { feature: EnhancedFeature; formData: FormData; onSavePRD: (featureId: string, prd: any) => void; isGenerating: boolean; setIsGenerating: (val: boolean) => void; isProUser: boolean; remainingFreeMindmaps: number | null; mindmapsCreated: number; freeLimit: number; onUpgrade: () => void }) {
   const handleGenerate = async () => {
+    if (!isProUser) {
+      onUpgrade();
+      return;
+    }
+
     setIsGenerating(true);
     try {
       const response = await fetch('/api/features/generate-prd', {
@@ -557,20 +598,52 @@ function GeneratePRDStep({ feature, formData, onSavePRD, isGenerating, setIsGene
         </ul>
       </div>
 
+      {!isProUser && (
+        <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-4 mb-6">
+          <div className="flex items-start gap-3">
+            <Lock className="w-5 h-5 text-yellow-400 flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <h4 className="text-yellow-300 font-semibold mb-1">Pro Feature</h4>
+              <p className="text-gray-300 text-sm mb-2">
+                Generate comprehensive PRDs with detailed documentation. Upgrade to Pro to unlock this feature.
+              </p>
+              {!isLoadingLimit && remainingFreeMindmaps !== null && (
+                <p className="text-yellow-400 text-xs font-medium flex items-center gap-1">
+                  <span>⏱️</span>
+                  <span>{mindmapsCreated} of {freeLimit} free mindmaps used</span>
+                </p>
+              )}
+              {limitError && (
+                <p className="text-red-400 text-xs mt-2">{limitError}</p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       <button
         onClick={handleGenerate}
         disabled={isGenerating}
-        className="w-full px-6 py-4 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white rounded-xl font-semibold transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+        className={`w-full px-6 py-4 rounded-xl font-semibold transition-all flex items-center justify-center gap-2 disabled:opacity-50 ${
+          isProUser
+            ? 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white'
+            : 'bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-500 hover:to-orange-500 text-white'
+        }`}
       >
         {isGenerating ? (
           <>
             <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
             <span>Generating PRD...</span>
           </>
-        ) : (
+        ) : isProUser ? (
           <>
             <span>📄</span>
             <span>Generate Comprehensive PRD</span>
+          </>
+        ) : (
+          <>
+            <Lock className="w-5 h-5" />
+            <span>Upgrade to Generate PRD</span>
           </>
         )}
       </button>
@@ -578,8 +651,13 @@ function GeneratePRDStep({ feature, formData, onSavePRD, isGenerating, setIsGene
   );
 }
 
-function GenerateCodeStep({ feature, formData, onGenerateCode, isGenerating, setIsGenerating }: { feature: EnhancedFeature; formData: FormData; onGenerateCode: (featureId: string) => void; isGenerating: boolean; setIsGenerating: (val: boolean) => void }) {
+function GenerateCodeStep({ feature, formData, onGenerateCode, isGenerating, setIsGenerating, isProUser, remainingFreeMindmaps, mindmapsCreated, freeLimit, onUpgrade }: { feature: EnhancedFeature; formData: FormData; onGenerateCode: (featureId: string) => void; isGenerating: boolean; setIsGenerating: (val: boolean) => void; isProUser: boolean; remainingFreeMindmaps: number | null; mindmapsCreated: number; freeLimit: number; onUpgrade: () => void }) {
   const handleGenerate = async () => {
+    if (!isProUser) {
+      onUpgrade();
+      return;
+    }
+
     setIsGenerating(true);
     try {
       // Call code generation API
@@ -610,20 +688,52 @@ function GenerateCodeStep({ feature, formData, onGenerateCode, isGenerating, set
         </ul>
       </div>
 
+      {!isProUser && (
+        <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-4 mb-6">
+          <div className="flex items-start gap-3">
+            <Lock className="w-5 h-5 text-yellow-400 flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <h4 className="text-yellow-300 font-semibold mb-1">Pro Feature</h4>
+              <p className="text-gray-300 text-sm mb-2">
+                Generate production-ready code with full-stack components, API routes, and database schemas. Upgrade to Pro to unlock this feature.
+              </p>
+              {!isLoadingLimit && remainingFreeMindmaps !== null && (
+                <p className="text-yellow-400 text-xs font-medium flex items-center gap-1">
+                  <span>⏱️</span>
+                  <span>{mindmapsCreated} of {freeLimit} free mindmaps used</span>
+                </p>
+              )}
+              {limitError && (
+                <p className="text-red-400 text-xs mt-2">{limitError}</p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       <button
         onClick={handleGenerate}
         disabled={isGenerating}
-        className="w-full px-6 py-4 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white rounded-xl font-semibold transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+        className={`w-full px-6 py-4 rounded-xl font-semibold transition-all flex items-center justify-center gap-2 disabled:opacity-50 ${
+          isProUser
+            ? 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white'
+            : 'bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-500 hover:to-orange-500 text-white'
+        }`}
       >
         {isGenerating ? (
           <>
             <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
             <span>Generating Code...</span>
           </>
-        ) : (
+        ) : isProUser ? (
           <>
             <span>💻</span>
             <span>Generate Production Code</span>
+          </>
+        ) : (
+          <>
+            <Lock className="w-5 h-5" />
+            <span>Upgrade to Generate Code</span>
           </>
         )}
       </button>
