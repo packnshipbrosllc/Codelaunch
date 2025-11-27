@@ -16,6 +16,10 @@ import { useMindmapLimit } from '@/hooks/useMindmapLimit';
 import { SpaceBackground } from '@/components/ui/space-background';
 import Link from 'next/link';
 import { exportProjectAsZip } from '@/utils/exportUtils';
+import MindmapTutorialOverlay from '@/components/MindmapTutorialOverlay';
+import { useMindmapTutorial } from '@/hooks/useMindmapTutorial';
+import { toast } from 'sonner';
+import { toast } from 'sonner';
 
 // Debug logging
 if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
@@ -28,6 +32,15 @@ function CreateProjectPageContent() {
   const searchParams = useSearchParams();
   const { user, isLoaded } = useUser();
   const { canCreateMore, isSubscribed, remainingFreeMindmaps } = useMindmapLimit();
+  
+  // Tutorial system
+  const {
+    showTutorial,
+    hasCompletedTutorial,
+    startTutorial,
+    completeTutorial,
+    skipTutorial,
+  } = useMindmapTutorial();
   
   const [idea, setIdea] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
@@ -93,6 +106,15 @@ function CreateProjectPageContent() {
       console.log('🔍 DEBUG: Rendering EnhancedMindmapFlow with data:', mindmapData);
     }
   }, [mindmapData]);
+
+  // Show toast when Feature Builder opens
+  useEffect(() => {
+    if (selectedFeature) {
+      toast.success('🎉 Feature Builder opened! Expand features to see details', {
+        duration: 5000,
+      });
+    }
+  }, [selectedFeature]);
 
   // Keyboard shortcuts for fullscreen
   useEffect(() => {
@@ -165,6 +187,13 @@ function CreateProjectPageContent() {
 
       // Success! Show mindmap and usage info
       setMindmapData(result.data);
+      
+      // Trigger tutorial for first-time users after mindmap generation
+      if (!hasCompletedTutorial) {
+        setTimeout(() => {
+          startTutorial();
+        }, 1000); // Small delay so user can see the mindmap first
+      }
       
       // Show usage info if available
       if (result.usage && !result.usage.isProUser) {

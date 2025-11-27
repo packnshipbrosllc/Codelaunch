@@ -25,13 +25,20 @@ export async function GET(req: NextRequest) {
       .single();
 
     if (error) {
-      console.error('Error checking subscription:', error);
+      console.error('🔒 API: Error checking subscription:', error);
       // If user doesn't exist in DB yet, they need to subscribe
       return NextResponse.json({ hasSubscription: false });
     }
 
     // User has subscription if status is 'active'
     const hasSubscription = user?.subscription_status === 'active';
+    
+    // Debug logging
+    console.log('🔒 API: Subscription check result:', {
+      userId,
+      subscription_status: user?.subscription_status,
+      hasSubscription,
+    });
 
     return NextResponse.json({ hasSubscription });
   } catch (error) {

@@ -26,6 +26,8 @@ import { EnhancedPersonaNode } from './nodes/EnhancedPersonaNode';
 import PRDModal from '@/components/features/PRDModal';
 import FeatureSidebar from '@/components/FeatureSidebar';
 import { useMindmapLimit } from '@/hooks/useMindmapLimit';
+import NodeClickIndicator from '@/components/NodeClickIndicator';
+import { useMindmapTutorial } from '@/hooks/useMindmapTutorial';
 import { 
   EnhancedMindmapData, 
   NodeExpansionState,
@@ -64,6 +66,10 @@ export function EnhancedMindmapFlow({
   const { isSubscribed: hookIsSubscribed } = useMindmapLimit();
   const isSubscribed = propIsSubscribed || hookIsSubscribed;
   
+  // Tutorial system
+  const { hasCompletedTutorial } = useMindmapTutorial();
+  const [mindmapReady, setMindmapReady] = useState(false);
+  
   // PRD Modal state
   const [prdModalOpen, setPRDModalOpen] = useState(false);
   const [selectedFeatureId, setSelectedFeatureId] = useState<string | null>(null);
@@ -73,6 +79,13 @@ export function EnhancedMindmapFlow({
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarFeature, setSidebarFeature] = useState<any>(null);
   const [showPRDPreview, setShowPRDPreview] = useState(false);
+  
+  // Mark mindmap as ready when nodes are loaded
+  useEffect(() => {
+    if (nodes.length > 0) {
+      setMindmapReady(true);
+    }
+  }, [nodes.length]);
 
   // Generate initial nodes and edges from data - MEMOIZED WITHOUT expandedNodes to prevent infinite loop
   const { initialNodes, initialEdges } = useMemo(() => {
@@ -587,6 +600,13 @@ export function EnhancedMindmapFlow({
 
   return (
     <div className="w-full h-full relative" style={{ width: '100%', height: '100%', minHeight: '600px', background: 'transparent' }}>
+      {/* Node Click Indicator for first-time users */}
+      {mindmapReady && !hasCompletedTutorial && (
+        <div className="absolute inset-0 pointer-events-none z-40 flex items-center justify-center">
+          <NodeClickIndicator show={true} />
+        </div>
+      )}
+      
       <ReactFlow
         nodes={nodes}
         edges={edges}

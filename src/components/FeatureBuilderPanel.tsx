@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X, Lock } from 'lucide-react';
 import { EnhancedFeature } from '@/types/enhanced-mindmap';
 import { Feature } from '@/types/mindmap';
@@ -86,6 +86,18 @@ export default function FeatureBuilderPanel({
   const { remainingFreeMindmaps, mindmapsCreated, freeLimit, isLoading: isLoadingLimit, error: limitError } = useMindmapLimit();
   const isProUser = hasSubscription === true;
 
+  // Debug logging for subscription status
+  useEffect(() => {
+    console.log('🔒 FeatureBuilderPanel Subscription Debug:', {
+      hasSubscription,
+      isLoadingSubscription,
+      isProUser,
+      remainingFreeMindmaps,
+      mindmapsCreated,
+      freeLimit,
+    });
+  }, [hasSubscription, isLoadingSubscription, isProUser, remainingFreeMindmaps, mindmapsCreated, freeLimit]);
+
   const [formData, setFormData] = useState<FormData>({
     userStories: feature.userStories?.map(us => `As a ${us.persona}, I want to ${us.need} so that ${us.goal}`).join('\n') || '',
     acceptanceCriteria: feature.acceptanceCriteria?.join('\n') || '',
@@ -156,7 +168,9 @@ export default function FeatureBuilderPanel({
               const isCompleted = requirementsProgress >= stepProgress;
               const isActive = currentStep === step.id;
               const isProFeature = step.id === 5 || step.id === 6; // PRD and Code generation are Pro features
-              const isLocked = isProFeature && !isProUser;
+              // Lock if: it's a Pro feature AND (user is not Pro OR subscription is still loading)
+              // Default to locked during loading to prevent bypass
+              const isLocked = isProFeature && (isLoadingSubscription || !isProUser);
               
               return (
                 <button

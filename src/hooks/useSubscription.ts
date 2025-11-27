@@ -21,13 +21,24 @@ export function useSubscription() {
         });
 
         if (response.ok) {
-          const { hasSubscription } = await response.json();
+          const data = await response.json();
+          const { hasSubscription } = data;
+          
+          // Debug logging
+          console.log('🔒 useSubscription API Response:', {
+            userId: user.id,
+            response: data,
+            hasSubscription,
+            type: typeof hasSubscription,
+          });
+          
           setHasSubscription(hasSubscription);
         } else {
+          console.warn('🔒 useSubscription API Error:', response.status, response.statusText);
           setHasSubscription(false);
         }
       } catch (error) {
-        console.error('Error checking subscription:', error);
+        console.error('🔒 Error checking subscription:', error);
         setHasSubscription(false);
       } finally {
         setIsLoading(false);
