@@ -9,6 +9,8 @@ export function useSubscription() {
   useEffect(() => {
     async function checkSubscription() {
       if (!isLoaded || !user) {
+        // Explicitly set hasSubscription to false when user is not loaded or doesn't exist
+        setHasSubscription(false);
         setIsLoading(false);
         return;
       }

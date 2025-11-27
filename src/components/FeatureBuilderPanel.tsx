@@ -172,6 +172,18 @@ export default function FeatureBuilderPanel({
               // Default to locked during loading to prevent bypass
               const isLocked = isProFeature && (isLoadingSubscription || !isProUser);
               
+              // Enhanced debug logging for Pro feature steps
+              if (isProFeature) {
+                console.log(`🔒 Step ${step.id} (${step.title}) Lock Debug:`, {
+                  isProFeature,
+                  isLoadingSubscription,
+                  hasSubscription,
+                  isProUser,
+                  isLocked,
+                  calculation: `isProFeature(${isProFeature}) && (isLoadingSubscription(${isLoadingSubscription}) || !isProUser(${!isProUser})) = ${isLocked}`,
+                });
+              }
+              
               return (
                 <button
                   key={step.id}

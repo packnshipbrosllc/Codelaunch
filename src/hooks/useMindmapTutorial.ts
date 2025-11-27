@@ -5,6 +5,7 @@
 
 import { useState, useEffect } from 'react';
 import { useUser } from '@clerk/nextjs';
+import { trackFeatureUsed } from '@/utils/analytics';
 
 export function useMindmapTutorial() {
   const { user } = useUser();
@@ -33,10 +34,25 @@ export function useMindmapTutorial() {
     localStorage.setItem(tutorialKey, 'true');
     setHasCompletedTutorial(true);
     setShowTutorial(false);
+    
+    // Track tutorial completion
+    trackFeatureUsed('tutorial_completed', { 
+      tutorial_type: 'mindmap_first_time' 
+    });
   };
 
   const skipTutorial = () => {
-    completeTutorial(); // Same as completing - don't show again
+    if (!user) return;
+    
+    const tutorialKey = `mindmap_tutorial_completed_${user.id}`;
+    localStorage.setItem(tutorialKey, 'true');
+    setHasCompletedTutorial(true);
+    setShowTutorial(false);
+    
+    // Track tutorial skip
+    trackFeatureUsed('tutorial_skipped', { 
+      tutorial_type: 'mindmap_first_time' 
+    });
   };
 
   return {
