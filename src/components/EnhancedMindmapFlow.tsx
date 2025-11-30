@@ -79,13 +79,6 @@ export function EnhancedMindmapFlow({
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarFeature, setSidebarFeature] = useState<any>(null);
   const [showPRDPreview, setShowPRDPreview] = useState(false);
-  
-  // Mark mindmap as ready when nodes are loaded
-  useEffect(() => {
-    if (nodes.length > 0) {
-      setMindmapReady(true);
-    }
-  }, [nodes.length]);
 
   // Generate initial nodes and edges from data - MEMOIZED WITHOUT expandedNodes to prevent infinite loop
   const { initialNodes, initialEdges } = useMemo(() => {
@@ -310,6 +303,13 @@ export function EnhancedMindmapFlow({
   // ✅ HOOKS MUST BE DECLARED AFTER useMemo BUT BEFORE THEY'RE USED
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+
+  // Mark mindmap as ready when nodes are loaded
+  useEffect(() => {
+    if (nodes.length > 0) {
+      setMindmapReady(true);
+    }
+  }, [nodes.length]);
 
   // ✅ Use refs to track state and prevent infinite loops
   const isInitializedRef = useRef(false);
