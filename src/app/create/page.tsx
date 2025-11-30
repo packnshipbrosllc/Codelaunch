@@ -19,7 +19,6 @@ import { exportProjectAsZip } from '@/utils/exportUtils';
 import MindmapTutorialOverlay from '@/components/MindmapTutorialOverlay';
 import { useMindmapTutorial } from '@/hooks/useMindmapTutorial';
 import { toast } from 'sonner';
-import { toast } from 'sonner';
 
 // Debug logging
 if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
