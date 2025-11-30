@@ -237,8 +237,8 @@ export default function FeatureBuilderPanel({
           {currentStep === 2 && <TechnicalSpecsStep feature={feature} projectContext={projectContext} formData={formData} setFormData={setFormData} />}
           {currentStep === 3 && <DependenciesStep feature={feature} projectContext={projectContext} formData={formData} setFormData={setFormData} />}
           {currentStep === 4 && <EdgeCasesStep feature={feature} formData={formData} setFormData={setFormData} />}
-          {currentStep === 5 && <GeneratePRDStep feature={feature} formData={formData} onSavePRD={onSavePRD} isGenerating={isGenerating} setIsGenerating={setIsGenerating} isProUser={isProUser} remainingFreeMindmaps={remainingFreeMindmaps} mindmapsCreated={mindmapsCreated} freeLimit={freeLimit} onUpgrade={() => { trackPaywallViewed('prd_generation', 'button_click'); trackUpgradeClicked('prd_button'); setShowUpgradeModal(true); }} />}
-          {currentStep === 6 && <GenerateCodeStep feature={feature} formData={formData} onGenerateCode={onGenerateCode} isGenerating={isGenerating} setIsGenerating={setIsGenerating} isProUser={isProUser} remainingFreeMindmaps={remainingFreeMindmaps} mindmapsCreated={mindmapsCreated} freeLimit={freeLimit} onUpgrade={() => { trackPaywallViewed('code_generation', 'button_click'); trackUpgradeClicked('code_button'); setShowUpgradeModal(true); }} />}
+          {currentStep === 5 && <GeneratePRDStep feature={feature} formData={formData} onSavePRD={onSavePRD} isGenerating={isGenerating} setIsGenerating={setIsGenerating} isProUser={isProUser} remainingFreeMindmaps={remainingFreeMindmaps} mindmapsCreated={mindmapsCreated} freeLimit={freeLimit} isLoadingLimit={isLoadingLimit} limitError={limitError} onUpgrade={() => { trackPaywallViewed('prd_generation', 'button_click'); trackUpgradeClicked('prd_button'); setShowUpgradeModal(true); }} />}
+          {currentStep === 6 && <GenerateCodeStep feature={feature} formData={formData} onGenerateCode={onGenerateCode} isGenerating={isGenerating} setIsGenerating={setIsGenerating} isProUser={isProUser} remainingFreeMindmaps={remainingFreeMindmaps} mindmapsCreated={mindmapsCreated} freeLimit={freeLimit} isLoadingLimit={isLoadingLimit} limitError={limitError} onUpgrade={() => { trackPaywallViewed('code_generation', 'button_click'); trackUpgradeClicked('code_button'); setShowUpgradeModal(true); }} />}
 
           {/* Navigation Buttons */}
           <div className="flex justify-between mt-8 pt-8 border-t border-gray-700">
@@ -568,7 +568,7 @@ function EdgeCasesStep({ feature, formData, setFormData }: { feature: EnhancedFe
   );
 }
 
-function GeneratePRDStep({ feature, formData, onSavePRD, isGenerating, setIsGenerating, isProUser, remainingFreeMindmaps, mindmapsCreated, freeLimit, onUpgrade }: { feature: EnhancedFeature; formData: FormData; onSavePRD: (featureId: string, prd: any) => void; isGenerating: boolean; setIsGenerating: (val: boolean) => void; isProUser: boolean; remainingFreeMindmaps: number | null; mindmapsCreated: number; freeLimit: number; onUpgrade: () => void }) {
+function GeneratePRDStep({ feature, formData, onSavePRD, isGenerating, setIsGenerating, isProUser, remainingFreeMindmaps, mindmapsCreated, freeLimit, isLoadingLimit, limitError, onUpgrade }: { feature: EnhancedFeature; formData: FormData; onSavePRD: (featureId: string, prd: any) => void; isGenerating: boolean; setIsGenerating: (val: boolean) => void; isProUser: boolean; remainingFreeMindmaps: number | null; mindmapsCreated: number; freeLimit: number; isLoadingLimit: boolean; limitError: string | null; onUpgrade: () => void }) {
   const handleGenerate = async () => {
     if (!isProUser) {
       onUpgrade();
@@ -677,7 +677,7 @@ function GeneratePRDStep({ feature, formData, onSavePRD, isGenerating, setIsGene
   );
 }
 
-function GenerateCodeStep({ feature, formData, onGenerateCode, isGenerating, setIsGenerating, isProUser, remainingFreeMindmaps, mindmapsCreated, freeLimit, onUpgrade }: { feature: EnhancedFeature; formData: FormData; onGenerateCode: (featureId: string) => void; isGenerating: boolean; setIsGenerating: (val: boolean) => void; isProUser: boolean; remainingFreeMindmaps: number | null; mindmapsCreated: number; freeLimit: number; onUpgrade: () => void }) {
+function GenerateCodeStep({ feature, formData, onGenerateCode, isGenerating, setIsGenerating, isProUser, remainingFreeMindmaps, mindmapsCreated, freeLimit, isLoadingLimit, limitError, onUpgrade }: { feature: EnhancedFeature; formData: FormData; onGenerateCode: (featureId: string) => void; isGenerating: boolean; setIsGenerating: (val: boolean) => void; isProUser: boolean; remainingFreeMindmaps: number | null; mindmapsCreated: number; freeLimit: number; isLoadingLimit: boolean; limitError: string | null; onUpgrade: () => void }) {
   const handleGenerate = async () => {
     if (!isProUser) {
       onUpgrade();
