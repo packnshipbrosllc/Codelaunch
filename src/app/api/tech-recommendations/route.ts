@@ -3,9 +3,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import OpenAI from 'openai';
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+// Lazy initialization to ensure env vars are loaded
+function getOpenAI() {
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) {
+    throw new Error('OPENAI_API_KEY environment variable is not set');
+  }
+  return new OpenAI({ apiKey });
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -95,6 +100,7 @@ Provide tech stack recommendations in this JSON format:
 
 Be specific, practical, and explain your choices clearly. Consider scalability, developer experience, and cost.`;
 
+    const openai = getOpenAI();
     const completion = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
       messages: [

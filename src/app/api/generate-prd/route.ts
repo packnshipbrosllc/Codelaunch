@@ -11,9 +11,14 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+// Lazy initialization to ensure env vars are loaded
+function getOpenAI() {
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) {
+    throw new Error('OPENAI_API_KEY environment variable is not set');
+  }
+  return new OpenAI({ apiKey });
+}
 
 export async function POST(request: NextRequest) {
   const startTime = Date.now();
@@ -462,6 +467,7 @@ Make this EXCEPTIONAL - production-ready quality. Include all 13 sections listed
     });
 
     console.log('🤖 [Backend] Calling OpenAI GPT-4o API for exceptional PRD generation...');
+    const openai = getOpenAI();
     const completion = await openai.chat.completions.create({
       model: 'gpt-4o', // Using GPT-4o for exceptional quality (worth the extra cost for $40/mo customers)
       messages: [
