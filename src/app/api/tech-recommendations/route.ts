@@ -1,10 +1,13 @@
 // src/app/api/tech-recommendations/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
-import OpenAI from 'openai';
 
-// Lazy initialization to ensure env vars are loaded
+// Force dynamic rendering - prevents static analysis at build time
+export const dynamic = 'force-dynamic';
+
+// Lazy initialization for OpenAI
 function getOpenAI() {
+  const { default: OpenAI } = require('openai');
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
     throw new Error('OPENAI_API_KEY environment variable is not set');
