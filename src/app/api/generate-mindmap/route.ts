@@ -8,8 +8,10 @@ import { createClient } from '@supabase/supabase-js';
 // Lazy initialization to ensure env vars are loaded
 function getOpenAI() {
   const apiKey = process.env.OPENAI_API_KEY;
+  console.log('🔑 OPENAI_API_KEY exists:', !!apiKey);
+  console.log('🔑 OPENAI_API_KEY length:', apiKey?.length || 0);
   if (!apiKey) {
-    throw new Error('OPENAI_API_KEY environment variable is not set');
+    throw new Error('OPENAI_API_KEY environment variable is not set. Check Vercel env vars.');
   }
   return new OpenAI({ apiKey });
 }
