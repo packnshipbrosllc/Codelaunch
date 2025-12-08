@@ -1,12 +1,16 @@
 // src/app/api/generate-mindmap/route.ts
 
 import { NextRequest, NextResponse } from 'next/server';
-import OpenAI from 'openai';
 import { auth } from '@clerk/nextjs/server';
-import { createClient } from '@supabase/supabase-js';
 
-// Lazy initialization to ensure env vars are loaded
+// Force dynamic rendering - prevents static analysis at build time
+export const dynamic = 'force-dynamic';
+
+const FREE_MINDMAP_LIMIT = 3;
+
+// Lazy initialization for OpenAI
 function getOpenAI() {
+  const { default: OpenAI } = require('openai');
   const apiKey = process.env.OPENAI_API_KEY;
   console.log('🔑 OPENAI_API_KEY exists:', !!apiKey);
   console.log('🔑 OPENAI_API_KEY length:', apiKey?.length || 0);
@@ -16,14 +20,18 @@ function getOpenAI() {
   return new OpenAI({ apiKey });
 }
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
-
-const FREE_MINDMAP_LIMIT = 3;
+// Lazy initialization for Supabase
+function getSupabase() {
+  const { createClient } = require('@supabase/supabase-js');
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+}
 
 export async function POST(req: NextRequest) {
+  const supabase = getSupabase();
+  
   try {
     // Check authentication
     const { userId } = await auth();
@@ -313,4 +321,3 @@ Rules:
     );
   }
 }
-
