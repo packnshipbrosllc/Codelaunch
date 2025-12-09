@@ -5,22 +5,32 @@ export const maxDuration = 120;
 export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
-import Anthropic from '@anthropic-ai/sdk';
 import { auth } from '@clerk/nextjs/server';
-import { createClient } from '@supabase/supabase-js';
 
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-});
+// Lazy initialization for Anthropic
+function getAnthropic() {
+  const { default: Anthropic } = require('@anthropic-ai/sdk');
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) {
+    throw new Error('ANTHROPIC_API_KEY environment variable is not set');
+  }
+  return new Anthropic({ apiKey });
+}
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+// Lazy initialization for Supabase
+function getSupabase() {
+  const { createClient } = require('@supabase/supabase-js');
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+}
 
 export async function POST(request: NextRequest) {
   const startTime = Date.now();
   console.log('🚀 [Backend] Code generation request received');
+  
+  const supabase = getSupabase();
   
   try {
     const { userId } = await auth();
@@ -165,6 +175,7 @@ IMPORTANT:
 Return ONLY the JSON object, no markdown, no code blocks, no explanations.`;
 
     console.log('🤖 [Backend] Calling Anthropic API for code generation...');
+    const anthropic = getAnthropic();
     const message = await anthropic.messages.create({
       model: 'claude-sonnet-4-5-20250929',
       max_tokens: 16000, // Large token limit for multiple files

@@ -1,8 +1,28 @@
 // api/decision-tree/generate/route.ts
 import { auth } from '@clerk/nextjs/server';
-import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
-import Anthropic from '@anthropic-ai/sdk';
+
+// Force dynamic rendering - prevents static analysis at build time
+export const dynamic = 'force-dynamic';
+
+// Lazy initialization for Anthropic
+function getAnthropic() {
+  const { default: Anthropic } = require('@anthropic-ai/sdk');
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) {
+    throw new Error('ANTHROPIC_API_KEY environment variable is not set');
+  }
+  return new Anthropic({ apiKey });
+}
+
+// Lazy initialization for Supabase
+function getSupabase() {
+  const { createClient } = require('@supabase/supabase-js');
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+}
 
 export async function POST(request: Request) {
   try {
@@ -12,10 +32,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
+    const supabase = getSupabase();
 
     const body = await request.json();
     const { sessionId, decisions, appPurpose, appType } = body;
@@ -31,9 +48,7 @@ export async function POST(request: Request) {
     const prompt = buildPromptFromDecisions(decisions, appPurpose, appType);
 
     // Call Claude to generate the mindmap
-    const anthropic = new Anthropic({
-      apiKey: process.env.ANTHROPIC_API_KEY!,
-    });
+    const anthropic = getAnthropic();
 
     const message = await anthropic.messages.create({
       model: 'claude-sonnet-4-5-20250929',

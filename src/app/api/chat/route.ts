@@ -2,11 +2,19 @@
 // AI Chat API endpoint with streaming support
 
 import { NextRequest, NextResponse } from 'next/server';
-import Anthropic from '@anthropic-ai/sdk';
 
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY!,
-});
+// Force dynamic rendering - prevents static analysis at build time
+export const dynamic = 'force-dynamic';
+
+// Lazy initialization for Anthropic
+function getAnthropic() {
+  const { default: Anthropic } = require('@anthropic-ai/sdk');
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) {
+    throw new Error('ANTHROPIC_API_KEY environment variable is not set');
+  }
+  return new Anthropic({ apiKey });
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -18,6 +26,8 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    const anthropic = getAnthropic();
 
     // Create a readable stream
     const encoder = new TextEncoder();
@@ -68,4 +78,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-
