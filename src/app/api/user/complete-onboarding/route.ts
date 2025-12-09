@@ -1,7 +1,7 @@
 // FILE PATH: src/app/api/user/complete-onboarding/route.ts
 // Mark user onboarding as completed
 
-import { auth } from '@clerk/nextjs/server';
+import { auth, currentUser } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
@@ -21,20 +21,51 @@ export async function POST() {
       );
     }
 
-    // Update or insert user with onboarding_completed = true
-    // Note: Using 'id' field to match existing codebase pattern
-    // If onboarding_completed column doesn't exist yet, this will fail gracefully
-    const { data, error } = await supabase
+    // Get user details from Clerk for new user creation
+    const user = await currentUser();
+    const email = user?.emailAddresses?.[0]?.emailAddress || '';
+
+    // First, check if user exists
+    const { data: existingUser } = await supabase
       .from('users')
-      .upsert({
-        id: userId,
-        onboarding_completed: true,
-        updated_at: new Date().toISOString(),
-      }, {
-        onConflict: 'id',
-      })
-      .select()
+      .select('id')
+      .eq('id', userId)
       .single();
+
+    let data, error;
+
+    if (existingUser) {
+      // User exists - just update onboarding_completed
+      const result = await supabase
+        .from('users')
+        .update({
+          onboarding_completed: true,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', userId)
+        .select()
+        .single();
+      data = result.data;
+      error = result.error;
+    } else {
+      // User doesn't exist - create with required fields only
+      const result = await supabase
+        .from('users')
+        .insert({
+          id: userId,
+          email: email,
+          onboarding_completed: true,
+          subscription_status: 'inactive',
+          subscription_tier: 'free',
+          mindmaps_created: 0,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .select()
+        .single();
+      data = result.data;
+      error = result.error;
+    }
 
     if (error) {
       console.error('Error completing onboarding:', error);

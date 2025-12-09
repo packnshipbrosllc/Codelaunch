@@ -5,7 +5,7 @@
 
 import { X, Lock, Sparkles, Zap, CheckCircle2, AlertCircle } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import { PRICING } from '@/lib/stripe';
+import { PRICING } from '@/lib/stripe-config';
 import { trackPaywallViewed, trackUpgradeClicked, trackCheckoutStarted } from '@/utils/analytics';
 
 interface UpgradeModalProps {

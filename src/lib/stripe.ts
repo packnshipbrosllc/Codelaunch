@@ -1,27 +1,16 @@
+// Stripe SDK - server-side only
+// Do NOT import this file in client components
+
 import Stripe from 'stripe';
+import { PRICING } from './stripe-config';
+
+// Re-export PRICING for backwards compatibility in API routes
+export { PRICING };
 
 export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
   apiVersion: '2025-09-30.clover',
   typescript: true,
 });
-
-export const PRICING = {
-  monthly: {
-    priceId: process.env.NEXT_PUBLIC_STRIPE_MONTHLY_PRICE_ID!,
-    amount: 39.99,
-    credits: 100,
-    interval: 'month' as const,
-    name: 'Monthly Founder',
-  },
-  yearly: {
-    priceId: process.env.NEXT_PUBLIC_STRIPE_YEARLY_PRICE_ID!,
-    amount: 299.99,
-    credits: 1200,
-    interval: 'year' as const,
-    name: 'Yearly Founder',
-    savings: 179.89,
-  },
-};
 
 export async function createCheckoutSession({
   priceId,
