@@ -19,6 +19,9 @@ import { exportProjectAsZip } from '@/utils/exportUtils';
 import MindmapTutorialOverlay from '@/components/MindmapTutorialOverlay';
 import { useMindmapTutorial } from '@/hooks/useMindmapTutorial';
 import { toast } from 'sonner';
+import NextStepModal from '@/components/NextStepModal';
+import ProgressBar, { calculateProgress } from '@/components/ProgressBar';
+import { MessageCircle, Image as ImageIcon } from 'lucide-react';
 
 // Debug logging
 if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
@@ -47,9 +50,14 @@ function CreateProjectPageContent() {
   const [error, setError] = useState('');
   
   // Panel state
-  const [showAIChat, setShowAIChat] = useState(true);
+  const [showAIChat, setShowAIChat] = useState(false);  // Hidden by default for cleaner UX
+  const [showMoodBoard, setShowMoodBoard] = useState(false);  // Hidden by default
   const [moodBoardImages, setMoodBoardImages] = useState<any[]>([]);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  
+  // NextStepModal state
+  const [showNextStepModal, setShowNextStepModal] = useState(false);
+  const [hasShownNextStepModal, setHasShownNextStepModal] = useState(false);
   
   // Feature Builder state
   const [selectedFeature, setSelectedFeature] = useState<EnhancedFeature | null>(null);
@@ -186,6 +194,14 @@ function CreateProjectPageContent() {
 
       // Success! Show mindmap and usage info
       setMindmapData(result.data);
+      
+      // Show NextStepModal to guide user
+      if (!hasShownNextStepModal) {
+        setTimeout(() => {
+          setShowNextStepModal(true);
+          setHasShownNextStepModal(true);
+        }, 1500);
+      }
       
       // Trigger tutorial for first-time users after mindmap generation
       if (!hasCompletedTutorial) {
@@ -359,6 +375,36 @@ function CreateProjectPageContent() {
     });
   }, [mindmapData]);
 
+  // Helper to get the top priority feature for NextStepModal
+  const getTopFeature = () => {
+    if (!mindmapData?.features?.length) return undefined;
+    const priorityOrder = ['must-have', 'high', 'medium', 'low'];
+    const sorted = [...mindmapData.features].sort((a, b) => {
+      const aIndex = priorityOrder.indexOf(a.priority || 'medium');
+      const bIndex = priorityOrder.indexOf(b.priority || 'medium');
+      return aIndex - bIndex;
+    });
+    return sorted[0] ? {
+      id: `feature-${sorted[0].id}`,
+      title: sorted[0].title,
+      description: sorted[0].description,
+    } : undefined;
+  };
+
+  // Handler for starting with a specific feature from NextStepModal
+  const handleStartWithFeature = (featureId: string) => {
+    const feature = mindmapData?.features.find(f => `feature-${f.id}` === featureId);
+    if (feature) {
+      setSelectedFeature(feature as unknown as EnhancedFeature);
+      toast.info('💡 Click "Generate PRD" to create detailed specs for this feature');
+    }
+  };
+
+  // Calculate progress for the ProgressBar
+  const { currentStage, completedStages } = useMemo(() => {
+    return calculateProgress(mindmapData as any);
+  }, [mindmapData]);
+
   // Debug logging before render decision
   console.log('🎯 Rendering decision - mindmapData:', mindmapData ? 'EXISTS' : 'NULL');
   if (mindmapData) {
@@ -490,6 +536,13 @@ function CreateProjectPageContent() {
               </div>
             </div>
 
+            {/* Progress Bar - Shows workflow stages */}
+            {!isFullscreen && (
+              <div className="absolute top-[88px] left-1/2 -translate-x-1/2 z-50 w-full max-w-3xl px-4">
+                <ProgressBar currentStage={currentStage} completedStages={completedStages} />
+              </div>
+            )}
+
             {/* Save Button + Fullscreen Toggle - Fixed Position Top Right */}
             <div className="fixed top-24 right-8 z-50 flex gap-3">
               {mindmapData && (
@@ -527,7 +580,7 @@ function CreateProjectPageContent() {
                 className="w-full" 
                 style={{ 
                   height: isFullscreen ? '100vh' : 'calc(100vh - 200px)',
-                  paddingTop: isFullscreen ? '0' : '80px'
+                  paddingTop: isFullscreen ? '0' : '140px'
                 }}
               >
                 {enhancedMindmapData && (
@@ -543,25 +596,62 @@ function CreateProjectPageContent() {
               </div>
             </div>
 
+            {/* Floating toggle buttons for collapsed panels */}
+            {!isFullscreen && (
+              <div className="fixed bottom-4 right-4 z-40 flex flex-col gap-2">
+                {!showAIChat && (
+                  <button
+                    onClick={() => setShowAIChat(true)}
+                    className="p-3 bg-purple-600 hover:bg-purple-500 text-white rounded-full shadow-lg transition-all hover:scale-110"
+                    title="Open AI Chat"
+                  >
+                    <MessageCircle className="w-6 h-6" />
+                  </button>
+                )}
+                {!showMoodBoard && (
+                  <button
+                    onClick={() => setShowMoodBoard(true)}
+                    className="p-3 bg-blue-600 hover:bg-blue-500 text-white rounded-full shadow-lg transition-all hover:scale-110"
+                    title="Open Mood Board"
+                  >
+                    <ImageIcon className="w-6 h-6" />
+                  </button>
+                )}
+              </div>
+            )}
+
             {/* Floating panels (hidden in fullscreen) */}
             {!isFullscreen && (
               <>
                 {showAIChat && (
-                  <div className="fixed bottom-4 right-4 z-40">
+                  <div className="fixed bottom-4 right-24 z-40">
                     <AIAssistantChatEnhanced 
                       mindmapData={mindmapData!}
                       moodBoardImages={moodBoardImages}
-                      isCollapsed={!showAIChat}
-                      onToggleCollapse={() => setShowAIChat(!showAIChat)}
+                      isCollapsed={false}
+                      onToggleCollapse={() => setShowAIChat(false)}
                     />
                   </div>
                 )}
-                <FloatingMoodBoard />
+                {showMoodBoard && <FloatingMoodBoard />}
               </>
             )}
           </div>
         </SpaceBackground>
       )}
+
+      {/* Next Step Modal - Guides users after mindmap generation */}
+      <NextStepModal
+        isOpen={showNextStepModal}
+        onClose={() => setShowNextStepModal(false)}
+        featureCount={mindmapData?.features?.length || 0}
+        topFeature={getTopFeature()}
+        onStartWithFeature={handleStartWithFeature}
+        onExploreFirst={() => {
+          setShowNextStepModal(false);
+          toast.info('💡 Click any feature node to see details and generate PRDs');
+        }}
+      />
       
       {/* Feature Builder Panel */}
       {selectedFeature && mindmapData && enhancedMindmapData && (
