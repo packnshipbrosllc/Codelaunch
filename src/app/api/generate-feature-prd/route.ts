@@ -1,7 +1,7 @@
 // API Route for Generating PRD for Individual Feature
 // Location: src/app/api/generate-feature-prd/route.ts
 
-export const maxDuration = 90;
+export const maxDuration = 60; // Reduced from 90
 export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -10,8 +10,12 @@ import { parseAIJsonResponse, JSON_ONLY_INSTRUCTION } from '@/lib/json-parser';
 
 // Lazy initialization for Anthropic
 function getAnthropic() {
+  console.log('🔑 [Backend] Initializing Anthropic client...');
   const { default: Anthropic } = require('@anthropic-ai/sdk');
   const apiKey = process.env.ANTHROPIC_API_KEY;
+  console.log('🔑 [Backend] ANTHROPIC_API_KEY exists:', !!apiKey);
+  console.log('🔑 [Backend] ANTHROPIC_API_KEY length:', apiKey?.length || 0);
+  console.log('🔑 [Backend] ANTHROPIC_API_KEY prefix:', apiKey?.substring(0, 10) + '...');
   if (!apiKey) {
     throw new Error('ANTHROPIC_API_KEY environment variable is not set');
   }
@@ -75,178 +79,124 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Build comprehensive prompt for feature-specific PRD
-    const prompt = `You are a senior product manager and technical architect creating a detailed Product Requirements Document (PRD) for a single feature.
+    // Simplify project context to reduce prompt size
+    const simplifiedContext = projectContext ? {
+      projectName: projectContext.projectName || 'Unknown Project',
+      techStack: projectContext.techStack ? 'React/Next.js, Node.js, PostgreSQL' : undefined,
+    } : null;
 
-CRITICAL REQUIREMENTS:
+    // Build a more concise prompt for feature-specific PRD
+    const prompt = `Generate a detailed PRD for this feature as valid JSON.
+
+FEATURE: ${featureName}
+DESCRIPTION: ${featureDescription || 'No description provided'}
+${simplifiedContext ? `PROJECT: ${simplifiedContext.projectName}` : ''}
+
 ${JSON_ONLY_INSTRUCTION}
-- Do NOT include any references to AI models, Claude, Anthropic, or how the document was generated
-- Focus only on the feature requirements
-- Make it detailed enough that a developer can implement it directly
 
-FEATURE DETAILS:
-- Feature Name: ${featureName}
-- Description: ${featureDescription || 'No description provided'}
-${projectContext ? `- Project Context: ${JSON.stringify(projectContext, null, 2)}` : ''}
-
-Generate a comprehensive PRD as a JSON object with this EXACT structure:
-
+Return this exact JSON structure:
 {
   "featureName": "${featureName}",
-  "overview": "2-3 sentence overview of what this feature does and why it's valuable",
+  "overview": "2-3 sentence overview",
   "userStories": [
     {
-      "persona": "User type (e.g., 'End User', 'Admin', 'Developer')",
+      "persona": "User type",
       "story": "As a [persona], I want to [action] so that [benefit]",
-      "acceptanceCriteria": [
-        "Specific, testable criterion 1",
-        "Specific, testable criterion 2",
-        "Specific, testable criterion 3"
-      ]
+      "acceptanceCriteria": ["criterion 1", "criterion 2", "criterion 3"]
     }
   ],
   "technicalRequirements": {
     "frontend": {
-      "components": [
-        "Component name 1 (e.g., 'UserDashboard.tsx')",
-        "Component name 2",
-        "Component name 3"
-      ],
-      "libraries": ["Library 1", "Library 2"],
-      "stateManagement": "How state is managed (e.g., 'React Context + Zustand')",
-      "styling": "Styling approach (e.g., 'Tailwind CSS with custom theme')"
+      "components": ["Component1.tsx", "Component2.tsx"],
+      "libraries": ["react", "tailwindcss"],
+      "stateManagement": "React hooks"
     },
     "backend": {
       "apiEndpoints": [
         {
-          "method": "GET" | "POST" | "PUT" | "DELETE" | "PATCH",
-          "path": "/api/endpoint/path",
-          "description": "What this endpoint does",
-          "requestBody": {
-            "example": {},
-            "schema": {}
-          },
-          "responseBody": {
-            "example": {},
-            "schema": {}
-          },
-          "authRequired": true | false
+          "method": "POST",
+          "path": "/api/example",
+          "description": "What it does",
+          "authRequired": true
         }
       ],
-      "services": ["Service name 1", "Service name 2"],
-      "libraries": ["Library 1", "Library 2"]
+      "services": ["ServiceName"]
     },
     "database": {
       "tables": [
         {
           "tableName": "table_name",
-          "description": "What this table stores",
           "columns": [
-            {
-              "name": "column_name",
-              "type": "VARCHAR(255)" | "INTEGER" | "UUID" | "TIMESTAMP" | "BOOLEAN" | "TEXT" | "JSONB",
-              "constraints": "PRIMARY KEY" | "NOT NULL" | "UNIQUE" | "FOREIGN KEY REFERENCES table(id)",
-              "description": "What this column stores"
-            }
-          ],
-          "relationships": [
-            "Has many relationship to other_table",
-            "Belongs to parent_table"
-          ],
-          "indexes": ["index_name on column_name"]
+            {"name": "id", "type": "UUID", "constraints": "PRIMARY KEY"}
+          ]
         }
-      ],
-      "migrations": ["Migration description 1", "Migration description 2"]
+      ]
     },
-    "security": [
-      "Security consideration 1 (e.g., 'JWT tokens for authentication')",
-      "Security consideration 2"
-    ],
-    "performance": [
-      "Performance consideration 1 (e.g., 'Database indexes on frequently queried columns')",
-      "Performance consideration 2"
-    ],
-    "edgeCases": [
-      "Edge case 1 to handle",
-      "Edge case 2 to handle"
-    ]
+    "security": ["Security consideration"],
+    "edgeCases": ["Edge case to handle"]
   },
-  "dependencies": [
-    "npm package 1 with version",
-    "npm package 2 with version"
-  ],
-  "implementationSteps": [
-    "Step 1: Description of what to do first",
-    "Step 2: Description of what to do next",
-    "Step 3: Continue with detailed steps..."
-  ],
-  "testing": {
-    "unitTests": [
-      "Test case 1 description",
-      "Test case 2 description"
-    ],
-    "integrationTests": [
-      "Integration test 1 description",
-      "Integration test 2 description"
-    ],
-    "e2eTests": [
-      "E2E test scenario 1",
-      "E2E test scenario 2"
-    ]
-  },
+  "implementationSteps": ["Step 1", "Step 2", "Step 3"],
   "estimations": {
-    "complexity": "simple" | "moderate" | "complex",
-    "engineeringHours": 40,
-    "breakdown": {
-      "frontend": 16,
-      "backend": 20,
-      "database": 4
-    }
+    "complexity": "moderate",
+    "engineeringHours": 20
   }
 }
 
-IMPORTANT:
-- Include 3-5 detailed user stories with acceptance criteria
-- Provide ALL API endpoints with complete request/response examples
-- Include complete database schema with all tables, columns, and relationships
-- List all UI components needed
-- Specify all npm dependencies with versions
-- Provide numbered implementation steps (8-12 steps)
-- Include testing considerations
-- Estimate hours realistically based on complexity
-- Include security and performance considerations
-- Think through edge cases that need handling`;
+Include 3 user stories, 2-3 API endpoints, relevant database tables, and 5-8 implementation steps.`;
 
-    console.log('📦 [Backend] Feature PRD request validated:', {
+    console.log('📏 [Backend] Prompt length:', prompt.length, 'characters');
+    console.log('📦 [Backend] Feature PRD request:', {
       featureId,
       featureName,
       hasDescription: !!featureDescription,
       hasProjectContext: !!projectContext,
+      promptLength: prompt.length,
     });
 
-    console.log('🤖 [Backend] Calling Anthropic API for feature PRD...');
-    const anthropic = getAnthropic();
-    const message = await anthropic.messages.create({
-      model: 'claude-sonnet-4-5-20250929',
-      max_tokens: 8192,
-      temperature: 0.7,
-      messages: [
-        {
-          role: 'user',
-          content: prompt,
-        },
-      ],
-    });
+    console.log('🤖 [Backend] Calling Claude API for feature PRD...');
+    
+    let anthropic;
+    try {
+      anthropic = getAnthropic();
+      console.log('✅ [Backend] Anthropic client initialized');
+    } catch (initError: any) {
+      console.error('❌ [Backend] Anthropic init failed:', initError.message);
+      throw initError;
+    }
+
+    let message;
+    try {
+      message = await anthropic.messages.create({
+        model: 'claude-sonnet-4-20250514', // Fixed model name
+        max_tokens: 4096, // Reduced from 8192
+        messages: [
+          {
+            role: 'user',
+            content: prompt,
+          },
+        ],
+      });
+      console.log('✅ [Backend] Claude API call successful');
+    } catch (claudeError: any) {
+      console.error('❌ [Backend] Claude API error:', claudeError.message);
+      console.error('❌ [Backend] Error status:', claudeError.status);
+      console.error('❌ [Backend] Error type:', claudeError.type);
+      throw claudeError;
+    }
 
     const duration = Date.now() - startTime;
-    console.log(`✅ [Backend] Anthropic responded in ${duration}ms`);
+    console.log(`✅ [Backend] Claude responded in ${duration}ms`);
+    console.log('📊 [Backend] Token usage:', message.usage);
 
     const responseText = message.content[0].type === 'text' 
       ? message.content[0].text 
       : '';
 
+    console.log('📄 [Backend] Response length:', responseText.length);
+    console.log('📄 [Backend] Response preview:', responseText.substring(0, 100));
+
     // Parse JSON using bulletproof parser
-    const parsedContent = parseAIJsonResponse(responseText, 'Feature PRD generation (Anthropic)');
+    const parsedContent = parseAIJsonResponse(responseText, 'Feature PRD generation');
 
     // Clean any accidental model references
     const cleanObject = (obj: any): any => {
@@ -287,15 +237,14 @@ IMPORTANT:
 
   } catch (error: any) {
     const duration = Date.now() - startTime;
-    console.error('❌ [Backend] Feature PRD generation failed:', {
-      error: error?.message,
-      duration,
-      stack: error?.stack,
-    });
+    console.error('❌ [Backend] Feature PRD generation failed after', duration, 'ms');
+    console.error('❌ [Backend] Error:', error?.message);
+    console.error('❌ [Backend] Error status:', error?.status);
+    console.error('❌ [Backend] Error type:', error?.type);
 
-    if (error?.status === 401) {
+    if (error?.status === 401 || error?.message?.includes('API key')) {
       return NextResponse.json(
-        { success: false, error: 'API authentication failed' },
+        { success: false, error: 'API authentication failed. Check ANTHROPIC_API_KEY.' },
         { status: 500 }
       );
     }
@@ -311,9 +260,9 @@ IMPORTANT:
       { 
         success: false, 
         error: error?.message || 'Failed to generate feature PRD',
+        details: error?.type || 'unknown_error',
       },
       { status: 500 }
     );
   }
 }
-

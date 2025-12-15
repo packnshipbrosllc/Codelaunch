@@ -7,8 +7,12 @@ import { parseAIJsonResponse, JSON_ONLY_INSTRUCTION } from '@/lib/json-parser';
 
 // Lazy initialization for Anthropic (Claude)
 function getAnthropic() {
+  console.log('🔑 [Backend] Initializing Anthropic client...');
   const { default: Anthropic } = require('@anthropic-ai/sdk');
   const apiKey = process.env.ANTHROPIC_API_KEY;
+  console.log('🔑 [Backend] ANTHROPIC_API_KEY exists:', !!apiKey);
+  console.log('🔑 [Backend] ANTHROPIC_API_KEY length:', apiKey?.length || 0);
+  console.log('🔑 [Backend] ANTHROPIC_API_KEY starts with:', apiKey?.substring(0, 10) + '...');
   if (!apiKey) {
     throw new Error('ANTHROPIC_API_KEY environment variable is not set');
   }
@@ -446,20 +450,44 @@ Return ONLY the JSON object, no markdown, no code blocks, no explanations. Start
     });
 
     console.log('🤖 [Backend] Calling Claude API for exceptional PRD generation...');
-    const anthropic = getAnthropic();
     
-    const message = await anthropic.messages.create({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 16000, // Claude supports larger outputs
-      temperature: 0.7,
-      system: systemPrompt,
-      messages: [
-        {
-          role: 'user',
-          content: userPrompt,
-        },
-      ],
-    });
+    let anthropic;
+    try {
+      anthropic = getAnthropic();
+      console.log('✅ [Backend] Anthropic client initialized successfully');
+    } catch (initError: any) {
+      console.error('❌ [Backend] Failed to initialize Anthropic client:', initError.message);
+      throw new Error(`Anthropic initialization failed: ${initError.message}`);
+    }
+    
+    console.log('📤 [Backend] Sending request to Claude with model: claude-sonnet-4-20250514');
+    console.log('📤 [Backend] System prompt length:', systemPrompt.length);
+    console.log('📤 [Backend] User prompt length:', userPrompt.length);
+    
+    let message;
+    try {
+      message = await anthropic.messages.create({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 16000, // Claude supports larger outputs
+        temperature: 0.7,
+        system: systemPrompt,
+        messages: [
+          {
+            role: 'user',
+            content: userPrompt,
+          },
+        ],
+      });
+      console.log('✅ [Backend] Claude API call successful');
+    } catch (claudeError: any) {
+      console.error('❌ [Backend] Claude API call failed');
+      console.error('❌ [Backend] Error name:', claudeError.name);
+      console.error('❌ [Backend] Error message:', claudeError.message);
+      console.error('❌ [Backend] Error status:', claudeError.status);
+      console.error('❌ [Backend] Error type:', claudeError.type);
+      console.error('❌ [Backend] Full error:', JSON.stringify(claudeError, null, 2));
+      throw claudeError;
+    }
 
     const duration = Date.now() - startTime;
     console.log(`✅ [Backend] Claude responded in ${duration}ms`);
@@ -467,10 +495,14 @@ Return ONLY the JSON object, no markdown, no code blocks, no explanations. Start
       input_tokens: message.usage?.input_tokens,
       output_tokens: message.usage?.output_tokens,
     });
+    console.log('📊 [Backend] Response content type:', message.content[0]?.type);
+    console.log('📊 [Backend] Response content length:', message.content[0]?.type === 'text' ? message.content[0].text.length : 0);
 
     const responseText = message.content[0].type === 'text' 
       ? message.content[0].text 
       : '';
+    
+    console.log('📄 [Backend] Response text first 200 chars:', responseText.substring(0, 200));
 
     // Parse JSON using bulletproof parser
     const parsedContent = parseAIJsonResponse(responseText, 'PRD generation (Claude)');
@@ -522,17 +554,29 @@ Return ONLY the JSON object, no markdown, no code blocks, no explanations. Start
 
   } catch (error: any) {
     const duration = Date.now() - startTime;
-    console.error('❌ [Backend] PRD generation failed:', {
-      error: error?.message,
-      duration,
-      stack: error?.stack,
-      status: error?.status,
-      code: error?.code,
-    });
+    console.error('❌ [Backend] PRD generation failed after', duration, 'ms');
+    console.error('❌ [Backend] Error name:', error?.name);
+    console.error('❌ [Backend] Error message:', error?.message);
+    console.error('❌ [Backend] Error status:', error?.status);
+    console.error('❌ [Backend] Error code:', error?.code);
+    console.error('❌ [Backend] Error type:', error?.type);
+    console.error('❌ [Backend] Error stack:', error?.stack);
+    
+    // Try to get more error details
+    if (error?.error) {
+      console.error('❌ [Backend] Nested error:', error.error);
+    }
+    if (error?.response) {
+      console.error('❌ [Backend] Response data:', error.response);
+    }
 
-    if (error?.status === 401) {
+    if (error?.status === 401 || error?.message?.includes('authentication') || error?.message?.includes('API key')) {
       return NextResponse.json(
-        { success: false, error: 'API authentication failed' },
+        { 
+          success: false, 
+          error: 'API authentication failed. Check ANTHROPIC_API_KEY.',
+          details: error?.message,
+        },
         { status: 500 }
       );
     }
@@ -544,11 +588,23 @@ Return ONLY the JSON object, no markdown, no code blocks, no explanations. Start
       );
     }
 
+    if (error?.status === 400 || error?.type === 'invalid_request_error') {
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: 'Invalid request to Claude API',
+          details: error?.message,
+        },
+        { status: 400 }
+      );
+    }
+
     return NextResponse.json(
       { 
         success: false, 
         error: error?.message || 'Failed to generate PRD',
         code: error?.code || 'INTERNAL_ERROR',
+        details: process.env.NODE_ENV === 'development' ? error?.stack : undefined,
       },
       { status: 500 }
     );
