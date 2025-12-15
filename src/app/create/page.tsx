@@ -1,7 +1,7 @@
 // src/app/create/page.tsx
 'use client';
 
-import { useState, useEffect, useRef, useMemo, Suspense } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
 import { EnhancedMindmapFlow } from '@/components/EnhancedMindmapFlow';
@@ -272,9 +272,18 @@ function CreateProjectPageContent() {
     }
   };
 
-  const handleGeneratePRD = async (nodeId: string, featureData: any) => {
+  // Use a ref to always have the latest mindmapData available (fixes stale closure issue)
+  const mindmapDataRef = useRef(mindmapData);
+  useEffect(() => {
+    mindmapDataRef.current = mindmapData;
+  }, [mindmapData]);
+
+  const handleGeneratePRD = useCallback(async (nodeId: string, featureData: any) => {
+    // Use ref to get the CURRENT mindmapData, not the stale closure value
+    const currentMindmapData = mindmapDataRef.current;
+    
     console.log('🚀 handleGeneratePRD called:', nodeId);
-    console.log('📊 mindmapData at PRD generation:', mindmapData);
+    console.log('📊 mindmapData from ref:', currentMindmapData);
     console.log('📊 featureData:', featureData);
     
     if (!isSubscribed) {
@@ -292,7 +301,7 @@ function CreateProjectPageContent() {
       return;
     }
 
-    if (!mindmapData) {
+    if (!currentMindmapData) {
       console.error('❌ mindmapData is null/undefined at PRD generation time');
       alert('No mindmap data available. Please generate a mindmap first.');
       return;
@@ -301,12 +310,12 @@ function CreateProjectPageContent() {
     try {
       // Send the full mindmapData to the API as it expects
       const requestBody = {
-        projectName: mindmapData.projectName,
-        mindmapData: mindmapData, // Full mindmap data
-        idea: mindmapData.projectDescription,
-        features: mindmapData.features,
-        competitors: mindmapData.competitors,
-        techStack: mindmapData.techStack,
+        projectName: currentMindmapData.projectName,
+        mindmapData: currentMindmapData, // Full mindmap data
+        idea: currentMindmapData.projectDescription,
+        features: currentMindmapData.features,
+        competitors: currentMindmapData.competitors,
+        techStack: currentMindmapData.techStack,
         // Also include feature-specific data
         feature: featureData,
       };
@@ -330,8 +339,8 @@ function CreateProjectPageContent() {
         alert('✅ PRD Generated!');
         // Update mindmap data with new PRD
         setMindmapData({
-          ...mindmapData,
-          features: mindmapData.features.map(f =>
+          ...currentMindmapData,
+          features: currentMindmapData.features.map(f =>
             f.id === nodeId ? { ...f, prd: result.prd, hasPRD: true } : f
           )
         } as any);
@@ -341,7 +350,7 @@ function CreateProjectPageContent() {
     } catch (error: any) {
       alert('Failed: ' + error.message);
     }
-  };
+  }, [isSubscribed]);
 
   const exampleIdeas = [
     "A SaaS platform where therapists can manage appointments, client notes, and secure messaging",
