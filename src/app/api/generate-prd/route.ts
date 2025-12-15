@@ -1,5 +1,5 @@
 // src/app/api/generate-prd/route.ts
-export const maxDuration = 120; // Increased for Claude processing time
+export const maxDuration = 300; // 5 minutes - Vercel Pro
 export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';

@@ -1,7 +1,7 @@
 // API Route for Generating PRD for Individual Feature
 // Location: src/app/api/generate-feature-prd/route.ts
 
-export const maxDuration = 60; // Reduced from 90
+export const maxDuration = 300; // 5 minutes - Vercel Pro
 export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
