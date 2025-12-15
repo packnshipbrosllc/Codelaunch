@@ -274,6 +274,8 @@ function CreateProjectPageContent() {
 
   const handleGeneratePRD = async (nodeId: string, featureData: any) => {
     console.log('🚀 handleGeneratePRD called:', nodeId);
+    console.log('📊 mindmapData at PRD generation:', mindmapData);
+    console.log('📊 featureData:', featureData);
     
     if (!isSubscribed) {
       const upgrade = window.confirm(
@@ -291,23 +293,35 @@ function CreateProjectPageContent() {
     }
 
     if (!mindmapData) {
-      alert('No mindmap data available');
+      console.error('❌ mindmapData is null/undefined at PRD generation time');
+      alert('No mindmap data available. Please generate a mindmap first.');
       return;
     }
 
     try {
+      // Send the full mindmapData to the API as it expects
+      const requestBody = {
+        projectName: mindmapData.projectName,
+        mindmapData: mindmapData, // Full mindmap data
+        idea: mindmapData.projectDescription,
+        features: mindmapData.features,
+        competitors: mindmapData.competitors,
+        techStack: mindmapData.techStack,
+        // Also include feature-specific data
+        feature: featureData,
+      };
+      
+      console.log('📤 Sending PRD request:', {
+        projectName: requestBody.projectName,
+        hasMindmapData: !!requestBody.mindmapData,
+        featuresCount: requestBody.features?.length,
+        featureId: nodeId,
+      });
+
       const response = await fetch('/api/generate-prd', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          feature: featureData,
-          projectContext: {
-            projectName: mindmapData.projectName,
-            projectDescription: mindmapData.projectDescription,
-            techStack: mindmapData.techStack,
-            allFeatures: mindmapData.features,
-          }
-        })
+        body: JSON.stringify(requestBody)
       });
 
       const result = await response.json();
