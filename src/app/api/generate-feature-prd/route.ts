@@ -6,6 +6,7 @@ export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
+import { parseAIJsonResponse, JSON_ONLY_INSTRUCTION } from '@/lib/json-parser';
 
 // Lazy initialization for Anthropic
 function getAnthropic() {
@@ -78,7 +79,7 @@ export async function POST(request: NextRequest) {
     const prompt = `You are a senior product manager and technical architect creating a detailed Product Requirements Document (PRD) for a single feature.
 
 CRITICAL REQUIREMENTS:
-- Return ONLY valid JSON (no markdown, no code blocks, no explanations)
+${JSON_ONLY_INSTRUCTION}
 - Do NOT include any references to AI models, Claude, Anthropic, or how the document was generated
 - Focus only on the feature requirements
 - Make it detailed enough that a developer can implement it directly
@@ -214,9 +215,7 @@ IMPORTANT:
 - Include testing considerations
 - Estimate hours realistically based on complexity
 - Include security and performance considerations
-- Think through edge cases that need handling
-
-Return ONLY the JSON object, no markdown, no code blocks, no explanations.`;
+- Think through edge cases that need handling`;
 
     console.log('📦 [Backend] Feature PRD request validated:', {
       featureId,
@@ -246,32 +245,8 @@ Return ONLY the JSON object, no markdown, no code blocks, no explanations.`;
       ? message.content[0].text 
       : '';
 
-    // Extract JSON from response
-    let jsonContent = responseText.trim();
-    
-    // Remove markdown code blocks if present
-    if (jsonContent.startsWith('```')) {
-      const lines = jsonContent.split('\n');
-      jsonContent = lines.slice(1, -1).join('\n');
-    }
-    
-    // Parse JSON
-    let parsedContent;
-    try {
-      parsedContent = JSON.parse(jsonContent);
-    } catch (parseError) {
-      console.error('❌ [Backend] JSON parse error:', parseError);
-      const jsonMatch = jsonContent.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        try {
-          parsedContent = JSON.parse(jsonMatch[0]);
-        } catch (e) {
-          throw new Error('Failed to parse PRD JSON response');
-        }
-      } else {
-        throw new Error('No valid JSON found in response');
-      }
-    }
+    // Parse JSON using bulletproof parser
+    const parsedContent = parseAIJsonResponse(responseText, 'Feature PRD generation (Anthropic)');
 
     // Clean any accidental model references
     const cleanObject = (obj: any): any => {

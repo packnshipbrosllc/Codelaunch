@@ -1,5 +1,6 @@
 // app/api/features/generate-prd/route.ts
 import { NextRequest, NextResponse } from 'next/server';
+import { parseAIJsonResponse, JSON_ONLY_INSTRUCTION } from '@/lib/json-parser';
 
 // Force dynamic rendering - prevents static analysis at build time
 export const dynamic = 'force-dynamic';
@@ -33,7 +34,9 @@ ${appContext}
 OTHER FEATURES IN THIS APP:
 ${allFeatures?.map((f: any) => `- ${f.title}: ${f.description}`).join('\n') || 'None yet'}
 
-Generate a detailed PRD with the following structure. Return ONLY valid JSON with no markdown formatting:
+Generate a detailed PRD with the following structure.
+
+${JSON_ONLY_INSTRUCTION}
 
 {
   "overview": "Comprehensive overview of what this feature does, why it's important, and how it fits into the overall app (3-4 paragraphs)",
@@ -115,8 +118,7 @@ IMPORTANT:
 - Include actual file names, component names, API paths
 - Think through the complete implementation
 - Consider dependencies on other features
-- Make it production-ready, not a tutorial
-- Return ONLY the JSON object, no markdown code blocks or additional text`;
+- Make it production-ready, not a tutorial`;
 
     const anthropic = getAnthropic();
     const message = await anthropic.messages.create({
@@ -134,20 +136,8 @@ IMPORTANT:
       ? message.content[0].text 
       : '';
 
-    // Parse the JSON response
-    let prdData;
-    try {
-      // Remove markdown code blocks if present
-      const cleanedText = responseText
-        .replace(/```json\n?/g, '')
-        .replace(/```\n?/g, '')
-        .trim();
-      
-      prdData = JSON.parse(cleanedText);
-    } catch (parseError) {
-      console.error('Failed to parse PRD JSON:', responseText);
-      throw new Error('Invalid JSON response from AI');
-    }
+    // Parse JSON using bulletproof parser
+    const prdData = parseAIJsonResponse(responseText, 'Feature PRD generation (Anthropic)');
 
     // Add metadata
     const completePRD = {

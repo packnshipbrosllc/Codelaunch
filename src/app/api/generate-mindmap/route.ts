@@ -2,6 +2,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
+import { parseAIJsonResponse } from '@/lib/json-parser';
 
 // Force dynamic rendering - prevents static analysis at build time
 export const dynamic = 'force-dynamic';
@@ -273,7 +274,8 @@ Rules:
 
     console.log('✅ GPT-4o-mini response received');
 
-    const mindmapData = JSON.parse(content);
+    // Use bulletproof JSON parser (even with response_format: json_object, edge cases happen)
+    const mindmapData = parseAIJsonResponse(content, 'Mindmap generation (OpenAI)');
 
     // Validate the response has required fields
     if (!mindmapData.projectName || !mindmapData.features) {

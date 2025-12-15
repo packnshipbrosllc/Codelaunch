@@ -3,6 +3,7 @@ export const maxDuration = 120; // Increased for GPT-4o processing time
 export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
+import { parseAIJsonResponse, JSON_ONLY_INSTRUCTION } from '@/lib/json-parser';
 
 // Lazy initialization for OpenAI
 function getOpenAI() {
@@ -228,7 +229,7 @@ Use technical language. Be specific. Include code examples where helpful.
 This should be a 3,000-5,000 word document.
 
 CRITICAL FORMATTING REQUIREMENTS:
-- Return ONLY valid JSON (no markdown, no code blocks, no explanations)
+${JSON_ONLY_INSTRUCTION}
 - Do NOT include any references to AI models, OpenAI, GPT, or how the document was generated
 - Do NOT add metadata about generation
 - Focus only on the product requirements
@@ -500,40 +501,8 @@ Make this EXCEPTIONAL - production-ready quality. Include all 13 sections listed
 
     const responseText = completion.choices[0]?.message?.content || '';
 
-    // Extract JSON from response (handle markdown code blocks if present)
-    let jsonContent = responseText.trim();
-    
-    // Remove markdown code blocks if present
-    if (jsonContent.startsWith('```')) {
-      const lines = jsonContent.split('\n');
-      const firstLine = lines[0];
-      const lastLine = lines[lines.length - 1];
-      
-      if (firstLine.includes('json') || firstLine.includes('JSON')) {
-        jsonContent = lines.slice(1, -1).join('\n');
-      } else {
-        jsonContent = lines.slice(1, -1).join('\n');
-      }
-    }
-    
-    // Parse JSON
-    let parsedContent;
-    try {
-      parsedContent = JSON.parse(jsonContent);
-    } catch (parseError) {
-      console.error('❌ [Backend] JSON parse error:', parseError);
-      // Try to extract JSON from text if parsing fails
-      const jsonMatch = jsonContent.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        try {
-          parsedContent = JSON.parse(jsonMatch[0]);
-        } catch (e) {
-          throw new Error('Failed to parse PRD JSON response');
-        }
-      } else {
-        throw new Error('No valid JSON found in response');
-      }
-    }
+    // Parse JSON using bulletproof parser
+    const parsedContent = parseAIJsonResponse(responseText, 'PRD generation (OpenAI)');
 
     // Clean any accidental model references from string fields
     const cleanObject = (obj: any): any => {
