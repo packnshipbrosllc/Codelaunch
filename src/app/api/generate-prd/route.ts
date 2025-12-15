@@ -1,18 +1,18 @@
 // src/app/api/generate-prd/route.ts
-export const maxDuration = 120; // Increased for GPT-4o processing time
+export const maxDuration = 120; // Increased for Claude processing time
 export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { parseAIJsonResponse, JSON_ONLY_INSTRUCTION } from '@/lib/json-parser';
 
-// Lazy initialization for OpenAI
-function getOpenAI() {
-  const { default: OpenAI } = require('openai');
-  const apiKey = process.env.OPENAI_API_KEY;
+// Lazy initialization for Anthropic (Claude)
+function getAnthropic() {
+  const { default: Anthropic } = require('@anthropic-ai/sdk');
+  const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
-    throw new Error('OPENAI_API_KEY environment variable is not set');
+    throw new Error('ANTHROPIC_API_KEY environment variable is not set');
   }
-  return new OpenAI({ apiKey });
+  return new Anthropic({ apiKey });
 }
 
 // Lazy initialization for Supabase
@@ -230,10 +230,26 @@ This should be a 3,000-5,000 word document.
 
 CRITICAL FORMATTING REQUIREMENTS:
 ${JSON_ONLY_INSTRUCTION}
-- Do NOT include any references to AI models, OpenAI, GPT, or how the document was generated
+- Do NOT include any references to AI models, Claude, Anthropic, or how the document was generated
 - Do NOT add metadata about generation
 - Focus only on the product requirements
-- Make it detailed enough that a developer can copy sections directly into an AI code generator and get production-ready code
+- Make it detailed enough that a developer can copy sections directly into an AI code generator and get production-ready code`;
+
+    // Build user prompt with project context
+    const userPrompt = `Generate a comprehensive PRD for this project:
+
+Project Name: ${extractedProjectName}
+Description: ${extractedIdea || 'No description provided'}
+${extractedFeatures ? `Features: ${JSON.stringify(extractedFeatures, null, 2)}` : ''}
+${extractedCompetitors ? `Competitors: ${JSON.stringify(extractedCompetitors, null, 2)}` : ''}
+${extractedTechStack ? `Tech Stack: ${JSON.stringify(extractedTechStack, null, 2)}` : ''}
+${mindmapData?.targetAudience ? `Target Audience: ${mindmapData.targetAudience}` : ''}
+${mindmapData?.userPersona ? `User Persona: ${JSON.stringify(mindmapData.userPersona, null, 2)}` : ''}
+${mindmapData?.monetization ? `Monetization: ${JSON.stringify(mindmapData.monetization, null, 2)}` : ''}
+
+Target Tech Stack: React/Next.js frontend, Node.js/Express backend, PostgreSQL database
+
+Make this EXCEPTIONAL - production-ready quality. Include all 13 sections listed in the system prompt.
 
 Generate a comprehensive PRD as a JSON object with this EXACT structure:
 
@@ -269,30 +285,20 @@ Generate a comprehensive PRD as a JSON object with this EXACT structure:
       "technicalImplementation": {
         "frontend": {
           "approach": "High-level frontend approach (1-2 sentences)",
-          "components": [
-            "Component name 1 (e.g., 'UserDashboard.tsx')",
-            "Component name 2",
-            "Component name 3"
-          ],
+          "components": ["ComponentName.tsx"],
           "libraries": ["Library 1", "Library 2"],
-          "stateManagement": "How state is managed (e.g., 'React Context + Zustand')"
+          "stateManagement": "How state is managed"
         },
         "backend": {
           "businessLogic": "Description of core business logic (2-3 sentences)",
           "apiEndpoints": [
             {
-              "method": "GET" | "POST" | "PUT" | "DELETE" | "PATCH",
+              "method": "GET | POST | PUT | DELETE | PATCH",
               "path": "/api/endpoint/path",
               "description": "What this endpoint does",
-              "requestBody": {
-                "example": {},
-                "schema": {}
-              },
-              "responseBody": {
-                "example": {},
-                "schema": {}
-              },
-              "authRequired": true | false
+              "requestBody": { "example": {}, "schema": {} },
+              "responseBody": { "example": {}, "schema": {} },
+              "authRequired": true
             }
           ],
           "services": ["Service name 1", "Service name 2"],
@@ -306,41 +312,25 @@ Generate a comprehensive PRD as a JSON object with this EXACT structure:
               "columns": [
                 {
                   "name": "column_name",
-                  "type": "VARCHAR(255)" | "INTEGER" | "UUID" | "TIMESTAMP" | "BOOLEAN" | "TEXT",
-                  "constraints": "PRIMARY KEY" | "NOT NULL" | "UNIQUE" | "FOREIGN KEY REFERENCES table(id)",
+                  "type": "VARCHAR(255)",
+                  "constraints": "PRIMARY KEY",
                   "description": "What this column stores"
                 }
               ],
-              "relationships": [
-                "Has many relationship to other_table",
-                "Belongs to parent_table"
-              ],
+              "relationships": ["Has many relationship to other_table"],
               "indexes": ["index_name on column_name"]
             }
           ],
-          "migrations": ["Migration description 1", "Migration description 2"]
+          "migrations": ["Migration description 1"]
         },
-        "security": [
-          "Security consideration 1 (e.g., 'JWT tokens for authentication')",
-          "Security consideration 2"
-        ],
-        "performance": [
-          "Performance consideration 1 (e.g., 'Database indexes on frequently queried columns')",
-          "Performance consideration 2"
-        ],
-        "edgeCases": [
-          "Edge case 1 to handle",
-          "Edge case 2 to handle"
-        ]
+        "security": ["Security consideration 1"],
+        "performance": ["Performance consideration 1"],
+        "edgeCases": ["Edge case 1 to handle"]
       },
       "estimations": {
-        "complexity": "simple" | "moderate" | "complex",
+        "complexity": "simple | moderate | complex",
         "engineeringHours": 40,
-        "breakdown": {
-          "frontend": 16,
-          "backend": 20,
-          "database": 4
-        }
+        "breakdown": { "frontend": 16, "backend": 20, "database": 4 }
       }
     }
   ],
@@ -351,13 +341,13 @@ Generate a comprehensive PRD as a JSON object with this EXACT structure:
         "age": "25-45",
         "occupation": "Job title",
         "location": "Geographic location",
-        "techSavviness": "High" | "Medium" | "Low"
+        "techSavviness": "High | Medium | Low"
       },
       "psychographics": {
-        "goals": ["Goal 1", "Goal 2", "Goal 3"],
-        "painPoints": ["Pain point 1", "Pain point 2"],
-        "motivations": ["Motivation 1", "Motivation 2"],
-        "frustrations": ["Frustration 1", "Frustration 2"]
+        "goals": ["Goal 1", "Goal 2"],
+        "painPoints": ["Pain point 1"],
+        "motivations": ["Motivation 1"],
+        "frustrations": ["Frustration 1"]
       },
       "userJourney": {
         "awareness": "How they discover the product",
@@ -368,40 +358,40 @@ Generate a comprehensive PRD as a JSON object with this EXACT structure:
     }
   ],
   "technicalArchitecture": {
-    "systemOverview": "High-level description of the system architecture (3-4 sentences)",
+    "systemOverview": "High-level description of the system architecture",
     "techStack": {
-      "frontend": ["Technology 1", "Technology 2"],
-      "backend": ["Technology 1", "Technology 2"],
+      "frontend": ["Technology 1"],
+      "backend": ["Technology 1"],
       "database": ["Database name"],
       "hosting": ["Hosting platform"],
       "ciCd": ["CI/CD tool"],
       "monitoring": ["Monitoring tool"]
     },
-    "dataFlow": "Description of how data flows through the system (2-3 sentences)",
-    "securityArchitecture": "Security measures and architecture (2-3 sentences)",
-    "scalability": "How the system scales (2-3 sentences)",
-    "deployment": "Deployment strategy and process (2-3 sentences)"
+    "dataFlow": "Description of how data flows through the system",
+    "securityArchitecture": "Security measures and architecture",
+    "scalability": "How the system scales",
+    "deployment": "Deployment strategy and process"
   },
   "monetization": {
-    "revenueModel": "Description of revenue model (e.g., 'Subscription-based SaaS')",
+    "revenueModel": "Description of revenue model",
     "pricingStrategy": {
       "tiers": [
         {
-          "name": "Tier name (e.g., 'Starter', 'Pro', 'Enterprise')",
-          "price": "$X/month or $Y/year",
-          "features": ["Feature 1", "Feature 2", "Feature 3"],
+          "name": "Tier name",
+          "price": "$X/month",
+          "features": ["Feature 1", "Feature 2"],
           "targetUser": "Who this tier is for"
         }
       ],
-      "justification": "Why these prices are set (1-2 sentences)"
+      "justification": "Why these prices are set"
     }
   },
   "competitorAnalysis": [
     {
       "competitor": "Competitor name",
-      "strengths": ["Strength 1", "Strength 2"],
-      "weaknesses": ["Weakness 1", "Weakness 2"],
-      "differentiators": ["How we're different 1", "How we're different 2"],
+      "strengths": ["Strength 1"],
+      "weaknesses": ["Weakness 1"],
+      "differentiators": ["How we're different"],
       "pricing": "Their pricing model",
       "marketShare": "Their estimated market share"
     }
@@ -409,26 +399,26 @@ Generate a comprehensive PRD as a JSON object with this EXACT structure:
   "roadmap": {
     "mvp": {
       "timeline": "Months 1-3",
-      "features": ["MVP Feature 1", "MVP Feature 2"],
-      "goals": ["Goal 1", "Goal 2"]
+      "features": ["MVP Feature 1"],
+      "goals": ["Goal 1"]
     },
     "phase2": {
       "timeline": "Months 4-6",
-      "features": ["Phase 2 Feature 1", "Phase 2 Feature 2"],
-      "goals": ["Goal 1", "Goal 2"]
+      "features": ["Phase 2 Feature 1"],
+      "goals": ["Goal 1"]
     },
     "phase3": {
       "timeline": "Months 7-12",
-      "features": ["Phase 3 Feature 1", "Phase 3 Feature 2"],
-      "goals": ["Goal 1", "Goal 2"]
+      "features": ["Phase 3 Feature 1"],
+      "goals": ["Goal 1"]
     }
   },
   "risksAndMitigation": [
     {
       "risk": "Risk description",
-      "impact": "high" | "medium" | "low",
-      "probability": "high" | "medium" | "low",
-      "mitigation": "How to mitigate this risk (2-3 sentences)"
+      "impact": "high | medium | low",
+      "probability": "high | medium | low",
+      "mitigation": "How to mitigate this risk"
     }
   ]
 }
@@ -444,23 +434,7 @@ IMPORTANT:
 - Include security and performance considerations for each feature
 - Think through edge cases that need handling
 
-Return ONLY the JSON object, no markdown, no code blocks, no explanations.`;
-
-    // Build user prompt with project context
-    const userPrompt = `Generate a comprehensive PRD for this project:
-
-Project Name: ${extractedProjectName}
-Description: ${extractedIdea || 'No description provided'}
-${extractedFeatures ? `Features: ${JSON.stringify(extractedFeatures, null, 2)}` : ''}
-${extractedCompetitors ? `Competitors: ${JSON.stringify(extractedCompetitors, null, 2)}` : ''}
-${extractedTechStack ? `Tech Stack: ${JSON.stringify(extractedTechStack, null, 2)}` : ''}
-${mindmapData?.targetAudience ? `Target Audience: ${mindmapData.targetAudience}` : ''}
-${mindmapData?.userPersona ? `User Persona: ${JSON.stringify(mindmapData.userPersona, null, 2)}` : ''}
-${mindmapData?.monetization ? `Monetization: ${JSON.stringify(mindmapData.monetization, null, 2)}` : ''}
-
-Target Tech Stack: React/Next.js frontend, Node.js/Express backend, PostgreSQL database
-
-Make this EXCEPTIONAL - production-ready quality. Include all 13 sections listed in the system prompt. Return ONLY valid JSON following the structure specified.`;
+Return ONLY the JSON object, no markdown, no code blocks, no explanations. Start with { and end with }.`;
 
     console.log('📦 [Backend] Request validated:', {
       projectName: extractedProjectName,
@@ -471,38 +445,35 @@ Make this EXCEPTIONAL - production-ready quality. Include all 13 sections listed
       mindmapSize: JSON.stringify(mindmapData).length,
     });
 
-    console.log('🤖 [Backend] Calling OpenAI GPT-4o API for exceptional PRD generation...');
-    const openai = getOpenAI();
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-4o', // Using GPT-4o for exceptional quality (worth the extra cost for $40/mo customers)
+    console.log('🤖 [Backend] Calling Claude API for exceptional PRD generation...');
+    const anthropic = getAnthropic();
+    
+    const message = await anthropic.messages.create({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 16000, // Claude supports larger outputs
+      temperature: 0.7,
+      system: systemPrompt,
       messages: [
-        {
-          role: 'system',
-          content: systemPrompt,
-        },
         {
           role: 'user',
           content: userPrompt,
         },
       ],
-      temperature: 0.7,
-      max_tokens: 8000, // Increased for comprehensive, detailed PRDs
     });
 
     const duration = Date.now() - startTime;
-    console.log(`✅ [Backend] OpenAI GPT-4o responded in ${duration}ms`);
-    if (completion.usage) {
-      console.log('📊 [Backend] Token usage:', {
-        prompt_tokens: completion.usage.prompt_tokens,
-        completion_tokens: completion.usage.completion_tokens,
-        total_tokens: completion.usage.total_tokens,
-      });
-    }
+    console.log(`✅ [Backend] Claude responded in ${duration}ms`);
+    console.log('📊 [Backend] Token usage:', {
+      input_tokens: message.usage?.input_tokens,
+      output_tokens: message.usage?.output_tokens,
+    });
 
-    const responseText = completion.choices[0]?.message?.content || '';
+    const responseText = message.content[0].type === 'text' 
+      ? message.content[0].text 
+      : '';
 
     // Parse JSON using bulletproof parser
-    const parsedContent = parseAIJsonResponse(responseText, 'PRD generation (OpenAI)');
+    const parsedContent = parseAIJsonResponse(responseText, 'PRD generation (Claude)');
 
     // Clean any accidental model references from string fields
     const cleanObject = (obj: any): any => {
@@ -510,8 +481,8 @@ Make this EXCEPTIONAL - production-ready quality. Include all 13 sections listed
         return obj
           .replace(/#{1,6}\s*Model:?\s*[^\n]*/gi, '')
           .replace(/#{1,6}\s*Generated by:?\s*[^\n]*/gi, '')
-          .replace(/Model:\s*(claude|gpt|openai)[^\n]*/gi, '')
-          .replace(/Generated by (Claude|GPT|OpenAI)[^\n]*/gi, '')
+          .replace(/Model:\s*(claude|gpt|openai|anthropic)[^\n]*/gi, '')
+          .replace(/Generated by (Claude|GPT|OpenAI|Anthropic)[^\n]*/gi, '')
           .replace(/(Anthropic's Claude|OpenAI's GPT)[^\n]*/gi, '')
           .split('\n')
           .filter((line) => !line.toLowerCase().includes('claude-sonnet') && !line.toLowerCase().includes('gpt-4'))
@@ -542,8 +513,8 @@ Make this EXCEPTIONAL - production-ready quality. Include all 13 sections listed
         metadata: {
           projectName: extractedProjectName,
           generatedAt: new Date().toISOString(),
-          model: 'gpt-4o',
-          tokensUsed: completion.usage,
+          model: 'claude-sonnet-4-20250514',
+          tokensUsed: message.usage,
           processingTime: duration,
         },
       },
