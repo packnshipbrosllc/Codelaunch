@@ -1,7 +1,7 @@
 // API Route for Generating Code from PRD
 // Location: src/app/api/generate-code/route.ts
 
-export const maxDuration = 120;
+export const maxDuration = 300; // 5 minutes - Vercel Pro
 export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';

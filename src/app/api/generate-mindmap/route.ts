@@ -6,6 +6,7 @@ import { parseAIJsonResponse } from '@/lib/json-parser';
 
 // Force dynamic rendering - prevents static analysis at build time
 export const dynamic = 'force-dynamic';
+export const maxDuration = 300; // 5 minutes - Vercel Pro
 
 const FREE_MINDMAP_LIMIT = 3;
 

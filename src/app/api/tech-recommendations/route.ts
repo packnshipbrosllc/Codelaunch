@@ -4,6 +4,7 @@ import { auth } from '@clerk/nextjs/server';
 
 // Force dynamic rendering - prevents static analysis at build time
 export const dynamic = 'force-dynamic';
+export const maxDuration = 300; // 5 minutes - Vercel Pro
 
 // Lazy initialization for OpenAI
 function getOpenAI() {
