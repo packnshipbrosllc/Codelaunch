@@ -67,7 +67,11 @@ function CreateProjectPageContent() {
   const [fromOnboarding, setFromOnboarding] = useState(false);
 
   // Debug logging at component render
+  console.log('🔍 CREATE PAGE RENDER #' + Date.now());
+  console.log('🔍 CREATE PAGE RENDER - mindmapData:', mindmapData);
   console.log('🔍 CREATE PAGE RENDER - mindmapData exists:', !!mindmapData);
+  console.log('🔍 CREATE PAGE RENDER - mindmapData?.projectName:', mindmapData?.projectName);
+  console.log('🔍 CREATE PAGE RENDER - mindmapData?.features?.length:', mindmapData?.features?.length);
   console.log('🔍 CREATE PAGE RENDER - searchParams:', searchParams.toString());
 
   // Pre-fill idea from URL params (from onboarding flow)
@@ -193,7 +197,13 @@ function CreateProjectPageContent() {
       }
 
       // Success! Show mindmap and usage info
+      console.log('✅ API RESPONSE SUCCESS - Full result:', result);
+      console.log('✅ API RESPONSE - result.data:', result.data);
+      console.log('✅ API RESPONSE - result.data.projectName:', result.data?.projectName);
+      console.log('✅ API RESPONSE - result.data.features:', result.data?.features?.length, 'features');
+      console.log('🔄 CALLING setMindmapData with:', result.data);
       setMindmapData(result.data);
+      console.log('🔄 setMindmapData CALLED (state update is async)');
       
       // Show NextStepModal to guide user
       if (!hasShownNextStepModal) {
@@ -275,7 +285,9 @@ function CreateProjectPageContent() {
   // Use a ref to always have the latest mindmapData available (fixes stale closure issue)
   const mindmapDataRef = useRef(mindmapData);
   useEffect(() => {
+    console.log('🔄 REF UPDATE EFFECT - mindmapData changed to:', mindmapData ? `Object with projectName: ${mindmapData.projectName}` : 'null');
     mindmapDataRef.current = mindmapData;
+    console.log('🔄 REF UPDATE EFFECT - mindmapDataRef.current is now:', mindmapDataRef.current ? 'SET' : 'null');
   }, [mindmapData]);
 
   const handleGeneratePRD = useCallback(async (nodeId: string, featureData: any) => {
@@ -558,6 +570,17 @@ function CreateProjectPageContent() {
                 </div>
               </div>
             </div>
+
+            {/* DEBUG PANEL - Remove after debugging */}
+            {process.env.NODE_ENV === 'development' && (
+              <div className="fixed top-20 left-4 z-[100] bg-black/90 text-white p-3 rounded-lg text-xs font-mono max-w-xs">
+                <div className="font-bold text-yellow-400 mb-2">🔍 DEBUG STATE</div>
+                <div>mindmapData: {mindmapData ? '✅ SET' : '❌ NULL'}</div>
+                <div>projectName: {mindmapData?.projectName || 'N/A'}</div>
+                <div>features: {mindmapData?.features?.length || 0}</div>
+                <div>ref.current: {mindmapDataRef.current ? '✅ SET' : '❌ NULL'}</div>
+              </div>
+            )}
 
             {/* Progress Bar - Shows workflow stages */}
             {!isFullscreen && (
