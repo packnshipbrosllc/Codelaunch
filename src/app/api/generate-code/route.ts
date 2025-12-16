@@ -26,6 +26,41 @@ function getSupabase() {
   );
 }
 
+// Repair truncated JSON by closing unclosed brackets/braces
+function repairTruncatedJSON(text: string): string {
+  let cleaned = text.trim();
+  
+  // Remove trailing incomplete string if we're mid-string
+  // Check if we have an odd number of unescaped quotes
+  const quoteMatches = cleaned.match(/(?<!\\)"/g) || [];
+  if (quoteMatches.length % 2 !== 0) {
+    // We're inside an unterminated string - try to close it
+    cleaned += '"';
+  }
+  
+  // Count open/close braces and brackets
+  const openBraces = (cleaned.match(/{/g) || []).length;
+  const closeBraces = (cleaned.match(/}/g) || []).length;
+  const openBrackets = (cleaned.match(/\[/g) || []).length;
+  const closeBrackets = (cleaned.match(/]/g) || []).length;
+  
+  // Remove trailing comma if present (invalid before closing bracket/brace)
+  cleaned = cleaned.replace(/,\s*$/, '');
+  
+  // Add missing closing brackets first, then braces
+  const missingBrackets = openBrackets - closeBrackets;
+  const missingBraces = openBraces - closeBraces;
+  
+  if (missingBrackets > 0) {
+    cleaned += ']'.repeat(missingBrackets);
+  }
+  if (missingBraces > 0) {
+    cleaned += '}'.repeat(missingBraces);
+  }
+  
+  return cleaned;
+}
+
 export async function POST(request: NextRequest) {
   const startTime = Date.now();
   console.log('🚀 [Backend] Code generation request received');
@@ -103,102 +138,51 @@ ${uiComponents ? `\nUI Components:\n${Array.isArray(uiComponents) ? uiComponents
       prdLength: finalPrdContent.length,
     });
 
-    // Build comprehensive prompt for code generation
-    const prompt = `You are a senior full-stack developer generating production-ready code based on a Product Requirements Document.
-
-CRITICAL REQUIREMENTS:
-- Generate production-ready, well-commented code
-- Follow best practices and industry standards
-- Include proper error handling
-- Use TypeScript for type safety
-- Include proper imports and exports
-- Code should be immediately usable
+    // Simplified prompt requesting fewer, more focused files
+    const prompt = `You are a senior full-stack developer. Generate production-ready code for this feature.
 
 TECH STACK: ${techStackStr}
-
 FEATURE: ${featureNameStr}
 
-PRD CONTENT:
-${finalPrdContent}
+PRD:
+${finalPrdContent.substring(0, 8000)}
 
-Generate a complete implementation as a JSON object with this structure:
+Generate a JSON response with this EXACT structure. Keep code concise but complete:
 
 {
   "files": [
     {
-      "path": "src/components/FeatureName.tsx",
-      "content": "// Complete React component code with TypeScript",
+      "name": "ComponentName.tsx",
+      "content": "// React component code here",
       "type": "component"
     },
     {
-      "path": "src/app/api/feature-name/route.ts",
-      "content": "// Complete API route code",
+      "name": "api-route.ts",
+      "content": "// API route code here",
       "type": "api"
-    },
-    {
-      "path": "prisma/schema.prisma",
-      "content": "// Prisma schema definitions",
-      "type": "schema"
-    },
-    {
-      "path": "README.md",
-      "content": "// Setup and deployment instructions",
-      "type": "documentation"
     }
   ],
-  "structure": {
-    "frontend": {
-      "components": ["Component1.tsx", "Component2.tsx"],
-      "hooks": ["useFeature.ts"],
-      "utils": ["featureUtils.ts"]
-    },
-    "backend": {
-      "routes": ["api/feature/route.ts"],
-      "services": ["featureService.ts"],
-      "types": ["featureTypes.ts"]
-    },
-    "database": {
-      "tables": ["table_name"],
-      "migrations": ["migration_description"]
-    }
-  },
-  "dependencies": {
-    "npm": ["package1@version", "package2@version"],
-    "devDependencies": ["@types/package1@version"]
-  },
-  "setupInstructions": [
-    "Step 1: Install dependencies",
-    "Step 2: Set up environment variables",
-    "Step 3: Run database migrations",
-    "Step 4: Start development server"
-  ],
-  "environmentVariables": {
-    "DATABASE_URL": "postgresql://...",
-    "API_KEY": "your-api-key"
-  }
+  "dependencies": ["package1", "package2"],
+  "setup": ["Step 1", "Step 2"]
 }
 
-IMPORTANT:
-- Generate ALL necessary files for a complete implementation
-- Include frontend components with proper TypeScript types
-- Include backend API routes with error handling
-- Include database schema (Prisma format)
-- Include proper imports and exports
-- Add comments explaining complex logic
-- Include error handling and validation
-- Make code production-ready (not just examples)
-- Include a comprehensive README with setup steps
-- List all npm dependencies with versions
-- Include environment variable requirements
+RULES:
+- Generate 2-4 key files maximum (main component, API route, types if needed)
+- Keep each file under 150 lines
+- Include TypeScript types inline
+- Include error handling
+- Return ONLY valid JSON, no markdown
 
-Return ONLY the JSON object, no markdown, no code blocks, no explanations.`;
+Start your response with { and end with }`;
 
-    console.log('🤖 [Backend] Calling Anthropic API for code generation...');
+    console.log('🤖 [Backend] Calling Claude API for code generation...');
+    console.log('📏 [Backend] Prompt length:', prompt.length);
+    
     const anthropic = getAnthropic();
     const message = await anthropic.messages.create({
       model: 'claude-sonnet-4-20250514',
-      max_tokens: 16000, // Large token limit for multiple files
-      temperature: 0.3, // Lower temperature for more consistent code
+      max_tokens: 8192, // Reduced for more reliable completion
+      temperature: 0.2, // Lower temperature for consistent output
       messages: [
         {
           role: 'user',
@@ -208,11 +192,22 @@ Return ONLY the JSON object, no markdown, no code blocks, no explanations.`;
     });
 
     const duration = Date.now() - startTime;
-    console.log(`✅ [Backend] Anthropic responded in ${duration}ms`);
-
+    console.log(`✅ [Backend] Claude responded in ${duration}ms`);
+    
+    // Log response metadata
     const responseText = message.content[0].type === 'text' 
       ? message.content[0].text 
       : '';
+    
+    console.log('📏 [Backend] Response length:', responseText.length);
+    console.log('🛑 [Backend] Stop reason:', message.stop_reason);
+    console.log('📊 [Backend] Token usage:', message.usage);
+    
+    // Check if response was truncated
+    const wasTruncated = message.stop_reason === 'max_tokens';
+    if (wasTruncated) {
+      console.warn('⚠️ [Backend] Response was truncated due to max_tokens limit');
+    }
 
     // Extract JSON from response
     let jsonContent = responseText.trim();
@@ -220,25 +215,71 @@ Return ONLY the JSON object, no markdown, no code blocks, no explanations.`;
     // Remove markdown code blocks if present
     if (jsonContent.startsWith('```')) {
       const lines = jsonContent.split('\n');
-      jsonContent = lines.slice(1, -1).join('\n');
+      // Remove first line (```json) and last line (```)
+      if (lines[lines.length - 1].trim() === '```') {
+        jsonContent = lines.slice(1, -1).join('\n');
+      } else {
+        // Last ``` might be missing if truncated
+        jsonContent = lines.slice(1).join('\n');
+      }
     }
     
-    // Parse JSON
+    // Find JSON boundaries
+    const firstBrace = jsonContent.indexOf('{');
+    const lastBrace = jsonContent.lastIndexOf('}');
+    
+    if (firstBrace !== -1) {
+      if (lastBrace > firstBrace) {
+        jsonContent = jsonContent.substring(firstBrace, lastBrace + 1);
+      } else {
+        // JSON was truncated - extract from first brace and repair
+        jsonContent = jsonContent.substring(firstBrace);
+      }
+    }
+    
+    // Parse JSON with repair fallback
     let parsedContent;
     try {
       parsedContent = JSON.parse(jsonContent);
-    } catch (parseError) {
-      console.error('❌ [Backend] JSON parse error:', parseError);
-      const jsonMatch = jsonContent.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        try {
-          parsedContent = JSON.parse(jsonMatch[0]);
-        } catch (e) {
-          throw new Error('Failed to parse code generation JSON response');
-        }
-      } else {
-        throw new Error('No valid JSON found in response');
+      console.log('✅ [Backend] JSON parsed successfully');
+    } catch (parseError: any) {
+      console.warn('⚠️ [Backend] Initial JSON parse failed:', parseError.message);
+      console.log('🔧 [Backend] Attempting JSON repair...');
+      
+      // Try to repair truncated JSON
+      const repairedJson = repairTruncatedJSON(jsonContent);
+      console.log('🔧 [Backend] Repaired JSON length:', repairedJson.length);
+      
+      try {
+        parsedContent = JSON.parse(repairedJson);
+        console.log('✅ [Backend] Repaired JSON parsed successfully');
+      } catch (repairError: any) {
+        console.error('❌ [Backend] JSON repair failed:', repairError.message);
+        console.error('❌ [Backend] Raw response preview:', jsonContent.substring(0, 500));
+        console.error('❌ [Backend] Raw response end:', jsonContent.substring(jsonContent.length - 500));
+        
+        // Return partial result with error info
+        return NextResponse.json({
+          success: false,
+          error: 'Code generation produced incomplete output. Please try again with a simpler feature.',
+          partialResponse: true,
+          rawPreview: jsonContent.substring(0, 1000),
+        }, { status: 500 });
       }
+    }
+
+    // Ensure we have the expected structure
+    if (!parsedContent.files || !Array.isArray(parsedContent.files)) {
+      console.warn('⚠️ [Backend] Response missing files array, wrapping content');
+      parsedContent = {
+        files: [{
+          name: 'generated-code.tsx',
+          content: JSON.stringify(parsedContent, null, 2),
+          type: 'unknown'
+        }],
+        dependencies: parsedContent.dependencies || [],
+        setup: parsedContent.setup || parsedContent.setupInstructions || []
+      };
     }
 
     // Clean any accidental model references
@@ -275,6 +316,8 @@ Return ONLY the JSON object, no markdown, no code blocks, no explanations.`;
         generatedAt: new Date().toISOString(),
         processingTime: duration,
         filesCount: cleanedContent.files?.length || 0,
+        wasTruncated,
+        stopReason: message.stop_reason,
       },
     });
 
