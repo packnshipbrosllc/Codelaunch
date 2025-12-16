@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { X, Lock } from 'lucide-react';
+import { X, Lock, Copy, Download, Check, Sparkles } from 'lucide-react';
 import { EnhancedFeature } from '@/types/enhanced-mindmap';
 import { Feature } from '@/types/mindmap';
 import { useSubscription } from '@/hooks/useSubscription';
@@ -81,10 +81,17 @@ export default function FeatureBuilderPanel({
 }: FeatureBuilderPanelProps) {
   const [currentStep, setCurrentStep] = useState<number>(1);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isEnhancing, setIsEnhancing] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const { hasSubscription, isLoading: isLoadingSubscription } = useSubscription();
   const { remainingFreeMindmaps, mindmapsCreated, freeLimit, isLoading: isLoadingLimit, error: limitError } = useMindmapLimit();
   const isProUser = hasSubscription === true;
+
+  // State for generated content
+  const [generatedPRD, setGeneratedPRD] = useState<any>(null);
+  const [generatedCode, setGeneratedCode] = useState<any>(null);
+  const [prdError, setPrdError] = useState<string | null>(null);
+  const [codeError, setCodeError] = useState<string | null>(null);
 
   // Debug logging for subscription status
   useEffect(() => {
@@ -113,6 +120,113 @@ export default function FeatureBuilderPanel({
     errorHandling: '',
   });
 
+  // AI Enhancement handler
+  const handleEnhanceWithAI = async (stepType: 'userStories' | 'technicalSpecs' | 'edgeCases' | 'dependencies') => {
+    setIsEnhancing(true);
+    try {
+      const prompt = getEnhancementPrompt(stepType, formData, feature);
+      
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: [{ role: 'user', content: prompt }],
+          featureContext: {
+            title: feature.title,
+            description: feature.description,
+          }
+        })
+      });
+
+      if (!response.ok) throw new Error('Enhancement failed');
+      
+      const result = await response.json();
+      const enhancedContent = result.content || result.message;
+
+      // Update the appropriate form field based on step type
+      if (stepType === 'userStories') {
+        setFormData(prev => ({
+          ...prev,
+          userStories: prev.userStories + '\n\n' + enhancedContent,
+        }));
+      } else if (stepType === 'technicalSpecs') {
+        // Parse and add to relevant fields
+        setFormData(prev => ({
+          ...prev,
+          apiEndpoints: typeof prev.apiEndpoints === 'string' 
+            ? prev.apiEndpoints + '\n\n' + enhancedContent
+            : enhancedContent,
+        }));
+      } else if (stepType === 'edgeCases') {
+        setFormData(prev => ({
+          ...prev,
+          edgeCases: prev.edgeCases + '\n\n' + enhancedContent,
+          errorHandling: prev.errorHandling + '\n\n' + 'AI-suggested error handling strategies added above.',
+        }));
+      }
+    } catch (error) {
+      console.error('Enhancement failed:', error);
+      alert('Failed to enhance with AI. Please try again.');
+    } finally {
+      setIsEnhancing(false);
+    }
+  };
+
+  const getEnhancementPrompt = (stepType: string, formData: FormData, feature: EnhancedFeature): string => {
+    switch (stepType) {
+      case 'userStories':
+        return `For a feature called "${feature.title}" (${feature.description}), enhance these user stories and add 2-3 more:
+
+Current user stories:
+${formData.userStories || 'None yet'}
+
+Current acceptance criteria:
+${formData.acceptanceCriteria || 'None yet'}
+
+Please provide:
+1. 2-3 additional user stories in "As a [user], I want to [action] so that [benefit]" format
+2. 3-5 additional acceptance criteria
+
+Return only the new content, not a repeat of existing content.`;
+
+      case 'technicalSpecs':
+        return `For a feature called "${feature.title}" (${feature.description}), suggest technical specifications:
+
+Current API endpoints:
+${typeof formData.apiEndpoints === 'string' ? formData.apiEndpoints : JSON.stringify(formData.apiEndpoints)}
+
+Please suggest:
+1. Additional API endpoints needed (format: METHOD /api/path - description)
+2. Key database fields/models
+3. React components needed
+4. Third-party libraries that could help
+
+Be specific and practical.`;
+
+      case 'edgeCases':
+        return `For a feature called "${feature.title}" (${feature.description}), identify edge cases and error handling:
+
+Current edge cases:
+${formData.edgeCases || 'None yet'}
+
+Please identify:
+1. 5-7 edge cases that could occur
+2. How to handle each edge case
+3. Error messages to show users
+4. Fallback behaviors
+
+Be specific to this feature.`;
+
+      case 'dependencies':
+        return `For a feature called "${feature.title}" (${feature.description}), what features or systems should be built first?
+
+Consider: authentication, database setup, API infrastructure, shared components.`;
+
+      default:
+        return '';
+    }
+  };
+
   const calculateProgress = (): number => {
     let progress = 0;
     if (formData.userStories.trim()) progress += 16.67;
@@ -125,6 +239,19 @@ export default function FeatureBuilderPanel({
   };
 
   const requirementsProgress = calculateProgress();
+
+  // Check if step is complete
+  const isStepComplete = (stepId: number): boolean => {
+    switch (stepId) {
+      case 1: return !!(formData.userStories.trim() && formData.acceptanceCriteria.trim());
+      case 2: return !!(formData.apiEndpoints && (typeof formData.apiEndpoints === 'string' ? formData.apiEndpoints.trim() : formData.apiEndpoints.length > 0));
+      case 3: return true; // Dependencies can be empty
+      case 4: return !!(formData.edgeCases.trim());
+      case 5: return !!generatedPRD;
+      case 6: return !!generatedCode;
+      default: return false;
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md" onClick={onClose}>
@@ -164,25 +291,10 @@ export default function FeatureBuilderPanel({
 
           <div className="space-y-3 flex-1 overflow-y-auto">
             {steps.map((step) => {
-              const stepProgress = (step.id / steps.length) * 100;
-              const isCompleted = requirementsProgress >= stepProgress;
+              const isCompleted = isStepComplete(step.id);
               const isActive = currentStep === step.id;
-              const isProFeature = step.id === 5 || step.id === 6; // PRD and Code generation are Pro features
-              // Lock if: it's a Pro feature AND (user is not Pro OR subscription is still loading)
-              // Default to locked during loading to prevent bypass
+              const isProFeature = step.id === 5 || step.id === 6;
               const isLocked = isProFeature && (isLoadingSubscription || !isProUser);
-              
-              // Enhanced debug logging for Pro feature steps
-              if (isProFeature) {
-                console.log(`🔒 Step ${step.id} (${step.title}) Lock Debug:`, {
-                  isProFeature,
-                  isLoadingSubscription,
-                  hasSubscription,
-                  isProUser,
-                  isLocked,
-                  calculation: `isProFeature(${isProFeature}) && (isLoadingSubscription(${isLoadingSubscription}) || !isProUser(${!isProUser})) = ${isLocked}`,
-                });
-              }
               
               return (
                 <button
@@ -233,12 +345,93 @@ export default function FeatureBuilderPanel({
 
         {/* Main Content Area - Current Step */}
         <div className="flex-1 overflow-y-auto p-8">
-          {currentStep === 1 && <UserStoriesStep feature={feature} formData={formData} setFormData={setFormData} />}
-          {currentStep === 2 && <TechnicalSpecsStep feature={feature} projectContext={projectContext} formData={formData} setFormData={setFormData} />}
-          {currentStep === 3 && <DependenciesStep feature={feature} projectContext={projectContext} formData={formData} setFormData={setFormData} />}
-          {currentStep === 4 && <EdgeCasesStep feature={feature} formData={formData} setFormData={setFormData} />}
-          {currentStep === 5 && <GeneratePRDStep feature={feature} formData={formData} onSavePRD={onSavePRD} isGenerating={isGenerating} setIsGenerating={setIsGenerating} isProUser={isProUser} remainingFreeMindmaps={remainingFreeMindmaps} mindmapsCreated={mindmapsCreated} freeLimit={freeLimit} isLoadingLimit={isLoadingLimit} limitError={limitError} onUpgrade={() => { trackPaywallViewed('prd_generation', 'button_click'); trackUpgradeClicked('prd_button'); setShowUpgradeModal(true); }} />}
-          {currentStep === 6 && <GenerateCodeStep feature={feature} formData={formData} onGenerateCode={onGenerateCode} isGenerating={isGenerating} setIsGenerating={setIsGenerating} isProUser={isProUser} remainingFreeMindmaps={remainingFreeMindmaps} mindmapsCreated={mindmapsCreated} freeLimit={freeLimit} isLoadingLimit={isLoadingLimit} limitError={limitError} onUpgrade={() => { trackPaywallViewed('code_generation', 'button_click'); trackUpgradeClicked('code_button'); setShowUpgradeModal(true); }} />}
+          {currentStep === 1 && (
+            <UserStoriesStep 
+              feature={feature} 
+              formData={formData} 
+              setFormData={setFormData} 
+              onEnhance={() => handleEnhanceWithAI('userStories')}
+              isEnhancing={isEnhancing}
+            />
+          )}
+          {currentStep === 2 && (
+            <TechnicalSpecsStep 
+              feature={feature} 
+              projectContext={projectContext} 
+              formData={formData} 
+              setFormData={setFormData}
+              onEnhance={() => handleEnhanceWithAI('technicalSpecs')}
+              isEnhancing={isEnhancing}
+            />
+          )}
+          {currentStep === 3 && (
+            <DependenciesStep 
+              feature={feature} 
+              projectContext={projectContext} 
+              formData={formData} 
+              setFormData={setFormData}
+            />
+          )}
+          {currentStep === 4 && (
+            <EdgeCasesStep 
+              feature={feature} 
+              formData={formData} 
+              setFormData={setFormData}
+              onEnhance={() => handleEnhanceWithAI('edgeCases')}
+              isEnhancing={isEnhancing}
+            />
+          )}
+          {currentStep === 5 && (
+            <GeneratePRDStep 
+              feature={feature} 
+              formData={formData} 
+              projectContext={projectContext}
+              onSavePRD={onSavePRD} 
+              isGenerating={isGenerating} 
+              setIsGenerating={setIsGenerating} 
+              isProUser={isProUser} 
+              remainingFreeMindmaps={remainingFreeMindmaps} 
+              mindmapsCreated={mindmapsCreated} 
+              freeLimit={freeLimit} 
+              isLoadingLimit={isLoadingLimit} 
+              limitError={limitError} 
+              onUpgrade={() => { 
+                trackPaywallViewed('prd_generation', 'button_click'); 
+                trackUpgradeClicked('prd_button'); 
+                setShowUpgradeModal(true); 
+              }}
+              generatedPRD={generatedPRD}
+              setGeneratedPRD={setGeneratedPRD}
+              prdError={prdError}
+              setPrdError={setPrdError}
+            />
+          )}
+          {currentStep === 6 && (
+            <GenerateCodeStep 
+              feature={feature} 
+              formData={formData}
+              projectContext={projectContext}
+              generatedPRD={generatedPRD}
+              onGenerateCode={onGenerateCode} 
+              isGenerating={isGenerating} 
+              setIsGenerating={setIsGenerating} 
+              isProUser={isProUser} 
+              remainingFreeMindmaps={remainingFreeMindmaps} 
+              mindmapsCreated={mindmapsCreated} 
+              freeLimit={freeLimit} 
+              isLoadingLimit={isLoadingLimit} 
+              limitError={limitError} 
+              onUpgrade={() => { 
+                trackPaywallViewed('code_generation', 'button_click'); 
+                trackUpgradeClicked('code_button'); 
+                setShowUpgradeModal(true); 
+              }}
+              generatedCode={generatedCode}
+              setGeneratedCode={setGeneratedCode}
+              codeError={codeError}
+              setCodeError={setCodeError}
+            />
+          )}
 
           {/* Navigation Buttons */}
           <div className="flex justify-between mt-8 pt-8 border-t border-gray-700">
@@ -274,7 +467,19 @@ export default function FeatureBuilderPanel({
 }
 
 // Step Components
-function UserStoriesStep({ feature, formData, setFormData }: { feature: EnhancedFeature; formData: FormData; setFormData: (data: FormData) => void }) {
+function UserStoriesStep({ 
+  feature, 
+  formData, 
+  setFormData,
+  onEnhance,
+  isEnhancing
+}: { 
+  feature: EnhancedFeature; 
+  formData: FormData; 
+  setFormData: (data: FormData) => void;
+  onEnhance: () => void;
+  isEnhancing: boolean;
+}) {
   return (
     <div>
       <h3 className="text-3xl font-bold text-white mb-4">📝 User Stories & Requirements</h3>
@@ -312,17 +517,42 @@ As a user, I want to see my progress over time so that I stay motivated."
         </div>
 
         <button
-          className="w-full px-6 py-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white rounded-xl font-semibold transition-all flex items-center justify-center gap-2"
+          onClick={onEnhance}
+          disabled={isEnhancing}
+          className="w-full px-6 py-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white rounded-xl font-semibold transition-all flex items-center justify-center gap-2 disabled:opacity-50"
         >
-          <span>✨</span>
-          <span>Enhance with AI Suggestions</span>
+          {isEnhancing ? (
+            <>
+              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+              <span>Enhancing...</span>
+            </>
+          ) : (
+            <>
+              <Sparkles className="w-5 h-5" />
+              <span>Enhance with AI Suggestions</span>
+            </>
+          )}
         </button>
       </div>
     </div>
   );
 }
 
-function TechnicalSpecsStep({ feature, projectContext, formData, setFormData }: { feature: EnhancedFeature; projectContext: any; formData: FormData; setFormData: (data: FormData) => void }) {
+function TechnicalSpecsStep({ 
+  feature, 
+  projectContext, 
+  formData, 
+  setFormData,
+  onEnhance,
+  isEnhancing
+}: { 
+  feature: EnhancedFeature; 
+  projectContext: any; 
+  formData: FormData; 
+  setFormData: (data: FormData) => void;
+  onEnhance: () => void;
+  isEnhancing: boolean;
+}) {
   return (
     <div className="space-y-8">
       <div>
@@ -390,20 +620,6 @@ function TechnicalSpecsStep({ feature, projectContext, formData, setFormData }: 
                 <span className="text-gray-400">)</span>
               </div>
             </div>
-          </div>
-
-          <div className="mt-4 pt-4 border-t border-blue-500/20">
-            <p className="text-xs text-gray-400">
-              <span className="font-semibold text-blue-300">Example for "{feature.title}":</span>
-              <br/>
-              If your feature tracks user workouts, you might need:
-              <br/>
-              • <code className="bg-black/30 px-1">POST /api/workouts</code> - Create new workout
-              <br/>
-              • <code className="bg-black/30 px-1">GET /api/workouts/:id</code> - Get specific workout
-              <br/>
-              • <code className="bg-black/30 px-1">GET /api/workouts/user/:userId</code> - Get all user's workouts
-            </p>
           </div>
         </div>
 
@@ -478,9 +694,22 @@ Meal {
       </div>
 
       {/* AI Enhancement Button */}
-      <button className="w-full px-6 py-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white rounded-xl font-semibold transition-all flex items-center justify-center gap-2">
-        <span>✨</span>
-        <span>AI-Enhance Technical Specs</span>
+      <button 
+        onClick={onEnhance}
+        disabled={isEnhancing}
+        className="w-full px-6 py-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white rounded-xl font-semibold transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+      >
+        {isEnhancing ? (
+          <>
+            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+            <span>Enhancing...</span>
+          </>
+        ) : (
+          <>
+            <Sparkles className="w-5 h-5" />
+            <span>AI-Enhance Technical Specs</span>
+          </>
+        )}
       </button>
     </div>
   );
@@ -525,7 +754,19 @@ function DependenciesStep({ feature, projectContext, formData, setFormData }: { 
   );
 }
 
-function EdgeCasesStep({ feature, formData, setFormData }: { feature: EnhancedFeature; formData: FormData; setFormData: (data: FormData) => void }) {
+function EdgeCasesStep({ 
+  feature, 
+  formData, 
+  setFormData,
+  onEnhance,
+  isEnhancing
+}: { 
+  feature: EnhancedFeature; 
+  formData: FormData; 
+  setFormData: (data: FormData) => void;
+  onEnhance: () => void;
+  isEnhancing: boolean;
+}) {
   return (
     <div>
       <h3 className="text-3xl font-bold text-white mb-4">🛡️ Edge Cases & Error Handling</h3>
@@ -563,12 +804,68 @@ function EdgeCasesStep({ feature, formData, setFormData }: { feature: EnhancedFe
             className="w-full h-48 bg-gray-800/50 border border-gray-700 rounded-xl p-4 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500"
           />
         </div>
+
+        <button
+          onClick={onEnhance}
+          disabled={isEnhancing}
+          className="w-full px-6 py-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white rounded-xl font-semibold transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+        >
+          {isEnhancing ? (
+            <>
+              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+              <span>Identifying Edge Cases...</span>
+            </>
+          ) : (
+            <>
+              <Sparkles className="w-5 h-5" />
+              <span>AI-Identify Edge Cases</span>
+            </>
+          )}
+        </button>
       </div>
     </div>
   );
 }
 
-function GeneratePRDStep({ feature, formData, onSavePRD, isGenerating, setIsGenerating, isProUser, remainingFreeMindmaps, mindmapsCreated, freeLimit, isLoadingLimit, limitError, onUpgrade }: { feature: EnhancedFeature; formData: FormData; onSavePRD: (featureId: string, prd: any) => void; isGenerating: boolean; setIsGenerating: (val: boolean) => void; isProUser: boolean; remainingFreeMindmaps: number | null; mindmapsCreated: number; freeLimit: number; isLoadingLimit: boolean; limitError: string | null; onUpgrade: () => void }) {
+function GeneratePRDStep({ 
+  feature, 
+  formData, 
+  projectContext,
+  onSavePRD, 
+  isGenerating, 
+  setIsGenerating, 
+  isProUser, 
+  remainingFreeMindmaps, 
+  mindmapsCreated, 
+  freeLimit, 
+  isLoadingLimit, 
+  limitError, 
+  onUpgrade,
+  generatedPRD,
+  setGeneratedPRD,
+  prdError,
+  setPrdError
+}: { 
+  feature: EnhancedFeature; 
+  formData: FormData; 
+  projectContext: any;
+  onSavePRD: (featureId: string, prd: any) => void; 
+  isGenerating: boolean; 
+  setIsGenerating: (val: boolean) => void; 
+  isProUser: boolean; 
+  remainingFreeMindmaps: number | null; 
+  mindmapsCreated: number; 
+  freeLimit: number; 
+  isLoadingLimit: boolean; 
+  limitError: string | null; 
+  onUpgrade: () => void;
+  generatedPRD: any;
+  setGeneratedPRD: (prd: any) => void;
+  prdError: string | null;
+  setPrdError: (error: string | null) => void;
+}) {
+  const [copied, setCopied] = useState(false);
+
   const handleGenerate = async () => {
     if (!isProUser) {
       onUpgrade();
@@ -576,14 +873,22 @@ function GeneratePRDStep({ feature, formData, onSavePRD, isGenerating, setIsGene
     }
 
     setIsGenerating(true);
+    setPrdError(null);
+    
     try {
-      const response = await fetch('/api/features/generate-prd', {
+      console.log('🚀 Generating PRD for feature:', feature.title);
+      
+      const response = await fetch('/api/generate-feature-prd', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           featureId: feature.id,
-          featureTitle: feature.title,
+          featureName: feature.title,
           featureDescription: feature.description,
+          projectContext: {
+            projectName: projectContext.projectName,
+            techStack: projectContext.techStack,
+          },
           userStories: formData.userStories,
           acceptanceCriteria: formData.acceptanceCriteria.split('\n').filter(c => c.trim()),
           apiEndpoints: formData.apiEndpoints,
@@ -592,15 +897,40 @@ function GeneratePRDStep({ feature, formData, onSavePRD, isGenerating, setIsGene
           errorHandling: formData.errorHandling,
         })
       });
+      
       const result = await response.json();
-      if (result.success) {
+      console.log('📄 PRD generation result:', result);
+      
+      if (result.success && result.prd) {
+        setGeneratedPRD(result.prd);
         onSavePRD(feature.id, result.prd);
+      } else {
+        setPrdError(result.error || 'Failed to generate PRD');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to generate PRD:', error);
+      setPrdError(error.message || 'Failed to generate PRD');
     } finally {
       setIsGenerating(false);
     }
+  };
+
+  const handleCopyPRD = () => {
+    const prdText = JSON.stringify(generatedPRD, null, 2);
+    navigator.clipboard.writeText(prdText);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleDownloadPRD = () => {
+    const prdText = JSON.stringify(generatedPRD, null, 2);
+    const blob = new Blob([prdText], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${feature.title.replace(/\s+/g, '-').toLowerCase()}-prd.json`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -610,19 +940,116 @@ function GeneratePRDStep({ feature, formData, onSavePRD, isGenerating, setIsGene
         Generate a complete Product Requirements Document based on all the information you've provided.
       </p>
 
-      <div className="bg-purple-500/10 border border-purple-500/30 rounded-xl p-6 mb-6">
-        <h4 className="text-white font-semibold mb-3">PRD will include:</h4>
-        <ul className="space-y-2 text-gray-300 text-sm">
-          <li>✓ Executive summary</li>
-          <li>✓ User stories and acceptance criteria</li>
-          <li>✓ Technical specifications</li>
-          <li>✓ API endpoint documentation</li>
-          <li>✓ Database schema</li>
-          <li>✓ Dependencies and build order</li>
-          <li>✓ Edge cases and error handling</li>
-          <li>✓ Testing strategy</li>
-        </ul>
-      </div>
+      {/* PRD Preview if generated */}
+      {generatedPRD && (
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-3">
+            <h4 className="text-white font-semibold flex items-center gap-2">
+              <Check className="w-5 h-5 text-green-400" />
+              PRD Generated Successfully!
+            </h4>
+            <div className="flex gap-2">
+              <button
+                onClick={handleCopyPRD}
+                className="px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-white rounded-lg text-sm flex items-center gap-1"
+              >
+                {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                {copied ? 'Copied!' : 'Copy'}
+              </button>
+              <button
+                onClick={handleDownloadPRD}
+                className="px-3 py-1.5 bg-purple-600 hover:bg-purple-500 text-white rounded-lg text-sm flex items-center gap-1"
+              >
+                <Download className="w-4 h-4" />
+                Download
+              </button>
+            </div>
+          </div>
+          
+          <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-4 max-h-96 overflow-y-auto">
+            {/* Overview */}
+            {generatedPRD.overview && (
+              <div className="mb-4">
+                <h5 className="text-purple-400 font-semibold mb-2">Overview</h5>
+                <p className="text-gray-300 text-sm">{generatedPRD.overview}</p>
+              </div>
+            )}
+            
+            {/* User Stories */}
+            {generatedPRD.userStories && generatedPRD.userStories.length > 0 && (
+              <div className="mb-4">
+                <h5 className="text-purple-400 font-semibold mb-2">User Stories</h5>
+                <ul className="space-y-2">
+                  {generatedPRD.userStories.slice(0, 3).map((story: any, idx: number) => (
+                    <li key={idx} className="text-gray-300 text-sm bg-gray-900/50 p-2 rounded">
+                      As a <span className="text-blue-400">{story.role || story.persona}</span>, 
+                      I want to <span className="text-green-400">{story.action}</span> 
+                      so that <span className="text-yellow-400">{story.benefit}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            
+            {/* Technical Specs Preview */}
+            {generatedPRD.technicalRequirements && (
+              <div className="mb-4">
+                <h5 className="text-purple-400 font-semibold mb-2">Technical Specs</h5>
+                <div className="text-gray-300 text-sm space-y-1">
+                  {generatedPRD.technicalRequirements.frontend?.components && (
+                    <p>📦 Components: {generatedPRD.technicalRequirements.frontend.components.slice(0, 3).join(', ')}...</p>
+                  )}
+                  {generatedPRD.technicalRequirements.backend?.apiEndpoints && (
+                    <p>🔌 API Endpoints: {generatedPRD.technicalRequirements.backend.apiEndpoints.length} defined</p>
+                  )}
+                  {generatedPRD.technicalRequirements.database?.tables && (
+                    <p>🗄️ Database Tables: {generatedPRD.technicalRequirements.database.tables.length} defined</p>
+                  )}
+                </div>
+              </div>
+            )}
+            
+            {/* Implementation Steps */}
+            {generatedPRD.implementationSteps && generatedPRD.implementationSteps.length > 0 && (
+              <div>
+                <h5 className="text-purple-400 font-semibold mb-2">Implementation Steps</h5>
+                <ol className="list-decimal list-inside text-gray-300 text-sm space-y-1">
+                  {generatedPRD.implementationSteps.slice(0, 5).map((step: string, idx: number) => (
+                    <li key={idx}>{step}</li>
+                  ))}
+                  {generatedPRD.implementationSteps.length > 5 && (
+                    <li className="text-gray-500">...and {generatedPRD.implementationSteps.length - 5} more steps</li>
+                  )}
+                </ol>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Error display */}
+      {prdError && (
+        <div className="mb-6 bg-red-500/10 border border-red-500/30 rounded-xl p-4">
+          <p className="text-red-400 text-sm">❌ {prdError}</p>
+        </div>
+      )}
+
+      {/* PRD will include section */}
+      {!generatedPRD && (
+        <div className="bg-purple-500/10 border border-purple-500/30 rounded-xl p-6 mb-6">
+          <h4 className="text-white font-semibold mb-3">PRD will include:</h4>
+          <ul className="space-y-2 text-gray-300 text-sm">
+            <li>✓ Executive summary</li>
+            <li>✓ User stories and acceptance criteria</li>
+            <li>✓ Technical specifications</li>
+            <li>✓ API endpoint documentation</li>
+            <li>✓ Database schema</li>
+            <li>✓ Dependencies and build order</li>
+            <li>✓ Edge cases and error handling</li>
+            <li>✓ Testing strategy</li>
+          </ul>
+        </div>
+      )}
 
       {!isProUser && (
         <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-4 mb-6">
@@ -661,6 +1088,11 @@ function GeneratePRDStep({ feature, formData, onSavePRD, isGenerating, setIsGene
             <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
             <span>Generating PRD...</span>
           </>
+        ) : generatedPRD ? (
+          <>
+            <span>🔄</span>
+            <span>Regenerate PRD</span>
+          </>
         ) : isProUser ? (
           <>
             <span>📄</span>
@@ -677,7 +1109,48 @@ function GeneratePRDStep({ feature, formData, onSavePRD, isGenerating, setIsGene
   );
 }
 
-function GenerateCodeStep({ feature, formData, onGenerateCode, isGenerating, setIsGenerating, isProUser, remainingFreeMindmaps, mindmapsCreated, freeLimit, isLoadingLimit, limitError, onUpgrade }: { feature: EnhancedFeature; formData: FormData; onGenerateCode: (featureId: string) => void; isGenerating: boolean; setIsGenerating: (val: boolean) => void; isProUser: boolean; remainingFreeMindmaps: number | null; mindmapsCreated: number; freeLimit: number; isLoadingLimit: boolean; limitError: string | null; onUpgrade: () => void }) {
+function GenerateCodeStep({ 
+  feature, 
+  formData,
+  projectContext,
+  generatedPRD,
+  onGenerateCode, 
+  isGenerating, 
+  setIsGenerating, 
+  isProUser, 
+  remainingFreeMindmaps, 
+  mindmapsCreated, 
+  freeLimit, 
+  isLoadingLimit, 
+  limitError, 
+  onUpgrade,
+  generatedCode,
+  setGeneratedCode,
+  codeError,
+  setCodeError
+}: { 
+  feature: EnhancedFeature; 
+  formData: FormData;
+  projectContext: any;
+  generatedPRD: any;
+  onGenerateCode: (featureId: string) => void; 
+  isGenerating: boolean; 
+  setIsGenerating: (val: boolean) => void; 
+  isProUser: boolean; 
+  remainingFreeMindmaps: number | null; 
+  mindmapsCreated: number; 
+  freeLimit: number; 
+  isLoadingLimit: boolean; 
+  limitError: string | null; 
+  onUpgrade: () => void;
+  generatedCode: any;
+  setGeneratedCode: (code: any) => void;
+  codeError: string | null;
+  setCodeError: (error: string | null) => void;
+}) {
+  const [copied, setCopied] = useState(false);
+  const [activeFile, setActiveFile] = useState<string | null>(null);
+
   const handleGenerate = async () => {
     if (!isProUser) {
       onUpgrade();
@@ -685,13 +1158,68 @@ function GenerateCodeStep({ feature, formData, onGenerateCode, isGenerating, set
     }
 
     setIsGenerating(true);
+    setCodeError(null);
+    
     try {
-      // Call code generation API
-      await onGenerateCode(feature.id);
+      console.log('🚀 Generating code for feature:', feature.title);
+      
+      const response = await fetch('/api/generate-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          featureId: feature.id,
+          featureName: feature.title,
+          featureDescription: feature.description,
+          projectContext: {
+            projectName: projectContext.projectName,
+            techStack: projectContext.techStack,
+          },
+          prd: generatedPRD,
+          userStories: formData.userStories,
+          apiEndpoints: formData.apiEndpoints,
+          dataModels: formData.dataModels,
+          uiComponents: formData.uiComponents,
+        })
+      });
+      
+      const result = await response.json();
+      console.log('💻 Code generation result:', result);
+      
+      if (result.success && result.code) {
+        setGeneratedCode(result.code);
+        onGenerateCode(feature.id);
+      } else {
+        setCodeError(result.error || 'Failed to generate code');
+      }
+    } catch (error: any) {
+      console.error('Failed to generate code:', error);
+      setCodeError(error.message || 'Failed to generate code');
     } finally {
       setIsGenerating(false);
     }
   };
+
+  const handleCopyCode = (code: string) => {
+    navigator.clipboard.writeText(code);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleDownloadAll = () => {
+    const codeText = typeof generatedCode === 'string' 
+      ? generatedCode 
+      : JSON.stringify(generatedCode, null, 2);
+    const blob = new Blob([codeText], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${feature.title.replace(/\s+/g, '-').toLowerCase()}-code.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // Parse code into files if it's structured
+  const codeFiles = generatedCode?.files || (typeof generatedCode === 'object' ? Object.entries(generatedCode).map(([name, content]) => ({ name, content })) : null);
 
   return (
     <div>
@@ -700,19 +1228,104 @@ function GenerateCodeStep({ feature, formData, onGenerateCode, isGenerating, set
         Generate bug-free, production-ready code based on the PRD and all specifications.
       </p>
 
-      <div className="bg-green-500/10 border border-green-500/30 rounded-xl p-6 mb-6">
-        <h4 className="text-white font-semibold mb-3">Code will include:</h4>
-        <ul className="space-y-2 text-gray-300 text-sm">
-          <li>✓ Frontend components (React/Next.js)</li>
-          <li>✓ Backend API routes</li>
-          <li>✓ Database migrations</li>
-          <li>✓ Type definitions</li>
-          <li>✓ Error handling</li>
-          <li>✓ Input validation</li>
-          <li>✓ Tests</li>
-          <li>✓ Documentation</li>
-        </ul>
-      </div>
+      {/* Warning if no PRD */}
+      {!generatedPRD && (
+        <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-4 mb-6">
+          <p className="text-yellow-400 text-sm">
+            ⚠️ <strong>Tip:</strong> Generate a PRD first (Step 5) for better code quality. The AI uses the PRD to understand requirements.
+          </p>
+        </div>
+      )}
+
+      {/* Generated Code Display */}
+      {generatedCode && (
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-3">
+            <h4 className="text-white font-semibold flex items-center gap-2">
+              <Check className="w-5 h-5 text-green-400" />
+              Code Generated Successfully!
+            </h4>
+            <button
+              onClick={handleDownloadAll}
+              className="px-3 py-1.5 bg-green-600 hover:bg-green-500 text-white rounded-lg text-sm flex items-center gap-1"
+            >
+              <Download className="w-4 h-4" />
+              Download All
+            </button>
+          </div>
+          
+          {/* File Tabs */}
+          {codeFiles && codeFiles.length > 0 && (
+            <div className="flex gap-1 mb-2 overflow-x-auto pb-2">
+              {codeFiles.map((file: any, idx: number) => (
+                <button
+                  key={idx}
+                  onClick={() => setActiveFile(file.name || `file-${idx}`)}
+                  className={`px-3 py-1.5 rounded-t-lg text-sm whitespace-nowrap ${
+                    (activeFile || codeFiles[0]?.name) === (file.name || `file-${idx}`)
+                      ? 'bg-gray-800 text-white'
+                      : 'bg-gray-900 text-gray-400 hover:text-white'
+                  }`}
+                >
+                  {file.name || `File ${idx + 1}`}
+                </button>
+              ))}
+            </div>
+          )}
+          
+          {/* Code Content */}
+          <div className="bg-gray-900 border border-gray-700 rounded-xl overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-2 bg-gray-800 border-b border-gray-700">
+              <span className="text-sm text-gray-400">
+                {codeFiles ? (activeFile || codeFiles[0]?.name || 'Code') : 'Generated Code'}
+              </span>
+              <button
+                onClick={() => handleCopyCode(
+                  codeFiles 
+                    ? codeFiles.find((f: any) => f.name === (activeFile || codeFiles[0]?.name))?.content || ''
+                    : (typeof generatedCode === 'string' ? generatedCode : JSON.stringify(generatedCode, null, 2))
+                )}
+                className="px-2 py-1 bg-gray-700 hover:bg-gray-600 text-white rounded text-xs flex items-center gap-1"
+              >
+                {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                {copied ? 'Copied!' : 'Copy'}
+              </button>
+            </div>
+            <pre className="p-4 text-sm text-gray-300 overflow-x-auto max-h-96 overflow-y-auto">
+              <code>
+                {codeFiles 
+                  ? codeFiles.find((f: any) => f.name === (activeFile || codeFiles[0]?.name))?.content || 'No content'
+                  : (typeof generatedCode === 'string' ? generatedCode : JSON.stringify(generatedCode, null, 2))
+                }
+              </code>
+            </pre>
+          </div>
+        </div>
+      )}
+
+      {/* Error display */}
+      {codeError && (
+        <div className="mb-6 bg-red-500/10 border border-red-500/30 rounded-xl p-4">
+          <p className="text-red-400 text-sm">❌ {codeError}</p>
+        </div>
+      )}
+
+      {/* Code will include section */}
+      {!generatedCode && (
+        <div className="bg-green-500/10 border border-green-500/30 rounded-xl p-6 mb-6">
+          <h4 className="text-white font-semibold mb-3">Code will include:</h4>
+          <ul className="space-y-2 text-gray-300 text-sm">
+            <li>✓ Frontend components (React/Next.js)</li>
+            <li>✓ Backend API routes</li>
+            <li>✓ Database migrations</li>
+            <li>✓ Type definitions</li>
+            <li>✓ Error handling</li>
+            <li>✓ Input validation</li>
+            <li>✓ Tests</li>
+            <li>✓ Documentation</li>
+          </ul>
+        </div>
+      )}
 
       {!isProUser && (
         <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-4 mb-6">
@@ -751,6 +1364,11 @@ function GenerateCodeStep({ feature, formData, onGenerateCode, isGenerating, set
             <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
             <span>Generating Code...</span>
           </>
+        ) : generatedCode ? (
+          <>
+            <span>🔄</span>
+            <span>Regenerate Code</span>
+          </>
         ) : isProUser ? (
           <>
             <span>💻</span>
@@ -766,4 +1384,3 @@ function GenerateCodeStep({ feature, formData, onGenerateCode, isGenerating, set
     </div>
   );
 }
-
