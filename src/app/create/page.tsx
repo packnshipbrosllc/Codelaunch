@@ -708,6 +708,7 @@ function CreateProjectPageContent() {
             projectDescription: mindmapData.projectDescription || '',
             techStack: mindmapData.techStack,
             allFeatures: enhancedMindmapData.features,
+            mindmapId: mindmapData.id, // For Supabase persistence
           }}
           onClose={() => setSelectedFeature(null)}
           onSavePRD={async (featureId: string, prd: any) => {

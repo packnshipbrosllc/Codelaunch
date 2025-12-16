@@ -308,6 +308,36 @@ Start your response with { and end with }`;
 
     const cleanedContent = cleanObject(parsedContent);
 
+    // Save code to Supabase for persistence
+    const mindmapId = body.mindmapId || body.projectId;
+    const featureId = body.featureId;
+    if (mindmapId && featureId) {
+      try {
+        console.log('💾 [Backend] Saving generated code to Supabase...');
+        const { error: saveError } = await supabase
+          .from('feature_code')
+          .upsert({
+            user_id: userId,
+            mindmap_id: mindmapId,
+            feature_id: featureId,
+            feature_name: featureNameStr,
+            code_data: cleanedContent,
+            updated_at: new Date().toISOString(),
+          }, { 
+            onConflict: 'mindmap_id,feature_id',
+            ignoreDuplicates: false 
+          });
+        
+        if (saveError) {
+          console.warn('⚠️ [Backend] Code save warning (non-blocking):', saveError.message);
+        } else {
+          console.log('✅ [Backend] Code saved to Supabase');
+        }
+      } catch (saveErr: any) {
+        console.warn('⚠️ [Backend] Code save error (non-blocking):', saveErr.message);
+      }
+    }
+
     return NextResponse.json({
       success: true,
       code: cleanedContent,
@@ -317,6 +347,7 @@ Start your response with { and end with }`;
         processingTime: duration,
         filesCount: cleanedContent.files?.length || 0,
         wasTruncated,
+        saved: !!(mindmapId && featureId),
         stopReason: message.stop_reason,
       },
     });

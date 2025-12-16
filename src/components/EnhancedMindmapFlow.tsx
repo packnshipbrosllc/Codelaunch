@@ -24,7 +24,7 @@ import { EnhancedFeatureNode } from './nodes/EnhancedFeatureNode';
 import { EnhancedCompetitorNode } from './nodes/EnhancedCompetitorNode';
 import { EnhancedPersonaNode } from './nodes/EnhancedPersonaNode';
 import PRDModal from '@/components/features/PRDModal';
-import FeatureSidebar from '@/components/FeatureSidebar';
+// FeatureSidebar removed - using FeatureBuilderPanel instead for unified UX
 import { useMindmapLimit } from '@/hooks/useMindmapLimit';
 import NodeClickIndicator from '@/components/NodeClickIndicator';
 import { useMindmapTutorial } from '@/hooks/useMindmapTutorial';
@@ -75,10 +75,7 @@ export function EnhancedMindmapFlow({
   const [selectedFeatureId, setSelectedFeatureId] = useState<string | null>(null);
   const [isGeneratingPRD, setIsGeneratingPRD] = useState(false);
   
-  // Feature Sidebar state
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [sidebarFeature, setSidebarFeature] = useState<any>(null);
-  const [showPRDPreview, setShowPRDPreview] = useState(false);
+  // Feature click is handled by parent via onNodeClick -> FeatureBuilderPanel
 
   // Generate initial nodes and edges from data - MEMOIZED WITHOUT expandedNodes to prevent infinite loop
   const { initialNodes, initialEdges } = useMemo(() => {
@@ -177,10 +174,7 @@ export function EnhancedMindmapFlow({
           hasPRD,
           hasCode,
           onClick: () => {
-            // Open sidebar when feature is clicked
-            setSidebarFeature(feature);
-            setSidebarOpen(true);
-            // Also call the original onNodeClick if provided
+            // Open FeatureBuilderPanel when feature is clicked
             if (onNodeClick) {
               onNodeClick(feature);
             }
@@ -720,23 +714,7 @@ export function EnhancedMindmapFlow({
       </ReactFlow>
 
       {/* PRD Modal */}
-      {/* Feature Sidebar */}
-      <FeatureSidebar
-        feature={sidebarFeature}
-        isOpen={sidebarOpen}
-        onClose={() => {
-          setSidebarOpen(false);
-          setSidebarFeature(null);
-        }}
-        isSubscribed={isSubscribed}
-        onGeneratePRD={(featureId, featureData) => {
-          handleGeneratePRD(featureId);
-        }}
-        onShowPRDPreview={(feature) => {
-          setShowPRDPreview(true);
-          setSidebarFeature(feature);
-        }}
-      />
+      {/* FeatureSidebar removed - FeatureBuilderPanel is used instead for unified UX */}
 
       <PRDModal
         isOpen={prdModalOpen}

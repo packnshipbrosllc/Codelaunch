@@ -311,7 +311,7 @@ export default function FeatureSidebar({
                   <div className="w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full animate-spin" />
                   <div>
                     <p className="text-white font-semibold">Generating PRD...</p>
-                    <p className="text-gray-400 text-sm">This may take 10-20 seconds</p>
+                    <p className="text-gray-400 text-sm">This may take 1-2 minutes</p>
                   </div>
                 </div>
               </div>
@@ -387,7 +387,7 @@ export default function FeatureSidebar({
                   <div className="w-8 h-8 border-4 border-pink-500 border-t-transparent rounded-full animate-spin" />
                   <div>
                     <p className="text-white font-semibold">Generating Code...</p>
-                    <p className="text-gray-400 text-sm">This may take 20-30 seconds</p>
+                    <p className="text-gray-400 text-sm">This takes 2-3 minutes</p>
                   </div>
                 </div>
               </div>

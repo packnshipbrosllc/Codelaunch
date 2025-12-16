@@ -224,6 +224,36 @@ Include 3 user stories, 2-3 API endpoints, relevant database tables, and 5-8 imp
 
     const cleanedContent = cleanObject(parsedContent);
 
+    // Save PRD to Supabase for persistence
+    const mindmapId = body.mindmapId || body.projectId;
+    if (mindmapId) {
+      try {
+        console.log('💾 [Backend] Saving PRD to Supabase...');
+        const { error: saveError } = await supabase
+          .from('feature_prds')
+          .upsert({
+            user_id: userId,
+            mindmap_id: mindmapId,
+            feature_id: featureId,
+            feature_name: featureName,
+            prd_data: cleanedContent,
+            updated_at: new Date().toISOString(),
+          }, { 
+            onConflict: 'mindmap_id,feature_id',
+            ignoreDuplicates: false 
+          });
+        
+        if (saveError) {
+          console.warn('⚠️ [Backend] PRD save warning (non-blocking):', saveError.message);
+          // Don't fail the request if save fails - PRD is still returned
+        } else {
+          console.log('✅ [Backend] PRD saved to Supabase');
+        }
+      } catch (saveErr: any) {
+        console.warn('⚠️ [Backend] PRD save error (non-blocking):', saveErr.message);
+      }
+    }
+
     return NextResponse.json({
       success: true,
       prd: cleanedContent,
@@ -232,6 +262,7 @@ Include 3 user stories, 2-3 API endpoints, relevant database tables, and 5-8 imp
         featureName,
         generatedAt: new Date().toISOString(),
         processingTime: duration,
+        saved: !!mindmapId,
       },
     });
 

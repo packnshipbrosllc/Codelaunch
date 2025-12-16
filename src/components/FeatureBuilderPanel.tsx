@@ -16,6 +16,7 @@ interface FeatureBuilderPanelProps {
     projectDescription: string;
     techStack: any;
     allFeatures: EnhancedFeature[];
+    mindmapId?: string; // For Supabase persistence
   };
   onClose: () => void;
   onSavePRD: (featureId: string, prd: any) => void;
@@ -916,6 +917,7 @@ function GeneratePRDStep({
           featureId: feature.id,
           featureName: feature.title,
           featureDescription: feature.description,
+          mindmapId: projectContext.mindmapId, // For Supabase persistence
           projectContext: { projectName: projectContext.projectName, techStack: projectContext.techStack },
           userStories: formData.userStories,
           acceptanceCriteria: formData.acceptanceCriteria.split('\n').filter(c => c.trim()),
@@ -1104,6 +1106,7 @@ function GenerateCodeStep({
           featureId: feature.id,
           featureName: feature.title,
           featureDescription: feature.description,
+          mindmapId: projectContext.mindmapId, // For Supabase persistence
           projectContext: { projectName: projectContext.projectName, techStack: projectContext.techStack },
           prd: generatedPRD,
           userStories: formData.userStories,
