@@ -64,24 +64,43 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { prdContent, techStack, featureName } = body;
+    const { prd, prdContent, techStack, featureName, featureDescription, projectContext, userStories, apiEndpoints, dataModels, uiComponents } = body;
 
-    // Validate required inputs
-    if (!prdContent) {
+    // Accept both 'prd' and 'prdContent' for backwards compatibility
+    const prdData = prd || prdContent;
+
+    // Build PRD content from available data
+    let finalPrdContent = '';
+    if (prdData) {
+      finalPrdContent = typeof prdData === 'string' ? prdData : JSON.stringify(prdData, null, 2);
+    } else {
+      // Build PRD from individual fields if no full PRD provided
+      finalPrdContent = `
+Feature: ${featureName || 'Unknown Feature'}
+Description: ${featureDescription || 'No description'}
+${userStories ? `\nUser Stories:\n${userStories}` : ''}
+${apiEndpoints ? `\nAPI Endpoints:\n${typeof apiEndpoints === 'string' ? apiEndpoints : JSON.stringify(apiEndpoints)}` : ''}
+${dataModels ? `\nData Models:\n${typeof dataModels === 'string' ? dataModels : JSON.stringify(dataModels)}` : ''}
+${uiComponents ? `\nUI Components:\n${Array.isArray(uiComponents) ? uiComponents.join(', ') : uiComponents}` : ''}
+      `.trim();
+    }
+
+    if (!finalPrdContent || finalPrdContent.length < 50) {
       return NextResponse.json(
-        { success: false, error: 'PRD content is required' },
+        { success: false, error: 'Please provide PRD content or feature details to generate code' },
         { status: 400 }
       );
     }
 
-    const techStackStr = techStack || 'React, Next.js, TypeScript, Node.js, PostgreSQL';
+    const techStackStr = techStack || projectContext?.techStack || 'React, Next.js, TypeScript, Node.js, PostgreSQL';
     const featureNameStr = featureName || 'Feature';
 
     console.log('📦 [Backend] Code generation request validated:', {
-      hasPRD: !!prdContent,
+      hasPRD: !!prdData,
+      hasIndividualFields: !!(userStories || apiEndpoints),
       techStack: techStackStr,
       featureName: featureNameStr,
-      prdLength: typeof prdContent === 'string' ? prdContent.length : JSON.stringify(prdContent).length,
+      prdLength: finalPrdContent.length,
     });
 
     // Build comprehensive prompt for code generation
@@ -100,7 +119,7 @@ TECH STACK: ${techStackStr}
 FEATURE: ${featureNameStr}
 
 PRD CONTENT:
-${typeof prdContent === 'string' ? prdContent : JSON.stringify(prdContent, null, 2)}
+${finalPrdContent}
 
 Generate a complete implementation as a JSON object with this structure:
 
@@ -177,7 +196,7 @@ Return ONLY the JSON object, no markdown, no code blocks, no explanations.`;
     console.log('🤖 [Backend] Calling Anthropic API for code generation...');
     const anthropic = getAnthropic();
     const message = await anthropic.messages.create({
-      model: 'claude-sonnet-4-5-20250929',
+      model: 'claude-sonnet-4-20250514',
       max_tokens: 16000, // Large token limit for multiple files
       temperature: 0.3, // Lower temperature for more consistent code
       messages: [

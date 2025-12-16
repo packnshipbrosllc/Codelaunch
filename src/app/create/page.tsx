@@ -711,15 +711,38 @@ function CreateProjectPageContent() {
           }}
           onClose={() => setSelectedFeature(null)}
           onSavePRD={async (featureId: string, prd: any) => {
-            // Update the feature with PRD data
-            console.log('PRD saved for feature:', featureId, prd);
+            console.log('💾 Saving PRD for feature:', featureId);
+            
+            // Update the mindmapData with the PRD
+            // enhancedMindmapData will auto-update via useMemo
+            if (mindmapData) {
+              const updatedFeatures = mindmapData.features.map(f => 
+                f.id === featureId ? { ...f, prd, hasPRD: true } : f
+              );
+              setMindmapData({
+                ...mindmapData,
+                features: updatedFeatures
+              } as any);
+              
+              toast.success('PRD saved! It will be persisted when you save the project.');
+            }
             setSelectedFeature(null);
-            // TODO: Update mindmapData with PRD
           }}
           onGenerateCode={async (featureId: string) => {
-            // Generate code for the feature
-            console.log('Generating code for feature:', featureId);
-            // TODO: Call code generation API
+            console.log('💻 Code generated for feature:', featureId);
+            
+            // Update the feature to mark it as having generated code
+            if (mindmapData) {
+              const updatedFeatures = mindmapData.features.map(f => 
+                f.id === featureId ? { ...f, hasCode: true } : f
+              );
+              setMindmapData({
+                ...mindmapData,
+                features: updatedFeatures
+              } as any);
+              
+              toast.success('Code generated! Download it from the Feature Builder.');
+            }
           }}
         />
       )}

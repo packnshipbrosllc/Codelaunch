@@ -1,16 +1,22 @@
 // src/app/api/save-prd/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
-import { createClient } from '@supabase/supabase-js';
 
 export const maxDuration = 90;
+export const dynamic = 'force-dynamic';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+// Lazy initialization for Supabase
+function getSupabase() {
+  const { createClient } = require('@supabase/supabase-js');
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+}
 
 export async function POST(request: NextRequest) {
+  const supabase = getSupabase();
+  
   try {
     console.log('🔍 [Save PRD] Starting save process');
 
@@ -110,6 +116,8 @@ export async function POST(request: NextRequest) {
 
 // GET endpoint to retrieve PRD
 export async function GET(request: NextRequest) {
+  const supabase = getSupabase();
+  
   try {
     const { userId } = await auth();
     
