@@ -13,7 +13,7 @@ const supabase = createClient(
 export async function GET() {
   try {
     const { userId } = await auth();
-
+    
     if (!userId) {
       return NextResponse.json(
         { error: 'Unauthorized' },

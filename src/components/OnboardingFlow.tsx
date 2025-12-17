@@ -26,7 +26,7 @@ export default function OnboardingFlow() {
       const response = await fetch('/api/user/complete-onboarding', {
         method: 'POST',
       });
-      
+
       if (!response.ok) {
         console.error('Failed to complete onboarding:', response.status, response.statusText);
         // Still redirect even if API fails - don't block user
@@ -75,7 +75,7 @@ export default function OnboardingFlow() {
             </div>
             <h1 className="text-5xl font-bold text-white mb-4">
               Welcome to CodeLaunch! 🚀
-            </h1>
+              </h1>
             <p className="text-xl text-gray-300">
               Transform your app ideas into production-ready plans in minutes
             </p>
@@ -134,8 +134,8 @@ export default function OnboardingFlow() {
               className="flex-1 px-8 py-4 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-semibold rounded-xl transition-all transform hover:scale-105 flex items-center justify-center gap-2"
             >
               Show Me How It Works
-              <ArrowRight className="w-5 h-5" />
-            </button>
+                  <ArrowRight className="w-5 h-5" />
+                </button>
             
             <button
               onClick={handleSkipToCreate}
@@ -179,19 +179,19 @@ export default function OnboardingFlow() {
               Start Building
                   <ArrowRight className="w-5 h-5" />
                 </button>
-            
-            <button
+                
+                <button
               type="button"
               onClick={() => setCurrentStep('welcome')}
               className="px-8 py-4 bg-gray-700/50 hover:bg-gray-700 text-white font-semibold rounded-xl transition-all border border-gray-600"
-            >
+                >
               Back
-            </button>
-          </div>
-        </div>
+                </button>
+              </div>
       </div>
-    );
-  }
+    </div>
+  );
+}
 
 
   return null;

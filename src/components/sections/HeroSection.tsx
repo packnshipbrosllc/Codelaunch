@@ -181,9 +181,9 @@ export default function HeroSection() {
             <div className="text-sm text-gray-500 flex items-center gap-2 justify-center lg:justify-start mb-8">
               <span className="text-purple-500">✓</span>
               3 free mindmaps • No credit card required
+              </div>
+              </div>
             </div>
-          </div>
-        </div>
 
         {/* Hero Mockup - Split View */}
         <div className="animate-[fadeUp_1s_ease-out_0.8s_both] mb-20">
@@ -194,20 +194,20 @@ export default function HeroSection() {
         {/* Bottom CTA Section */}
         <div className="text-center animate-[fadeUp_1s_ease-out_1.4s_both]">
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            {!isSignedIn ? (
-              <SignUpButton mode="modal">
-                <button className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl font-bold text-lg text-white shadow-lg shadow-purple-500/50 hover:shadow-purple-500/70 hover:scale-105 transition-all duration-200">
-                  Start Building Free
-                  <span>→</span>
-                </button>
-              </SignUpButton>
-            ) : (
+              {!isSignedIn ? (
+                <SignUpButton mode="modal">
+                  <button className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl font-bold text-lg text-white shadow-lg shadow-purple-500/50 hover:shadow-purple-500/70 hover:scale-105 transition-all duration-200">
+                    Start Building Free
+                    <span>→</span>
+                  </button>
+                </SignUpButton>
+              ) : (
               <button
                 onClick={handleStartBuilding}
-                className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl font-bold text-lg text-white shadow-lg shadow-purple-500/50 hover:shadow-purple-500/70 hover:scale-105 transition-all duration-200"
-              >
-                Start Building Free
-                <span>→</span>
+                  className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl font-bold text-lg text-white shadow-lg shadow-purple-500/50 hover:shadow-purple-500/70 hover:scale-105 transition-all duration-200"
+                >
+                  Start Building Free
+                  <span>→</span>
               </button>
             )}
             <button className="px-8 py-4 bg-white/5 backdrop-blur-sm border-2 border-purple-500/30 rounded-xl font-bold text-lg text-white hover:bg-purple-500/10 hover:border-purple-500/50 transition-all duration-200">

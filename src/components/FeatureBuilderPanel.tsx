@@ -6,6 +6,7 @@ import { EnhancedFeature } from '@/types/enhanced-mindmap';
 import { Feature } from '@/types/mindmap';
 import { useSubscription } from '@/hooks/useSubscription';
 import { useMindmapLimit } from '@/hooks/useMindmapLimit';
+import { useUsageStats } from '@/hooks/useUsageStats';
 import UpgradeModal from '@/components/UpgradeModal';
 import { trackPaywallViewed, trackUpgradeClicked } from '@/utils/analytics';
 
@@ -316,6 +317,7 @@ export default function FeatureBuilderPanel({
   
   const { hasSubscription, isLoading: isLoadingSubscription } = useSubscription();
   const { remainingFreeMindmaps, mindmapsCreated, freeLimit, isLoading: isLoadingLimit, error: limitError } = useMindmapLimit();
+  const { stats: usageStats, refresh: refreshUsage } = useUsageStats();
   const isProUser = hasSubscription === true;
 
   // State for generated content
@@ -323,6 +325,8 @@ export default function FeatureBuilderPanel({
   const [generatedCode, setGeneratedCode] = useState<any>(null);
   const [prdError, setPrdError] = useState<string | null>(null);
   const [codeError, setCodeError] = useState<string | null>(null);
+  const [prdUpdatedAt, setPrdUpdatedAt] = useState<string | null>(null);
+  const [codeUpdatedAt, setCodeUpdatedAt] = useState<string | null>(null);
 
   // Timer for code generation
   useEffect(() => {
@@ -356,6 +360,37 @@ export default function FeatureBuilderPanel({
     edgeCases: '',
     errorHandling: '',
   });
+
+  // Load existing PRD and code when Feature Builder opens
+  useEffect(() => {
+    async function loadExistingData() {
+      if (!projectContext.mindmapId || !feature.id) return;
+      
+      try {
+        const response = await fetch(`/api/features/${feature.id}/prd-code?mindmapId=${projectContext.mindmapId}`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success) {
+            if (data.prd) {
+              console.log('✅ Loaded existing PRD:', data.prdUpdatedAt);
+              setGeneratedPRD(data.prd);
+              setPrdUpdatedAt(data.prdUpdatedAt);
+            }
+            if (data.code) {
+              console.log('✅ Loaded existing code:', data.codeUpdatedAt);
+              setGeneratedCode(data.code);
+              setCodeUpdatedAt(data.codeUpdatedAt);
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error loading existing PRD/code:', error);
+        // Non-blocking error - just log it
+      }
+    }
+    
+    loadExistingData();
+  }, [projectContext.mindmapId, feature.id]);
 
   // AI Enhancement handler
   const handleEnhanceWithAI = async (stepType: 'userStories' | 'technicalSpecs' | 'edgeCases' | 'dependencies') => {
@@ -502,12 +537,25 @@ Consider: authentication, database setup, API infrastructure, shared components.
             <h2 className="text-xl font-bold text-white">Feature Builder</h2>
             <p className="text-sm text-gray-400">{feature.title}</p>
           </div>
-          <button
-            onClick={onClose}
-            className="p-2 hover:bg-gray-800 rounded-lg transition-colors text-gray-400 hover:text-white"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-4">
+            {/* Usage Stats Display */}
+            {isProUser && usageStats && (
+              <div className="flex items-center gap-3 text-xs">
+                <div className="text-gray-400">
+                  PRDs: <span className="text-white font-semibold">{usageStats.prd.used}/{usageStats.prd.limit}</span>
+                </div>
+                <div className="text-gray-400">
+                  Code: <span className="text-white font-semibold">{usageStats.code.used}/{usageStats.code.limit}</span>
+                </div>
+              </div>
+            )}
+            <button
+              onClick={onClose}
+              className="p-2 hover:bg-gray-800 rounded-lg transition-colors text-gray-400 hover:text-white"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         {/* Progress Tracker */}
@@ -581,6 +629,8 @@ Consider: authentication, database setup, API infrastructure, shared components.
               setGeneratedPRD={setGeneratedPRD}
               prdError={prdError}
               setPrdError={setPrdError}
+              prdUpdatedAt={prdUpdatedAt}
+              setPrdUpdatedAt={setPrdUpdatedAt}
             />
           )}
           {currentStep === 6 && (
@@ -607,6 +657,8 @@ Consider: authentication, database setup, API infrastructure, shared components.
               setGeneratedCode={setGeneratedCode}
               codeError={codeError}
               setCodeError={setCodeError}
+              codeUpdatedAt={codeUpdatedAt}
+              setCodeUpdatedAt={setCodeUpdatedAt}
             />
           )}
         </div>
@@ -881,7 +933,9 @@ function GeneratePRDStep({
   generatedPRD,
   setGeneratedPRD,
   prdError,
-  setPrdError
+  setPrdError,
+  prdUpdatedAt,
+  setPrdUpdatedAt
 }: { 
   feature: EnhancedFeature; 
   formData: FormData; 
@@ -900,6 +954,8 @@ function GeneratePRDStep({
   setGeneratedPRD: (prd: any) => void;
   prdError: string | null;
   setPrdError: (error: string | null) => void;
+  prdUpdatedAt: string | null;
+  setPrdUpdatedAt: (date: string | null) => void;
 }) {
   const [copied, setCopied] = useState(false);
 
@@ -929,9 +985,19 @@ function GeneratePRDStep({
       });
       
       const result = await response.json();
+      
+      // Handle usage limit reached
+      if (response.status === 403 && result.limitReached) {
+        setPrdError(result.message || `You've reached your monthly limit (${result.used}/${result.limit}). Your limits reset on the 1st of each month.`);
+        return;
+      }
+      
       if (result.success && result.prd) {
         setGeneratedPRD(result.prd);
+        setPrdUpdatedAt(new Date().toISOString());
         onSavePRD(feature.id, result.prd);
+        // Refresh usage stats after successful generation
+        if (refreshUsage) refreshUsage();
       } else {
         setPrdError(result.error || 'Failed to generate PRD');
       }
@@ -958,9 +1024,16 @@ function GeneratePRDStep({
       {generatedPRD ? (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <span className="text-green-400 flex items-center gap-2">
-              <Check className="w-5 h-5" /> PRD Generated
-            </span>
+            <div className="flex flex-col">
+              <span className="text-green-400 flex items-center gap-2">
+                <Check className="w-5 h-5" /> PRD Generated
+              </span>
+              {prdUpdatedAt && (
+                <span className="text-gray-500 text-xs mt-1">
+                  Last generated: {new Date(prdUpdatedAt).toLocaleDateString()} {new Date(prdUpdatedAt).toLocaleTimeString()}
+                </span>
+              )}
+            </div>
             <div className="flex gap-2">
               <button onClick={handleCopy} className="px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-white rounded-lg text-xs flex items-center gap-1">
                 {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
@@ -1068,7 +1141,9 @@ function GenerateCodeStep({
   generatedCode,
   setGeneratedCode,
   codeError,
-  setCodeError
+  setCodeError,
+  codeUpdatedAt,
+  setCodeUpdatedAt
 }: { 
   feature: EnhancedFeature; 
   formData: FormData;
@@ -1088,6 +1163,8 @@ function GenerateCodeStep({
   setGeneratedCode: (code: any) => void;
   codeError: string | null;
   setCodeError: (error: string | null) => void;
+  codeUpdatedAt: string | null;
+  setCodeUpdatedAt: (date: string | null) => void;
 }) {
   const [copied, setCopied] = useState(false);
   const [activeFile, setActiveFile] = useState(0);
@@ -1116,11 +1193,26 @@ function GenerateCodeStep({
         })
       });
       
+      console.log('✅ Code generation response status:', response.status);
       const result = await response.json();
+      console.log('✅ Code generation response:', result);
+      
+      // Handle usage limit reached
+      if (response.status === 403 && result.limitReached) {
+        console.error('❌ Usage limit reached:', result.message);
+        setCodeError(result.message || `You've reached your monthly limit (${result.used}/${result.limit}). Your limits reset on the 1st of each month.`);
+        return;
+      }
+      
       if (result.success && result.code) {
+        console.log('✅ Setting generated code to state:', result.code);
         setGeneratedCode(result.code);
+        setCodeUpdatedAt(new Date().toISOString());
         onGenerateCode(feature.id);
+        // Refresh usage stats after successful generation
+        if (refreshUsage) refreshUsage();
       } else {
+        console.error('❌ Code generation failed:', result.error);
         setCodeError(result.error || 'Failed to generate code');
       }
     } catch (error: any) {
@@ -1157,9 +1249,16 @@ function GenerateCodeStep({
       {generatedCode && files.length > 0 ? (
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-green-400 flex items-center gap-2 text-sm">
-              <Check className="w-4 h-4" /> {files.length} files generated
-            </span>
+            <div className="flex flex-col">
+              <span className="text-green-400 flex items-center gap-2 text-sm">
+                <Check className="w-4 h-4" /> {files.length} files generated
+              </span>
+              {codeUpdatedAt && (
+                <span className="text-gray-500 text-xs mt-1">
+                  Last generated: {new Date(codeUpdatedAt).toLocaleDateString()} {new Date(codeUpdatedAt).toLocaleTimeString()}
+                </span>
+              )}
+            </div>
             <button 
               onClick={() => {
                 const allCode = files.map((f: any) => `// ${f.name}\n${f.content}`).join('\n\n');

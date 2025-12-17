@@ -74,7 +74,7 @@ export default clerkMiddleware(async (auth, req) => {
     // On error, allow through to avoid blocking users
     console.error('Error checking onboarding status in middleware:', error);
   }
-
+  
   // Allow access to all routes for authenticated users
   return NextResponse.next();
 });

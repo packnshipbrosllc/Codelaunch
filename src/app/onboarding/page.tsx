@@ -20,7 +20,7 @@ export default function OnboardingPage() {
       try {
         const response = await fetch('/api/user/onboarding-status');
         const data = await response.json();
-
+        
         // If onboarding is already completed, redirect to dashboard
         if (data.completed) {
           router.push('/dashboard');
@@ -46,13 +46,13 @@ export default function OnboardingPage() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-black flex items-center justify-center">
         <div className="text-white text-xl">Loading...</div>
-      </div>
+        </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-black">
-      <OnboardingFlow />
-    </div>
+        <OnboardingFlow />
+      </div>
   );
 }

@@ -152,11 +152,11 @@ export default function LandingPage() {
             ) : (
               <>
                 {hasCompletedOnboarding ? (
-                  <Link href="/dashboard">
-                    <button className="bg-purple-600 hover:bg-purple-500 text-white px-6 py-2 rounded-lg font-medium transition shadow-lg shadow-purple-600/20">
-                      Dashboard
-                    </button>
-                  </Link>
+                <Link href="/dashboard">
+                  <button className="bg-purple-600 hover:bg-purple-500 text-white px-6 py-2 rounded-lg font-medium transition shadow-lg shadow-purple-600/20">
+                    Dashboard
+                  </button>
+                </Link>
                 ) : (
                   <Link href="/onboarding">
                     <button className="bg-purple-600 hover:bg-purple-500 text-white px-6 py-2 rounded-lg font-medium transition shadow-lg shadow-purple-600/20">
@@ -336,7 +336,7 @@ export default function LandingPage() {
                 className="bg-purple-600 hover:bg-purple-500 text-white px-8 py-3 rounded-lg font-semibold transition"
               >
                 {hasCompletedOnboarding ? 'Go to Dashboard' : 'Complete Setup'}
-              </button>
+                </button>
             )}
           </div>
         </div>
@@ -442,7 +442,7 @@ export default function LandingPage() {
                   className="w-full bg-gray-800 hover:bg-gray-700 text-white py-3 rounded-lg font-medium transition border border-purple-900/30"
                 >
                   {hasCompletedOnboarding ? 'Go to Dashboard' : 'Complete Setup'}
-                </button>
+                  </button>
               )}
             </div>
 

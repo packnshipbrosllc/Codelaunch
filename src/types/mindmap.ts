@@ -38,6 +38,7 @@ export interface UserPersona {
 }
 
 export interface MindmapData {
+  id?: string; // Optional: may not be present until saved to database
   projectName: string;
   projectDescription: string;
   targetAudience: string;
