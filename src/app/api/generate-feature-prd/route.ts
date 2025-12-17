@@ -248,6 +248,20 @@ Include 3 user stories, 2-3 API endpoints, relevant database tables, and 5-8 imp
           // Don't fail the request if save fails - PRD is still returned
         } else {
           console.log('✅ [Backend] PRD saved to Supabase');
+          
+          // Increment usage count after successful PRD generation and save
+          const monthYear = new Date().toISOString().slice(0, 7); // "2025-12"
+          const { error: usageError } = await supabase.rpc('increment_usage', {
+            p_user_id: userId,
+            p_month_year: monthYear,
+            p_column: 'prd_count'
+          });
+          
+          if (usageError) {
+            console.error('❌ Failed to increment usage:', usageError);
+          } else {
+            console.log('📊 Usage incremented for PRD');
+          }
         }
       } catch (saveErr: any) {
         console.warn('⚠️ [Backend] PRD save error (non-blocking):', saveErr.message);

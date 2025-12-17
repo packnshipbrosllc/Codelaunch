@@ -332,6 +332,20 @@ Start your response with { and end with }`;
           console.warn('⚠️ [Backend] Code save warning (non-blocking):', saveError.message);
         } else {
           console.log('✅ [Backend] Code saved to Supabase');
+          
+          // Increment usage count after successful code generation and save
+          const monthYear = new Date().toISOString().slice(0, 7);
+          const { error: usageError } = await supabase.rpc('increment_usage', {
+            p_user_id: userId,
+            p_month_year: monthYear,
+            p_column: 'code_gen_count'
+          });
+          
+          if (usageError) {
+            console.error('❌ Failed to increment usage:', usageError);
+          } else {
+            console.log('📊 Usage incremented for code gen');
+          }
         }
       } catch (saveErr: any) {
         console.warn('⚠️ [Backend] Code save error (non-blocking):', saveErr.message);
