@@ -117,9 +117,21 @@ export function EnhancedFeatureNode({ data, id }: EnhancedFeatureNodeProps) {
       onClick={handleClick}
       title="Click to open Feature Builder | Double-click to expand/collapse"
     >
-      {/* Status Badge */}
-      <div className={`absolute -top-2 -right-2 w-8 h-8 rounded-full bg-black border-2 ${getStatusColor(status)} flex items-center justify-center text-sm z-10`}>
-        {getStatusIcon(status)}
+      {/* Status Badge - Visual indicator */}
+      <div className={`absolute -top-2 -right-2 w-8 h-8 rounded-full bg-black border-2 flex items-center justify-center z-10 ${
+        status === 'code-generated' 
+          ? 'border-green-500 bg-green-500/20' 
+          : status === 'prd-done' 
+          ? 'border-yellow-500 bg-yellow-500/20' 
+          : 'border-gray-500 bg-gray-500/20'
+      }`}>
+        {status === 'code-generated' ? (
+          <div className="w-4 h-4 rounded-full bg-green-500" />
+        ) : status === 'prd-done' ? (
+          <div className="w-4 h-4 rounded-full bg-yellow-500" />
+        ) : (
+          <div className="w-4 h-4 rounded-full border-2 border-gray-500" />
+        )}
       </div>
       
       {/* Pro Badge for free users */}

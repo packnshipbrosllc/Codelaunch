@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { X, Lock, Copy, Download, Check, Sparkles, Code, Database, Server, Layout, Cpu, Zap } from 'lucide-react';
+import { X, Lock, Copy, Download, Check, Sparkles, Code, Database, Server, Layout, Cpu, Zap, PartyPopper } from 'lucide-react';
 import { EnhancedFeature } from '@/types/enhanced-mindmap';
 import { Feature } from '@/types/mindmap';
 import { useSubscription } from '@/hooks/useSubscription';
@@ -54,6 +54,65 @@ const codeGenMessages = [
   { text: "Optimizing code patterns...", icon: Zap },
   { text: "Finalizing implementation...", icon: Check },
 ];
+
+// Completion Celebration Component
+function CompletionCelebration() {
+  useEffect(() => {
+    // Trigger confetti animation when component mounts (optional - graceful fallback if not installed)
+    const triggerConfetti = async () => {
+      try {
+        // Dynamic import - will only work if canvas-confetti is installed
+        // @ts-ignore - canvas-confetti may not be installed
+        const confettiModule = await import('canvas-confetti').catch(() => null);
+        if (!confettiModule) return;
+        
+        // @ts-ignore
+        const confetti = confettiModule.default;
+        const duration = 3000;
+        const animationEnd = Date.now() + duration;
+        const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 10000 };
+
+        function randomInRange(min: number, max: number) {
+          return Math.random() * (max - min) + min;
+        }
+
+        const interval: NodeJS.Timeout = setInterval(function() {
+          const timeLeft = animationEnd - Date.now();
+
+          if (timeLeft <= 0) {
+            return clearInterval(interval);
+          }
+
+          const particleCount = 50 * (timeLeft / duration);
+          confetti({
+            ...defaults,
+            particleCount,
+            origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 }
+          });
+          confetti({
+            ...defaults,
+            particleCount,
+            origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 }
+          });
+        }, 250);
+      } catch (error) {
+        // Silently fail - confetti is optional
+      }
+    };
+
+    triggerConfetti();
+  }, []);
+
+  return (
+    <div className="mx-4 mt-4 mb-2 bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-500/30 rounded-xl p-3 flex items-center gap-3 animate-pulse">
+      <PartyPopper className="w-5 h-5 text-green-400" />
+      <div className="flex-1">
+        <p className="text-green-400 font-semibold text-sm">🎉 Feature complete and ready to export!</p>
+        <p className="text-gray-400 text-xs">Both PRD and code have been generated successfully.</p>
+      </div>
+    </div>
+  );
+}
 
 // Futuristic Loading Overlay Component
 function CodeGenerationOverlay({ isVisible, elapsedTime }: { isVisible: boolean; elapsedTime: number }) {
@@ -502,13 +561,16 @@ Consider: authentication, database setup, API infrastructure, shared components.
     switch (stepId) {
       case 1: return !!(formData.userStories.trim() && formData.acceptanceCriteria.trim());
       case 2: return !!(formData.apiEndpoints && (typeof formData.apiEndpoints === 'string' ? formData.apiEndpoints.trim() : formData.apiEndpoints.length > 0));
-      case 3: return true;
+      case 3: return true; // Dependencies are auto-filled
       case 4: return !!(formData.edgeCases.trim());
-      case 5: return !!generatedPRD;
-      case 6: return !!generatedCode;
+      case 5: return !!generatedPRD || !!prdUpdatedAt;
+      case 6: return !!generatedCode || !!codeUpdatedAt;
       default: return false;
     }
   };
+  
+  // Check if feature is fully complete (PRD + Code)
+  const isFeatureComplete = (generatedPRD || prdUpdatedAt) && (generatedCode || codeUpdatedAt);
 
   const handleStepClick = (stepId: number) => {
     const step = steps.find(s => s.id === stepId);
@@ -532,29 +594,84 @@ Consider: authentication, database setup, API infrastructure, shared components.
         <CodeGenerationOverlay isVisible={isGeneratingCode} elapsedTime={elapsedTime} />
 
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-purple-500/20">
-          <div>
-            <h2 className="text-xl font-bold text-white">Feature Builder</h2>
-            <p className="text-sm text-gray-400">{feature.title}</p>
+        <div className="border-b border-purple-500/20">
+          <div className="flex items-center justify-between p-4">
+            <div>
+              <h2 className="text-xl font-bold text-white">Feature Builder</h2>
+              <p className="text-sm text-gray-400">{feature.title}</p>
+            </div>
+            <div className="flex items-center gap-4">
+              {/* Usage Stats Display */}
+              {isProUser && usageStats && (
+                <div className="flex items-center gap-3 text-xs">
+                  <div className="text-gray-400">
+                    PRDs: <span className="text-white font-semibold">{usageStats.prd.used}/{usageStats.prd.limit}</span>
+                  </div>
+                  <div className="text-gray-400">
+                    Code: <span className="text-white font-semibold">{usageStats.code.used}/{usageStats.code.limit}</span>
+                  </div>
+                </div>
+              )}
+              <button
+                onClick={onClose}
+                className="p-2 hover:bg-gray-800 rounded-lg transition-colors text-gray-400 hover:text-white"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
           </div>
-          <div className="flex items-center gap-4">
-            {/* Usage Stats Display */}
-            {isProUser && usageStats && (
-              <div className="flex items-center gap-3 text-xs">
-                <div className="text-gray-400">
-                  PRDs: <span className="text-white font-semibold">{usageStats.prd.used}/{usageStats.prd.limit}</span>
+          
+          {/* Progress Bar */}
+          <div className="px-4 pb-4">
+            {(() => {
+              const completedSteps = steps.filter(s => isStepComplete(s.id)).length;
+              const progressPercent = Math.round((completedSteps / steps.length) * 100);
+              
+              return (
+                <div className="space-y-3">
+                  {/* Progress Bar */}
+                  <div className="relative">
+                    <div className="h-2 bg-gray-800 rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-gradient-to-r from-purple-600 via-pink-500 to-purple-600 rounded-full transition-all duration-500 ease-out"
+                        style={{ width: `${progressPercent}%` }}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between mt-1">
+                      <span className="text-xs text-gray-400">{progressPercent}% Complete</span>
+                    </div>
+                  </div>
+                  
+                  {/* Step Pills */}
+                  <div className="flex flex-wrap gap-2">
+                    {steps.map((step) => {
+                      const isComplete = isStepComplete(step.id);
+                      return (
+                        <div
+                          key={step.id}
+                          className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs transition-all ${
+                            isComplete
+                              ? 'bg-green-500/20 text-green-400 border border-green-500/30'
+                              : currentStep === step.id
+                              ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30'
+                              : 'bg-gray-800/50 text-gray-500 border border-gray-700/50'
+                          }`}
+                        >
+                          {isComplete ? (
+                            <Check className="w-3 h-3" />
+                          ) : currentStep === step.id ? (
+                            <div className="w-3 h-3 rounded-full bg-purple-500 animate-pulse" />
+                          ) : (
+                            <div className="w-3 h-3 rounded-full border border-current" />
+                          )}
+                          <span>{step.shortTitle}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
-                <div className="text-gray-400">
-                  Code: <span className="text-white font-semibold">{usageStats.code.used}/{usageStats.code.limit}</span>
-                </div>
-              </div>
-            )}
-            <button
-              onClick={onClose}
-              className="p-2 hover:bg-gray-800 rounded-lg transition-colors text-gray-400 hover:text-white"
-            >
-              <X className="w-5 h-5" />
-            </button>
+              );
+            })()}
           </div>
         </div>
 
@@ -567,6 +684,11 @@ Consider: authentication, database setup, API infrastructure, shared components.
           isProUser={isProUser}
           isLoadingSubscription={isLoadingSubscription}
         />
+
+        {/* Completion Celebration Banner */}
+        {isFeatureComplete && (
+          <CompletionCelebration />
+        )}
 
         {/* Main Content */}
         <div className="flex-1 overflow-y-auto p-6">
@@ -1021,8 +1143,16 @@ function GeneratePRDStep({
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-2xl font-bold text-white mb-2">📄 Generate PRD</h3>
+        <div className="flex items-center gap-2 mb-2">
+          <h3 className="text-2xl font-bold text-white">📄 Generate PRD</h3>
+          {(generatedPRD || prdUpdatedAt) && (
+            <Check className="w-5 h-5 text-green-400" />
+          )}
+        </div>
         <p className="text-gray-400 text-sm">Create comprehensive documentation from your specifications.</p>
+        {prdUpdatedAt && (
+          <p className="text-gray-500 text-xs mt-1">Generated on {new Date(prdUpdatedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</p>
+        )}
       </div>
 
       {generatedPRD ? (
@@ -1242,8 +1372,16 @@ function GenerateCodeStep({
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-2xl font-bold text-white mb-2">💻 Generate Code</h3>
+        <div className="flex items-center gap-2 mb-2">
+          <h3 className="text-2xl font-bold text-white">💻 Generate Code</h3>
+          {(generatedCode || codeUpdatedAt) && (
+            <Check className="w-5 h-5 text-green-400" />
+          )}
+        </div>
         <p className="text-gray-400 text-sm">Generate production-ready code from your specifications.</p>
+        {codeUpdatedAt && (
+          <p className="text-gray-500 text-xs mt-1">Generated on {new Date(codeUpdatedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</p>
+        )}
       </div>
 
       {!generatedPRD && (

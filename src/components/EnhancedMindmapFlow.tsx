@@ -28,6 +28,7 @@ import PRDModal from '@/components/features/PRDModal';
 import { useMindmapLimit } from '@/hooks/useMindmapLimit';
 import NodeClickIndicator from '@/components/NodeClickIndicator';
 import { useMindmapTutorial } from '@/hooks/useMindmapTutorial';
+import { useFeatureProgress } from '@/hooks/useFeatureProgress';
 import { 
   EnhancedMindmapData, 
   NodeExpansionState,
@@ -74,6 +75,11 @@ export function EnhancedMindmapFlow({
   const [prdModalOpen, setPRDModalOpen] = useState(false);
   const [selectedFeatureId, setSelectedFeatureId] = useState<string | null>(null);
   const [isGeneratingPRD, setIsGeneratingPRD] = useState(false);
+  
+  // Feature progress tracking - get mindmapId from data if available
+  // Note: mindmapId might not be in data, it's passed from parent component
+  const mindmapId = (data as any).id || (data as any).mindmapId || undefined;
+  const { featureProgress, isLoading: isLoadingProgress } = useFeatureProgress(mindmapId, data.features);
   
   // Feature click is handled by parent via onNodeClick -> FeatureBuilderPanel
 
@@ -142,11 +148,14 @@ export function EnhancedMindmapFlow({
     data.features.forEach((feature, index) => {
       const id = `feature-${feature.id}`;
       
-      // Determine feature status
+      // Determine feature status from progress data or feature data
+      const progress = featureProgress[feature.id] || featureProgress[`feature-${feature.id}`];
       const hasUserStories = feature.userStories && feature.userStories.length > 0;
       const hasAcceptanceCriteria = feature.acceptanceCriteria && feature.acceptanceCriteria.length > 0;
-      const hasPRD = (feature as any).hasPRD || (feature as any).prd;
-      const hasCode = (feature as any).hasCode || (feature as any).generatedCode;
+      
+      // Use progress data if available, otherwise fall back to feature data
+      const hasPRD = progress?.hasPrd || (feature as any).hasPRD || (feature as any).prd;
+      const hasCode = progress?.hasCode || (feature as any).hasCode || (feature as any).generatedCode;
       
       let status: FeatureStatus = 'planned';
       if (hasCode) status = 'code-generated';
@@ -173,6 +182,8 @@ export function EnhancedMindmapFlow({
           requirementsProgress,
           hasPRD,
           hasCode,
+          prdUpdatedAt: progress?.prdUpdatedAt,
+          codeUpdatedAt: progress?.codeUpdatedAt,
           onClick: () => {
             // Open FeatureBuilderPanel when feature is clicked
             if (onNodeClick) {

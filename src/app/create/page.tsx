@@ -21,6 +21,7 @@ import { useMindmapTutorial } from '@/hooks/useMindmapTutorial';
 import { toast } from 'sonner';
 import NextStepModal from '@/components/NextStepModal';
 import ProgressBar, { calculateProgress } from '@/components/ProgressBar';
+import { ProjectProgressCard } from '@/components/ProjectProgressCard';
 import { MessageCircle, Image as ImageIcon } from 'lucide-react';
 
 // Debug logging
@@ -622,6 +623,17 @@ function CreateProjectPageContent() {
 
             {/* Mindmap Display */}
             <div className={`relative ${isFullscreen ? 'fixed inset-0 z-40' : ''}`}>
+              {/* Project Progress Card */}
+              {!isFullscreen && mindmapData && enhancedMindmapData && (
+                <div className="absolute top-24 right-4 z-50">
+                  <ProjectProgressCard
+                    mindmapId={mindmapData.id || mindmapData.projectName}
+                    features={enhancedMindmapData.features}
+                    projectName={mindmapData.projectName}
+                  />
+                </div>
+              )}
+              
               <div 
                 className="w-full" 
                 style={{ 
@@ -632,7 +644,10 @@ function CreateProjectPageContent() {
                 {enhancedMindmapData && (
                   <EnhancedMindmapFlow 
                     key={`mindmap-${mindmapData?.projectName || 'mindmap'}-${mindmapData?.features?.length || 0}`}
-                    data={enhancedMindmapData} 
+                    data={{
+                      ...enhancedMindmapData,
+                      id: mindmapData?.id || mindmapData?.projectName,
+                    } as any} 
                     onSave={handleSave}
                     onNodeClick={(feature) => setSelectedFeature(feature)}
                     onGeneratePRD={handleGeneratePRD}
