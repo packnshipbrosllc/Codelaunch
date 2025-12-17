@@ -317,7 +317,7 @@ export default function FeatureBuilderPanel({
   
   const { hasSubscription, isLoading: isLoadingSubscription } = useSubscription();
   const { remainingFreeMindmaps, mindmapsCreated, freeLimit, isLoading: isLoadingLimit, error: limitError } = useMindmapLimit();
-  const { stats: usageStats, refresh: refreshUsage } = useUsageStats();
+  const { stats: usageStats, refresh } = useUsageStats();
   const isProUser = hasSubscription === true;
 
   // State for generated content
@@ -631,6 +631,7 @@ Consider: authentication, database setup, API infrastructure, shared components.
               setPrdError={setPrdError}
               prdUpdatedAt={prdUpdatedAt}
               setPrdUpdatedAt={setPrdUpdatedAt}
+              refreshUsage={refresh}
             />
           )}
           {currentStep === 6 && (
@@ -659,6 +660,7 @@ Consider: authentication, database setup, API infrastructure, shared components.
               setCodeError={setCodeError}
               codeUpdatedAt={codeUpdatedAt}
               setCodeUpdatedAt={setCodeUpdatedAt}
+              refreshUsage={refresh}
             />
           )}
         </div>
@@ -935,7 +937,8 @@ function GeneratePRDStep({
   prdError,
   setPrdError,
   prdUpdatedAt,
-  setPrdUpdatedAt
+  setPrdUpdatedAt,
+  refreshUsage
 }: { 
   feature: EnhancedFeature; 
   formData: FormData; 
@@ -956,6 +959,7 @@ function GeneratePRDStep({
   setPrdError: (error: string | null) => void;
   prdUpdatedAt: string | null;
   setPrdUpdatedAt: (date: string | null) => void;
+  refreshUsage?: () => void;
 }) {
   const [copied, setCopied] = useState(false);
 
@@ -1143,7 +1147,8 @@ function GenerateCodeStep({
   codeError,
   setCodeError,
   codeUpdatedAt,
-  setCodeUpdatedAt
+  setCodeUpdatedAt,
+  refreshUsage
 }: { 
   feature: EnhancedFeature; 
   formData: FormData;
@@ -1165,6 +1170,7 @@ function GenerateCodeStep({
   setCodeError: (error: string | null) => void;
   codeUpdatedAt: string | null;
   setCodeUpdatedAt: (date: string | null) => void;
+  refreshUsage?: () => void;
 }) {
   const [copied, setCopied] = useState(false);
   const [activeFile, setActiveFile] = useState(0);
