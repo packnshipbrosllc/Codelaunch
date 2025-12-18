@@ -65,11 +65,11 @@ export async function trackEvent(eventName: string, eventData?: Record<string, a
 
 /**
  * Track when user views a paywall
- * @param feature - Which feature triggered the paywall (e.g., 'prd_generation')
- * @param context - Where the paywall was shown (e.g., 'step_click', 'button_click')
+ * @param trigger - Which trigger caused the paywall (e.g., 'free_limit', 'prd_locked', 'code_locked')
+ * @param context - Optional additional context (e.g., 'step_click', 'button_click')
  */
-export async function trackPaywallViewed(feature: string, context?: string): Promise<void> {
-  await trackEvent('paywall_viewed', { feature, context });
+export async function trackPaywallViewed(trigger: string, context?: string): Promise<void> {
+  await trackEvent('paywall_viewed', { trigger, context });
 }
 
 /**

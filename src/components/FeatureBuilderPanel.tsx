@@ -7,8 +7,9 @@ import { Feature } from '@/types/mindmap';
 import { useSubscription } from '@/hooks/useSubscription';
 import { useMindmapLimit } from '@/hooks/useMindmapLimit';
 import { useUsageStats } from '@/hooks/useUsageStats';
-import UpgradeModal from '@/components/UpgradeModal';
+import PremiumUpgradeModal from '@/components/PremiumUpgradeModal';
 import { trackPaywallViewed, trackUpgradeClicked } from '@/utils/analytics';
+import { useRouter } from 'next/navigation';
 
 interface FeatureBuilderPanelProps {
   feature: EnhancedFeature;
@@ -371,8 +372,10 @@ export default function FeatureBuilderPanel({
   const [isGeneratingCode, setIsGeneratingCode] = useState(false);
   const [isEnhancing, setIsEnhancing] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [upgradeTrigger, setUpgradeTrigger] = useState<'free_limit' | 'prd_locked' | 'code_locked'>('prd_locked');
   const [elapsedTime, setElapsedTime] = useState(0);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const router = useRouter();
   
   const { hasSubscription, isLoading: isLoadingSubscription } = useSubscription();
   const { remainingFreeMindmaps, mindmapsCreated, freeLimit, isLoading: isLoadingLimit, error: limitError } = useMindmapLimit();
@@ -577,7 +580,9 @@ Consider: authentication, database setup, API infrastructure, shared components.
     const isLocked = step?.isPro && (isLoadingSubscription || !isProUser);
     
     if (isLocked) {
-      trackPaywallViewed(stepId === 5 ? 'prd_generation' : 'code_generation', 'step_click');
+      const trigger = stepId === 5 ? 'prd_locked' : 'code_locked';
+      setUpgradeTrigger(trigger);
+      trackPaywallViewed(trigger, 'step_click');
       setShowUpgradeModal(true);
     } else {
       setCurrentStep(stepId);
@@ -620,7 +625,7 @@ Consider: authentication, database setup, API infrastructure, shared components.
               </button>
             </div>
           </div>
-          
+
           {/* Progress Bar */}
           <div className="px-4 pb-4">
             {(() => {
@@ -635,20 +640,20 @@ Consider: authentication, database setup, API infrastructure, shared components.
                       <div 
                         className="h-full bg-gradient-to-r from-purple-600 via-pink-500 to-purple-600 rounded-full transition-all duration-500 ease-out"
                         style={{ width: `${progressPercent}%` }}
-                      />
-                    </div>
+              />
+            </div>
                     <div className="flex items-center justify-between mt-1">
                       <span className="text-xs text-gray-400">{progressPercent}% Complete</span>
                     </div>
-                  </div>
-                  
+          </div>
+
                   {/* Step Pills */}
                   <div className="flex flex-wrap gap-2">
-                    {steps.map((step) => {
+            {steps.map((step) => {
                       const isComplete = isStepComplete(step.id);
-                      return (
+              return (
                         <div
-                          key={step.id}
+                  key={step.id}
                           className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs transition-all ${
                             isComplete
                               ? 'bg-green-500/20 text-green-400 border border-green-500/30'
@@ -665,9 +670,9 @@ Consider: authentication, database setup, API infrastructure, shared components.
                             <div className="w-3 h-3 rounded-full border border-current" />
                           )}
                           <span>{step.shortTitle}</span>
-                        </div>
-                      );
-                    })}
+                  </div>
+              );
+            })}
                   </div>
                 </div>
               );
@@ -743,8 +748,8 @@ Consider: authentication, database setup, API infrastructure, shared components.
               isLoadingLimit={isLoadingLimit} 
               limitError={limitError} 
               onUpgrade={() => { 
-                trackPaywallViewed('prd_generation', 'button_click'); 
-                trackUpgradeClicked('prd_button'); 
+                setUpgradeTrigger('prd_locked');
+                trackPaywallViewed('prd_locked', 'button_click'); 
                 setShowUpgradeModal(true); 
               }}
               generatedPRD={generatedPRD}
@@ -772,8 +777,8 @@ Consider: authentication, database setup, API infrastructure, shared components.
               isLoadingLimit={isLoadingLimit} 
               limitError={limitError} 
               onUpgrade={() => { 
-                trackPaywallViewed('code_generation', 'button_click'); 
-                trackUpgradeClicked('code_button'); 
+                setUpgradeTrigger('code_locked');
+                trackPaywallViewed('code_locked', 'button_click'); 
                 setShowUpgradeModal(true); 
               }}
               generatedCode={generatedCode}
@@ -790,29 +795,33 @@ Consider: authentication, database setup, API infrastructure, shared components.
         {/* Navigation */}
         <div className="flex justify-between p-4 border-t border-purple-500/20">
           {currentStep > 1 ? (
-            <button
-              onClick={() => setCurrentStep(currentStep - 1)}
+              <button
+                onClick={() => setCurrentStep(currentStep - 1)}
               className="px-5 py-2.5 bg-gray-800 hover:bg-gray-700 text-white rounded-xl transition-all text-sm"
-            >
+              >
               ← Previous
-            </button>
+              </button>
           ) : <div />}
-          
-          {currentStep < steps.length && (
-            <button
-              onClick={() => setCurrentStep(currentStep + 1)}
+            
+            {currentStep < steps.length && (
+              <button
+                onClick={() => setCurrentStep(currentStep + 1)}
               className="px-5 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white rounded-xl font-semibold transition-all text-sm"
-            >
+              >
               Next →
-            </button>
-          )}
+              </button>
+            )}
+          </div>
         </div>
-      </div>
 
-      <UpgradeModal
+      <PremiumUpgradeModal
         isOpen={showUpgradeModal}
         onClose={() => setShowUpgradeModal(false)}
-        featureName={currentStep === 5 ? 'PRD Generation' : currentStep === 6 ? 'Code Generation' : undefined}
+        onUpgrade={() => {
+          trackUpgradeClicked(upgradeTrigger);
+          router.push('/#pricing');
+        }}
+        trigger={upgradeTrigger}
       />
     </div>
   );
@@ -834,32 +843,32 @@ function UserStoriesStep({
 }) {
   return (
     <div className="space-y-6">
-      <div>
+    <div>
         <h3 className="text-2xl font-bold text-white mb-2">📝 User Stories & Requirements</h3>
         <p className="text-gray-400 text-sm">Define clear user stories and acceptance criteria.</p>
       </div>
 
-      <div>
+        <div>
         <label className="block text-white font-semibold mb-2 text-sm">User Stories</label>
-        <textarea
-          value={formData.userStories}
-          onChange={(e) => setFormData({...formData, userStories: e.target.value})}
+          <textarea
+            value={formData.userStories}
+            onChange={(e) => setFormData({...formData, userStories: e.target.value})}
           placeholder="As a [user type], I want to [action] so that [benefit]..."
           className="w-full h-36 bg-gray-800/50 border border-gray-700 rounded-xl p-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
-        />
-      </div>
+          />
+        </div>
 
-      <div>
+        <div>
         <label className="block text-white font-semibold mb-2 text-sm">Acceptance Criteria</label>
-        <textarea
-          value={formData.acceptanceCriteria}
-          onChange={(e) => setFormData({...formData, acceptanceCriteria: e.target.value})}
+          <textarea
+            value={formData.acceptanceCriteria}
+            onChange={(e) => setFormData({...formData, acceptanceCriteria: e.target.value})}
           placeholder="- Users can...\n- System should...\n- Data persists..."
           className="w-full h-36 bg-gray-800/50 border border-gray-700 rounded-xl p-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
-        />
-      </div>
+          />
+        </div>
 
-      <button
+        <button
         onClick={onEnhance}
         disabled={isEnhancing}
         className="w-full px-4 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white rounded-xl font-semibold transition-all flex items-center justify-center gap-2 disabled:opacity-50 text-sm"
@@ -875,7 +884,7 @@ function UserStoriesStep({
             <span>Enhance with AI</span>
           </>
         )}
-      </button>
+        </button>
     </div>
   );
 }
@@ -902,11 +911,11 @@ function TechnicalSpecsStep({
         <p className="text-gray-400 text-sm">Define API endpoints, data models, and UI components.</p>
       </div>
 
-      <div>
+              <div>
         <label className="block text-white font-semibold mb-2 text-sm">API Endpoints</label>
-        <textarea
-          value={typeof formData.apiEndpoints === 'string' ? formData.apiEndpoints : JSON.stringify(formData.apiEndpoints, null, 2)}
-          onChange={(e) => setFormData({...formData, apiEndpoints: e.target.value})}
+          <textarea
+            value={typeof formData.apiEndpoints === 'string' ? formData.apiEndpoints : JSON.stringify(formData.apiEndpoints, null, 2)}
+            onChange={(e) => setFormData({...formData, apiEndpoints: e.target.value})}
           placeholder="POST /api/resource - Create new resource\nGET /api/resource/:id - Get resource..."
           className="w-full h-32 bg-gray-800/50 border border-gray-700 rounded-xl p-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 font-mono text-sm"
         />
@@ -945,32 +954,32 @@ function TechnicalSpecsStep({
 
 function DependenciesStep({ feature, projectContext, formData, setFormData }: { feature: EnhancedFeature; projectContext: any; formData: FormData; setFormData: (data: FormData) => void }) {
   return (
-    <div className="space-y-6">
-      <div>
+      <div className="space-y-6">
+        <div>
         <h3 className="text-2xl font-bold text-white mb-2">🔗 Dependencies & Build Order</h3>
         <p className="text-gray-400 text-sm">Select features that must be built before this one.</p>
       </div>
 
-      <div className="space-y-2">
-        {projectContext.allFeatures
-          .filter((f: EnhancedFeature) => f.id !== feature.id)
-          .map((f: EnhancedFeature) => (
-            <label key={f.id} className="flex items-center gap-3 p-3 bg-gray-800/50 rounded-lg cursor-pointer hover:bg-gray-800">
-              <input
-                type="checkbox"
-                checked={formData.dependencies.includes(f.id)}
-                onChange={(e) => {
-                  if (e.target.checked) {
-                    setFormData({...formData, dependencies: [...formData.dependencies, f.id]});
-                  } else {
-                    setFormData({...formData, dependencies: formData.dependencies.filter(id => id !== f.id)});
-                  }
-                }}
-                className="w-4 h-4 text-purple-600 rounded"
-              />
+          <div className="space-y-2">
+            {projectContext.allFeatures
+              .filter((f: EnhancedFeature) => f.id !== feature.id)
+              .map((f: EnhancedFeature) => (
+                <label key={f.id} className="flex items-center gap-3 p-3 bg-gray-800/50 rounded-lg cursor-pointer hover:bg-gray-800">
+                  <input
+                    type="checkbox"
+                    checked={formData.dependencies.includes(f.id)}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setFormData({...formData, dependencies: [...formData.dependencies, f.id]});
+                      } else {
+                        setFormData({...formData, dependencies: formData.dependencies.filter(id => id !== f.id)});
+                      }
+                    }}
+                    className="w-4 h-4 text-purple-600 rounded"
+                  />
               <span className="text-white text-sm">{f.title}</span>
-            </label>
-          ))}
+                </label>
+              ))}
         {projectContext.allFeatures.filter((f: EnhancedFeature) => f.id !== feature.id).length === 0 && (
           <p className="text-gray-500 text-sm italic">No other features to depend on</p>
         )}
@@ -994,30 +1003,30 @@ function EdgeCasesStep({
 }) {
   return (
     <div className="space-y-6">
-      <div>
+    <div>
         <h3 className="text-2xl font-bold text-white mb-2">🛡️ Edge Cases & Error Handling</h3>
         <p className="text-gray-400 text-sm">Think through failure scenarios and how to handle them.</p>
       </div>
 
-      <div>
+        <div>
         <label className="block text-white font-semibold mb-2 text-sm">Edge Cases</label>
-        <textarea
-          value={formData.edgeCases}
-          onChange={(e) => setFormData({...formData, edgeCases: e.target.value})}
+          <textarea
+            value={formData.edgeCases}
+            onChange={(e) => setFormData({...formData, edgeCases: e.target.value})}
           placeholder="- What if user enters invalid data?\n- What if API is down?\n- What if network fails?"
           className="w-full h-36 bg-gray-800/50 border border-gray-700 rounded-xl p-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
-        />
-      </div>
+          />
+        </div>
 
-      <div>
+        <div>
         <label className="block text-white font-semibold mb-2 text-sm">Error Handling Strategy</label>
-        <textarea
-          value={formData.errorHandling}
-          onChange={(e) => setFormData({...formData, errorHandling: e.target.value})}
+          <textarea
+            value={formData.errorHandling}
+            onChange={(e) => setFormData({...formData, errorHandling: e.target.value})}
           placeholder="- Show user-friendly error messages\n- Retry failed requests\n- Log errors for debugging"
           className="w-full h-36 bg-gray-800/50 border border-gray-700 rounded-xl p-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
-        />
-      </div>
+          />
+        </div>
 
       <button
         onClick={onEnhance}
@@ -1142,7 +1151,7 @@ function GeneratePRDStep({
 
   return (
     <div className="space-y-6">
-      <div>
+    <div>
         <div className="flex items-center gap-2 mb-2">
           <h3 className="text-2xl font-bold text-white">📄 Generate PRD</h3>
           {(generatedPRD || prdUpdatedAt) && (
@@ -1189,17 +1198,190 @@ function GeneratePRDStep({
             </div>
           </div>
           
-          <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-4 max-h-64 overflow-y-auto text-sm">
-            {generatedPRD.overview && <p className="text-gray-300 mb-3">{generatedPRD.overview}</p>}
-            {generatedPRD.userStories?.length > 0 && (
-              <div className="mb-3">
-                <h4 className="text-purple-400 font-semibold mb-1">User Stories ({generatedPRD.userStories.length})</h4>
-                <ul className="text-gray-400 text-xs space-y-1">
-                  {generatedPRD.userStories.slice(0, 2).map((s: any, i: number) => (
-                    <li key={i}>• As a {s.role || s.persona}, I want to {s.action}...</li>
+          <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-6 max-h-[600px] overflow-y-auto text-sm space-y-6">
+            {/* Overview */}
+            {generatedPRD.overview && (
+              <section>
+                <h4 className="text-purple-400 font-semibold text-base mb-2">Overview</h4>
+                <p className="text-gray-300 leading-relaxed">{generatedPRD.overview}</p>
+              </section>
+            )}
+
+            {/* User Stories */}
+            {generatedPRD.userStories && generatedPRD.userStories.length > 0 && (
+              <section>
+                <h4 className="text-purple-400 font-semibold text-base mb-3">User Stories ({generatedPRD.userStories.length})</h4>
+                <div className="space-y-3">
+                  {generatedPRD.userStories.map((story: any, i: number) => (
+                    <div key={i} className="bg-gray-900/50 p-4 rounded-lg border border-gray-700/50">
+                      <p className="text-gray-200 font-medium mb-1">
+                        As a <span className="text-purple-300">{story.role || story.persona}</span>
+                      </p>
+                      <p className="text-gray-300 text-sm">
+                        I want to <span className="text-white">{story.action || story.need}</span>
+                        {story.goal && (
+                          <> so that <span className="text-gray-400">{story.goal}</span></>
+                        )}
+                      </p>
+                      {story.acceptanceCriteria && (
+                        <div className="mt-2 pt-2 border-t border-gray-700">
+                          <p className="text-gray-400 text-xs font-medium mb-1">Acceptance Criteria:</p>
+                          <ul className="text-gray-500 text-xs space-y-0.5">
+                            {Array.isArray(story.acceptanceCriteria) ? (
+                              story.acceptanceCriteria.map((criteria: string, j: number) => (
+                                <li key={j}>• {criteria}</li>
+                              ))
+                            ) : (
+                              <li>• {story.acceptanceCriteria}</li>
+                            )}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
                   ))}
-                </ul>
-              </div>
+                </div>
+              </section>
+            )}
+
+            {/* Technical Requirements */}
+            {(generatedPRD.technicalRequirements || generatedPRD.technicalSpecs) && (
+              <section>
+                <h4 className="text-purple-400 font-semibold text-base mb-3">Technical Requirements</h4>
+                <div className="bg-gray-900/50 p-4 rounded-lg border border-gray-700/50">
+                  <pre className="text-gray-300 text-xs whitespace-pre-wrap font-mono">
+                    {typeof generatedPRD.technicalRequirements === 'string' 
+                      ? generatedPRD.technicalRequirements 
+                      : JSON.stringify(generatedPRD.technicalRequirements || generatedPRD.technicalSpecs, null, 2)}
+                  </pre>
+                </div>
+              </section>
+            )}
+
+            {/* API Endpoints */}
+            {(generatedPRD.apiEndpoints || generatedPRD.endpoints) && (
+              <section>
+                <h4 className="text-purple-400 font-semibold text-base mb-3">API Endpoints</h4>
+                <div className="space-y-2">
+                  {(generatedPRD.apiEndpoints || generatedPRD.endpoints || []).map((endpoint: any, i: number) => (
+                    <div key={i} className="bg-gray-900/50 p-3 rounded-lg border border-gray-700/50">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className={`px-2 py-0.5 rounded text-xs font-mono font-semibold ${
+                          endpoint.method === 'GET' ? 'bg-blue-500/20 text-blue-400' :
+                          endpoint.method === 'POST' ? 'bg-green-500/20 text-green-400' :
+                          endpoint.method === 'PUT' ? 'bg-yellow-500/20 text-yellow-400' :
+                          endpoint.method === 'DELETE' ? 'bg-red-500/20 text-red-400' :
+                          'bg-gray-500/20 text-gray-400'
+                        }`}>
+                          {endpoint.method || 'GET'}
+                        </span>
+                        <span className="text-gray-300 font-mono text-sm">{endpoint.path || endpoint.url}</span>
+                      </div>
+                      {endpoint.description && (
+                        <p className="text-gray-400 text-xs mt-1">{endpoint.description}</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* Database Schema */}
+            {(generatedPRD.databaseSchema || generatedPRD.dataModels) && (
+              <section>
+                <h4 className="text-purple-400 font-semibold text-base mb-3">Database Schema</h4>
+                <div className="bg-gray-900/50 p-4 rounded-lg border border-gray-700/50">
+                  <pre className="text-gray-300 text-xs whitespace-pre-wrap font-mono">
+                    {typeof generatedPRD.databaseSchema === 'string' 
+                      ? generatedPRD.databaseSchema 
+                      : JSON.stringify(generatedPRD.databaseSchema || generatedPRD.dataModels, null, 2)}
+                  </pre>
+                </div>
+              </section>
+            )}
+
+            {/* Implementation Steps */}
+            {(generatedPRD.implementationSteps || generatedPRD.steps) && (
+              <section>
+                <h4 className="text-purple-400 font-semibold text-base mb-3">Implementation Steps</h4>
+                <ol className="space-y-2">
+                  {(generatedPRD.implementationSteps || generatedPRD.steps || []).map((step: any, i: number) => (
+                    <li key={i} className="flex gap-3">
+                      <span className="text-purple-400 font-semibold text-sm">{i + 1}.</span>
+                      <span className="text-gray-300 text-sm flex-1">
+                        {typeof step === 'string' ? step : step.description || step.title || JSON.stringify(step)}
+                      </span>
+                    </li>
+                  ))}
+                </ol>
+              </section>
+            )}
+
+            {/* Testing Strategy */}
+            {generatedPRD.testingStrategy && (
+              <section>
+                <h4 className="text-purple-400 font-semibold text-base mb-3">Testing Strategy</h4>
+                <div className="bg-gray-900/50 p-4 rounded-lg border border-gray-700/50">
+                  <p className="text-gray-300 text-sm whitespace-pre-wrap">
+                    {typeof generatedPRD.testingStrategy === 'string' 
+                      ? generatedPRD.testingStrategy 
+                      : JSON.stringify(generatedPRD.testingStrategy, null, 2)}
+                  </p>
+                </div>
+              </section>
+            )}
+
+            {/* Dependencies */}
+            {generatedPRD.dependencies && generatedPRD.dependencies.length > 0 && (
+              <section>
+                <h4 className="text-purple-400 font-semibold text-base mb-3">Dependencies</h4>
+                <div className="flex flex-wrap gap-2">
+                  {generatedPRD.dependencies.map((dep: string, i: number) => (
+                    <span key={i} className="px-3 py-1 bg-purple-500/20 text-purple-300 rounded-full text-xs border border-purple-500/30">
+                      {dep}
+                    </span>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* Edge Cases */}
+            {generatedPRD.edgeCases && (
+              <section>
+                <h4 className="text-purple-400 font-semibold text-base mb-3">Edge Cases</h4>
+                <div className="bg-gray-900/50 p-4 rounded-lg border border-gray-700/50">
+                  <ul className="space-y-2">
+                    {(Array.isArray(generatedPRD.edgeCases) ? generatedPRD.edgeCases : [generatedPRD.edgeCases]).map((edgeCase: any, i: number) => (
+                      <li key={i} className="text-gray-300 text-sm">
+                        • {typeof edgeCase === 'string' ? edgeCase : edgeCase.description || JSON.stringify(edgeCase)}
+                      </li>
+                    ))}
+        </ul>
+      </div>
+              </section>
+            )}
+
+            {/* Additional sections - display any other fields */}
+            {Object.keys(generatedPRD).filter(key => 
+              !['overview', 'userStories', 'technicalRequirements', 'technicalSpecs', 'apiEndpoints', 'endpoints', 
+                'databaseSchema', 'dataModels', 'implementationSteps', 'steps', 'testingStrategy', 'dependencies', 'edgeCases'].includes(key)
+            ).length > 0 && (
+              <section>
+                <h4 className="text-purple-400 font-semibold text-base mb-3">Additional Information</h4>
+                <div className="bg-gray-900/50 p-4 rounded-lg border border-gray-700/50">
+                  <pre className="text-gray-300 text-xs whitespace-pre-wrap font-mono">
+                    {JSON.stringify(
+                      Object.fromEntries(
+                        Object.entries(generatedPRD).filter(([key]) => 
+                          !['overview', 'userStories', 'technicalRequirements', 'technicalSpecs', 'apiEndpoints', 'endpoints', 
+                            'databaseSchema', 'dataModels', 'implementationSteps', 'steps', 'testingStrategy', 'dependencies', 'edgeCases'].includes(key)
+                        )
+                      ),
+                      null,
+                      2
+                    )}
+                  </pre>
+                </div>
+              </section>
             )}
           </div>
         </div>
@@ -1371,7 +1553,7 @@ function GenerateCodeStep({
 
   return (
     <div className="space-y-6">
-      <div>
+    <div>
         <div className="flex items-center gap-2 mb-2">
           <h3 className="text-2xl font-bold text-white">💻 Generate Code</h3>
           {(generatedCode || codeUpdatedAt) && (
@@ -1443,7 +1625,7 @@ function GenerateCodeStep({
                 {copied ? 'Copied!' : 'Copy'}
               </button>
             </div>
-            <pre className="p-3 text-xs text-gray-300 overflow-x-auto max-h-48 overflow-y-auto">
+            <pre className="p-4 text-xs text-gray-300 overflow-x-auto max-h-[500px] overflow-y-auto font-mono leading-relaxed">
               <code>{currentFile?.content || 'No content'}</code>
             </pre>
           </div>
@@ -1456,8 +1638,8 @@ function GenerateCodeStep({
             <li>✓ API routes with error handling</li>
             <li>✓ TypeScript types</li>
             <li>✓ Database schemas</li>
-          </ul>
-        </div>
+        </ul>
+      </div>
       )}
 
       {codeError && (

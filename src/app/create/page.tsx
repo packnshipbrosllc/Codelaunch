@@ -23,6 +23,8 @@ import NextStepModal from '@/components/NextStepModal';
 import ProgressBar, { calculateProgress } from '@/components/ProgressBar';
 import { ProjectProgressCard } from '@/components/ProjectProgressCard';
 import { MessageCircle, Image as ImageIcon } from 'lucide-react';
+import PremiumUpgradeModal from '@/components/PremiumUpgradeModal';
+import { trackPaywallViewed, trackUpgradeClicked } from '@/utils/analytics';
 
 // Debug logging
 if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
@@ -62,6 +64,11 @@ function CreateProjectPageContent() {
   
   // Feature Builder state
   const [selectedFeature, setSelectedFeature] = useState<EnhancedFeature | null>(null);
+  const [hasClickedFeature, setHasClickedFeature] = useState(false);
+  
+  // Premium Upgrade Modal state
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [upgradeTrigger, setUpgradeTrigger] = useState<'free_limit' | 'prd_locked' | 'code_locked'>('free_limit');
   
   // Ref to track if we've already processed the URL param (prevent infinite loop)
   const hasProcessedUrlParam = useRef(false);
@@ -189,7 +196,10 @@ function CreateProjectPageContent() {
 
       // Handle limit reached error from API
       if (response.status === 403 && result.error === 'FREE_LIMIT_REACHED') {
-        setError(result.message || 'You\'ve reached your free mindmap limit. Please upgrade to Pro.');
+        setUpgradeTrigger('free_limit');
+        setShowUpgradeModal(true);
+        trackPaywallViewed('free_limit');
+        setError(''); // Clear error since modal will show
         return;
       }
 
@@ -232,7 +242,10 @@ function CreateProjectPageContent() {
     } catch (err: any) {
       console.error('Error generating mindmap:', err);
       if (err.message?.includes('FREE_LIMIT_REACHED')) {
-        setError('You\'ve reached your free mindmap limit. Please upgrade to Pro to continue.');
+        setUpgradeTrigger('free_limit');
+        setShowUpgradeModal(true);
+        trackPaywallViewed('free_limit');
+        setError(''); // Clear error since modal will show
       } else {
         setError(err.message || 'Failed to generate mindmap. Please try again.');
       }
@@ -258,8 +271,11 @@ function CreateProjectPageContent() {
 
       // Check if limit was reached during save
       if (response.status === 403 && result.error === 'FREE_LIMIT_REACHED') {
-        setError(result.message || 'You\'ve reached your free mindmap limit. Please upgrade to Pro.');
+        setUpgradeTrigger('free_limit');
+        setShowUpgradeModal(true);
+        trackPaywallViewed('free_limit');
         setMindmapData(null); // Clear the mindmap so user can't try to save again
+        setError(''); // Clear error since modal will show
         return;
       }
 
@@ -275,8 +291,11 @@ function CreateProjectPageContent() {
     } catch (err: any) {
       console.error('Error saving mindmap:', err);
       if (err.message?.includes('FREE_LIMIT_REACHED')) {
-        setError('You\'ve reached your free mindmap limit. Please upgrade to Pro to continue.');
+        setUpgradeTrigger('free_limit');
+        setShowUpgradeModal(true);
+        trackPaywallViewed('free_limit');
         setMindmapData(null);
+        setError(''); // Clear error since modal will show
       } else {
         alert('Failed to save mindmap: ' + err.message);
       }
@@ -459,16 +478,9 @@ function CreateProjectPageContent() {
         <SpaceBackground variant="default">
           <div className="container mx-auto px-4 py-16 min-h-screen flex items-center justify-center">
             <div className="w-full max-w-4xl">
-            {error && (
+            {error && !error.includes('limit') && (
               <div className="mb-6 p-4 bg-red-500/10 border border-red-500/50 rounded-lg backdrop-blur-sm">
                 <p className="text-red-400 mb-3">{error}</p>
-                {error.includes('limit') && (
-                  <Link href="/#pricing">
-                    <button className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white px-6 py-2 rounded-lg font-medium transition">
-                      Upgrade to Pro →
-                    </button>
-                  </Link>
-                )}
               </div>
             )}
 
@@ -649,13 +661,26 @@ function CreateProjectPageContent() {
                       id: mindmapData?.id || mindmapData?.projectName,
                     } as any} 
                     onSave={handleSave}
-                    onNodeClick={(feature) => setSelectedFeature(feature)}
+                    onNodeClick={(feature) => {
+                      setHasClickedFeature(true);
+                      setSelectedFeature(feature);
+                    }}
                     onGeneratePRD={handleGeneratePRD}
                     isSubscribed={isSubscribed}
                   />
                 )}
               </div>
             </div>
+
+            {/* Floating CTA to guide users to click features */}
+            {mindmapData && !hasClickedFeature && !isFullscreen && (
+              <div className="absolute bottom-24 left-1/2 transform -translate-x-1/2 z-50">
+                <div className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-3 rounded-full shadow-lg animate-bounce flex items-center gap-2">
+                  <span className="text-xl">👆</span>
+                  <span className="font-medium">Click any feature to generate production specs</span>
+                </div>
+              </div>
+            )}
 
             {/* Floating toggle buttons for collapsed panels */}
             {!isFullscreen && (
@@ -742,7 +767,7 @@ function CreateProjectPageContent() {
               
               toast.success('PRD saved! It will be persisted when you save the project.');
             }
-            setSelectedFeature(null);
+            // Don't close the Feature Builder - user should stay to view the PRD
           }}
           onGenerateCode={async (featureId: string) => {
             console.log('💻 Code generated for feature:', featureId);
@@ -762,6 +787,17 @@ function CreateProjectPageContent() {
           }}
         />
       )}
+
+      {/* Premium Upgrade Modal */}
+      <PremiumUpgradeModal
+        isOpen={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+        onUpgrade={() => {
+          trackUpgradeClicked(upgradeTrigger);
+          router.push('/#pricing');
+        }}
+        trigger={upgradeTrigger}
+      />
     </>
   );
 }
